@@ -1,0 +1,11 @@
+package sop
+
+authors    = "stefan-hoeck"
+version    = "0.1.0"
+readme     = "README.md"
+license    = "BSD-2 Clause"
+
+sourcedir  = "src"
+depends    = base
+
+modules = Data.SOP
