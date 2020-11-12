@@ -9,3 +9,6 @@ sourcedir  = "src"
 depends    = base
 
 modules = Data.SOP
+        , Data.SOP.Interfaces
+        , Data.SOP.NP
+        , Data.SOP.Utils
