@@ -21,6 +21,14 @@ import Data.SOP.Interfaces
 ||| In the context of the SOP approach to generic programming, an n-ary product
 ||| describes the structure of the arguments of a single data constructor.
 |||
+||| Note: `NP'` takes an additional type parameter `k` to simulate
+|||       Haskell's kind polymorphism. In theory, this could be left
+|||       as an implicit argument. However, type-inference when calling
+|||       interface functions like `hpure` was rather poor.
+|||
+|||       We therefore made `k` explicit and added a type alias `NP`
+|||       to be used in most occasions when `k` can be inferred.
+|||
 ||| Examples:
 |||
 ||| ```idris example
@@ -34,12 +42,19 @@ import Data.SOP.Interfaces
 ||| ex3 = [Just 'x', Nothing, Just 1]
 ||| ```
 public export
-data NP : forall k . (f : k -> Type) -> (ks : List k) -> Type where
-  Nil  : NP f []
-  (::) : {0 t : k} -> (v : f t) -> (vs : NP f ks) -> NP f (t :: ks)
+data NP' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
+  Nil  : NP' k f []
+  (::) : (v : f t) -> (vs : NP' k f ks) -> NP' k f (t :: ks)
+
+||| Type alias for `NP'` with type parameter `k` being
+||| implicit. This reflects the kind-polymorphic data type
+||| in Haskell.
+public export
+NP : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
+NP = NP' k
 
 public export
-mapNP : (fun : forall k . f k -> g k) -> NP f ks -> NP g ks
+mapNP : (fun : forall a . f a -> g a) -> NP f ks -> NP g ks
 mapNP fun []        = []
 mapNP fun (v :: vs) = fun v :: mapNP fun vs
 
@@ -91,17 +106,38 @@ public export
   neutral {ks = _ :: _} = neutral :: neutral
 
 public export
-HPure NP where
-  hpure {ks = []}       _ = []
-  hpure {ks = (_ :: _)} f = f :: hpure {h = NP} f
+HFunctor NP' where
+  hmap _   []        = []
+  hmap fun (v :: vs) = fun v :: hmap fun vs
 
-  cpure {ks = []}       _ _ = []
-  cpure {ks = (_ :: _)} c f = f :: cpure {h = NP} c f
+  hcmap c _   []        = []
+  hcmap c fun (v :: vs) = fun v :: hcmap c fun vs
 
 public export
-HAp NP where
-  hap fun []        = []
-  hap fun (v :: vs) = fun v :: hap {h = NP} fun vs
+HPure NP' where
+  hpure {ks = []}       _ = []
+  hpure {ks = (_ :: _)} f = f :: hpure f
+
+  cpure {ks = []}       _ _ = []
+  cpure {ks = (_ :: _)} c f = f :: cpure c f
+
+public export
+HAp NP' where
+  hap []        []        = []
+  hap (f :: fs) (v :: vs) = f v :: hap fs vs
+
+public export
+HFold NP' where
+  hfoldl _   acc []        = acc
+  hfoldl fun acc (v :: vs) = hfoldl fun (fun acc v) vs
+
+  hfoldr _   acc []        = acc
+  hfoldr fun acc (v :: vs) = fun v (hfoldr fun acc vs)
+
+public export
+HSequence NP' where
+  hsequence []        = pure []
+  hsequence (v :: vs) = [| v :: hsequence vs |]
 
 --------------------------------------------------------------------------------
 --          Examples and Tests
@@ -140,8 +176,8 @@ SemiTest = Refl
 NeutralTest : the (NP I [String,List Int]) Prelude.neutral = ["",[]]
 NeutralTest = Refl
 
-NothingTest : NP Maybe [String,Int]
-NothingTest = hpure {h = NP} Nothing
+HPureTest : NP Maybe [String,Int]
+HPureTest = hpure Nothing
 
-EmptyTest : NP I [String,String]
-EmptyTest = cpure {h = NP} Monoid neutral
+CPureNeutralTest : NP I [String,String]
+CPureNeutralTest = cpure Monoid neutral
