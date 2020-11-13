@@ -11,5 +11,7 @@ depends    = base
 modules = Data.SOP
         , Data.SOP.Interfaces
         , Data.SOP.NP
+        , Data.SOP.NS
         , Data.SOP.POP
+        , Data.SOP.SOP
         , Data.SOP.Utils
