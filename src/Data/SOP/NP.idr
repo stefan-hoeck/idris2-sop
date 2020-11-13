@@ -3,6 +3,8 @@ module Data.SOP.NP
 import Data.SOP.Utils
 import Data.SOP.Interfaces
 
+import Decidable.Equality
+
 %default total
 
 ||| An n-ary product.
@@ -138,6 +140,21 @@ public export
 HSequence k (List k) (NP' k) where
   hsequence []        = pure []
   hsequence (v :: vs) = [| v :: hsequence vs |]
+
+private
+consInjective : Data.SOP.NP.(::) a b = Data.SOP.NP.(::) c d -> (a = c, b = d)
+consInjective Refl = (Refl, Refl)
+
+public export
+All (DecEq . f) ks => DecEq (NP' k f ks) where
+  decEq [] []               = Yes Refl
+  decEq (x :: xs) (y :: ys) with (decEq x y)
+    decEq (x :: xs) (y :: ys) | (No contra) =
+      No $ contra . fst . consInjective
+    decEq (x :: xs) (x :: ys) | (Yes Refl) with (decEq xs ys)
+      decEq (x :: xs) (x :: xs) | (Yes Refl) | (Yes Refl) = Yes Refl
+      decEq (x :: xs) (x :: ys) | (Yes Refl) | (No contra) =
+        No $ contra . snd . consInjective
 
 --------------------------------------------------------------------------------
 --          Examples and Tests

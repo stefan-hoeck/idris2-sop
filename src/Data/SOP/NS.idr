@@ -3,6 +3,8 @@ module Data.SOP.NS
 import Data.SOP.Utils
 import Data.SOP.Interfaces
 
+import Decidable.Equality
+
 %default total
 
 public export
@@ -47,3 +49,30 @@ public export
 HSequence k (List k) (NS' k) where
   hsequence (Z v) = map Z v
   hsequence (S x) = map S $ hsequence x
+
+public export
+Uninhabited (Data.SOP.NS.Z x = Data.SOP.NS.S y) where
+  uninhabited Refl impossible
+
+public export
+Uninhabited (Data.SOP.NS.S x = Data.SOP.NS.Z y) where
+  uninhabited Refl impossible
+
+private
+zInjective : Data.SOP.NS.Z x = Data.SOP.NS.Z y -> x = y
+zInjective Refl = Refl
+
+private
+sInjective : Data.SOP.NS.S x = Data.SOP.NS.S y -> x = y
+sInjective Refl = Refl
+
+export
+All (DecEq . f) ks => DecEq (NS' k f ks) where
+  decEq (Z x) (Z y) with (decEq x y)
+   decEq (Z x) (Z x) | Yes Refl = Yes Refl
+   decEq (Z x) (Z y) | No contra = No (contra . zInjective)
+  decEq (Z x) (S y) = No absurd
+  decEq (S x) (Z y) = No absurd
+  decEq (S x) (S y) with (decEq x y)
+   decEq (S x) (S x) | Yes Refl = Yes Refl
+   decEq (S x) (S y) | No contra = No (contra . sInjective)

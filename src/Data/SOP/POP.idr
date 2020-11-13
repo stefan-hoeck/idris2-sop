@@ -4,6 +4,8 @@ import Data.SOP.Utils
 import Data.SOP.Interfaces
 import Data.SOP.NP
 
+import Decidable.Equality
+
 %default total
 
 public export
@@ -21,6 +23,16 @@ POP = POP' k
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
+
+public export
+All (Eq . f) kss => Eq (POP' k f kss) where
+  []          == []          = True
+  (vs :: vss) == (ws :: wss) = vs == ws && vss == wss
+
+public export
+All (Eq . f) kss => All (Ord . f) kss => Ord (POP' k f kss) where
+  compare [] []                   = EQ
+  compare (vs :: vss) (ws :: wss) = compare vs ws <+> compare vss wss
 
 public export
 HFunctor k (List $ List (k)) (POP' k) where
@@ -55,3 +67,18 @@ public export
 HSequence k (List $ List k) (POP' k) where
   hsequence []          = pure []
   hsequence (vs :: vss) = [| hsequence vs :: hsequence vss |]
+
+private
+consInjective : Data.SOP.POP.(::) a b = Data.SOP.POP.(::) c d -> (a = c, b = d)
+consInjective Refl = (Refl, Refl)
+
+public export
+All (DecEq . f) kss => DecEq (POP' k f kss) where
+  decEq [] []               = Yes Refl
+  decEq (x :: xs) (y :: ys) with (decEq x y)
+    decEq (x :: xs) (y :: ys) | (No contra) =
+      No $ contra . fst . consInjective
+    decEq (x :: xs) (x :: ys) | (Yes Refl) with (decEq xs ys)
+      decEq (x :: xs) (x :: xs) | (Yes Refl) | (Yes Refl) = Yes Refl
+      decEq (x :: xs) (x :: ys) | (Yes Refl) | (No contra) =
+        No $ contra . snd . consInjective
