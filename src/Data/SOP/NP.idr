@@ -86,35 +86,35 @@ projections {ks = (_ :: _)} = let ps  = projections {f = f}
 --------------------------------------------------------------------------------
 
 public export
-All (Eq . f) ks => Eq (NP f ks) where
+All (Eq . f) ks => Eq (NP' k f ks) where
   []        == []        = True
   (v :: vs) == (w :: ws) = v == w && vs == ws
 
 public export
-All (Eq . f) ks => All (Ord . f) ks => Ord (NP f ks) where
+All (Eq . f) ks => All (Ord . f) ks => Ord (NP' k f ks) where
   compare [] []               = EQ
   compare (v :: vs) (w :: ws) = compare v w <+> compare vs ws
 
 public export
-All (Semigroup . f) ks => Semigroup (NP f ks) where
+All (Semigroup . f) ks => Semigroup (NP' k f ks) where
   []        <+> []        = []
   (v :: vs) <+> (w :: ws) = (v <+> w) :: (vs <+> ws)
 
 public export
-{ks : _} -> All (Semigroup . f) ks => All (Monoid . f) ks => Monoid (NP f ks) where
+{ks : _} -> All (Semigroup . f) ks => All (Monoid . f) ks => Monoid (NP' k f ks) where
   neutral {ks = []}     = []
   neutral {ks = _ :: _} = neutral :: neutral
 
 public export
-HFunctor NP' where
-  hmap _   []        = []
-  hmap fun (v :: vs) = fun v :: hmap fun vs
-
-  hcmap c _   []        = []
-  hcmap c fun (v :: vs) = fun v :: hcmap c fun vs
-
+HFunctor k (List k) (NP' k) where
+   hmap _   []        = []
+   hmap fun (v :: vs) = fun v :: hmap fun vs
+ 
+   hcmap c _   []        = []
+   hcmap c fun (v :: vs) = fun v :: hcmap c fun vs
+ 
 public export
-HPure NP' where
+HPure k (List k) (NP' k) where
   hpure {ks = []}       _ = []
   hpure {ks = (_ :: _)} f = f :: hpure f
 
@@ -122,12 +122,12 @@ HPure NP' where
   cpure {ks = (_ :: _)} c f = f :: cpure c f
 
 public export
-HAp NP' where
+HAp k (List k) (NP' k) where
   hap []        []        = []
   hap (f :: fs) (v :: vs) = f v :: hap fs vs
 
 public export
-HFold NP' where
+HFold k (List k) (NP' k) where
   hfoldl _   acc []        = acc
   hfoldl fun acc (v :: vs) = hfoldl fun (fun acc v) vs
 
@@ -135,7 +135,7 @@ HFold NP' where
   hfoldr fun acc (v :: vs) = fun v (hfoldr fun acc vs)
 
 public export
-HSequence NP' where
+HSequence k (List k) (NP' k) where
   hsequence []        = pure []
   hsequence (v :: vs) = [| v :: hsequence vs |]
 
@@ -176,8 +176,14 @@ SemiTest = Refl
 NeutralTest : the (NP I [String,List Int]) Prelude.neutral = ["",[]]
 NeutralTest = Refl
 
-HPureTest : NP Maybe [String,Int]
-HPureTest = hpure Nothing
+HMapTest : hmap Just Ex1 = [Just 'c', Just True]
+HMapTest = Refl
 
-CPureNeutralTest : NP I [String,String]
-CPureNeutralTest = cpure Monoid neutral
+HCMapRes : NP (K String) [Char,Bool]
+HCMapRes = hcmap Show show Ex1
+
+-- HPureTest : NP Maybe [String,Int]
+-- HPureTest = hpure Nothing
+-- 
+-- CPureNeutralTest : NP I [String,String]
+-- CPureNeutralTest = cpure Monoid neutral
