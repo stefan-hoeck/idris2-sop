@@ -6,7 +6,8 @@ readme     = "README.md"
 license    = "BSD-2 Clause"
 
 sourcedir  = "src"
-depends    = base
+depends    = base, contrib
+opts       = "-p idris2-elab-util"
 
 modules = Data.SOP
         , Data.SOP.Interfaces
@@ -17,3 +18,4 @@ modules = Data.SOP
         , Data.SOP.Utils
 
         , Generics.SOP
+        , Generics.Derive

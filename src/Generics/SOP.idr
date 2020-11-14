@@ -1,8 +1,8 @@
 module Generics.SOP
 
-import Data.SOP.NP
-import Data.SOP.SOP
-import Data.SOP.Utils
+import public Data.SOP.NP
+import public Data.SOP.SOP
+import public Data.SOP.Utils
 
 %default total
 
