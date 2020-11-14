@@ -1,8 +1,11 @@
 module Generics.SOP
 
+import Decidable.Equality
+
 import public Data.SOP.NP
 import public Data.SOP.SOP
 import public Data.SOP.Utils
+import public Data.SOP.Interfaces
 
 %default total
 
@@ -26,6 +29,41 @@ interface Generic (t : Type) (code : List $ List Type) | t where
 
   ||| Proof that `from . to = id`.
   toFromId : (v : SOP I code) -> from (to v) = v
+
+export
+fromInjective : Generic t code =>
+                (0 x : t) -> (0 y : t) -> (from x = from y) -> x = y
+fromInjective x y prf = rewrite sym $ fromToId y in lemma2
+  where lemma1 : to {t = t} (from x) = to {t = t} (from y)
+        lemma1 = cong to prf
+
+        lemma2 : x = to {t = t} (from y)
+        lemma2 = rewrite sym $ fromToId x in lemma1
+
+--------------------------------------------------------------------------------
+--          Generic Implementation Functions
+--------------------------------------------------------------------------------
+
+||| Default `(==)` implementation for data types with a `Generic`
+||| instance.
+public export
+genEq : Generic t code => All Eq code => t -> t -> Bool
+genEq x y = from x == from y
+
+||| Default `compare` implementation for data types with a `Generic`
+||| instance.
+public export
+genCompare : Generic t code => All Ord code => All Eq code => t -> t -> Ordering
+genCompare x y = compare (from x) (from y)
+
+||| Default `decEq` implementation for data types with a `Generic`
+||| instance.
+public export
+genDecEq :  Generic t code => All DecEq code
+         => (x : t) -> (y : t) -> Dec (x = y)
+genDecEq x y = case decEq (from x) (from y) of
+                    (Yes prf)   => Yes $ fromInjective x y prf
+                    (No contra) => No \h => contra (cong from h)
 
 --------------------------------------------------------------------------------
 --          Prelude Implementations

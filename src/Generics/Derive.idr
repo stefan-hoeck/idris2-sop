@@ -2,6 +2,8 @@ module Generics.Derive
 
 import public Generics.SOP
 
+import Decidable.Equality
+
 import Language.Reflection.Syntax
 import Language.Reflection.Types
 
@@ -90,16 +92,8 @@ record InterfaceImpl where
   ||| ```
   type          : TTImp
 
-||| Alias for a function from `GenericUtil`
-||| to `InterfaceImpl`. A value of this type must
-||| be provided and passed to `derive` for each interface
-||| that should be derived automatically.
-public export
-MkImplementation : Type
-MkImplementation = GenericUtil -> InterfaceImpl
-
 private
-implDecl : GenericUtil -> MkImplementation -> List Decl
+implDecl : GenericUtil -> (GenericUtil -> InterfaceImpl) -> List Decl
 implDecl g f = let (MkInterfaceImpl iname vis impl type) = f g
                    function = implName g iname
 
@@ -107,17 +101,44 @@ implDecl g f = let (MkInterfaceImpl iname vis impl type) = f g
                    , def function [var function .= impl] ]
 
 private
-deriveDecls : Name -> List MkImplementation -> Elab (List Decl)
+deriveDecls : Name -> List (GenericUtil -> InterfaceImpl) -> Elab (List Decl)
 deriveDecls name fs = mkDecls <$> getParamInfo' name 
   where mkDecls : ParamTypeInfo -> List Decl
         mkDecls pi = let g = genericUtil pi
                       in concatMap (implDecl g) fs
                   
 
+||| Given a name of a data type plus a list of interfaces, tries
+||| to implement these interfaces automatically using
+||| elaborator reflection.
+|||
+||| ```idris example
+||| derive "Person" [Generic,Eq,OrdVis Export]
+||| ```
 export
-derive : Name -> List MkImplementation -> Elab ()
+derive : Name -> List (GenericUtil -> InterfaceImpl) -> Elab ()
 derive name fs = do decls <- deriveDecls name fs
                     declare decls
+
+||| Given a `TTImp` representing an interface, generates
+||| the type of the implementation function with all type
+||| parameters applied and auto implicits specified.
+|||
+||| Example: Given the `GenericUtil` info of `Either`, this
+||| will generate the following type for input ``(Eq)`:
+|||
+||| ```idris example
+||| {0 a : _} -> {0 b : _} -> Eq a => Eq b => Eq (Either a b)
+||| ```
+|||
+||| Note: This function is only to be used with single-parameter
+||| type classes, whose type parameters are of kind `Type`.
+export
+implementationType : (iface : TTImp) -> GenericUtil -> TTImp
+implementationType iface (MkGenericUtil _ appTp names argTypesWithParams) =
+  let appIface = iface .$ appTp
+      autoArgs = piAllAuto appIface $ map (iface .$) argTypesWithParams
+   in piAllImplicit autoArgs names
 
 --------------------------------------------------------------------------------
 --          Generic
@@ -141,7 +162,7 @@ mkSOP k args     = if k <= 0 then `(Z) .$ listOf args
                              else `(S) .$ mkSOP (k-1) args
 
 ||| Creates the syntax tree for the code of the given data type.
-||| We export this here, since it might be useful elsewhere.
+||| We export this since it might be useful elsewhere.
 export
 mkCode : ParamTypeInfo -> TTImp
 mkCode = listOf . map (listOf . map tpe . explicitArgs) . cons
@@ -175,9 +196,11 @@ conNames (MkParamCon con args) = let ns   = map (nameStr . name) args
                                      vars = map varStr ns
                                   in (con, ns, vars)
 
+||| Derives a `Generic` implementation for the given data type
+||| and visibility.
 export
-Generic' : MkImplementation
-Generic' g =
+GenericVis : Visibility -> GenericUtil -> InterfaceImpl
+GenericVis vis g =
   let names    = zipWithIndex (map conNames g.typeInfo.cons)
       genType  = `(Generic) .$ g.appliedType .$ mkCode g.typeInfo
       funType  = piAllImplicit  genType g.paramNames
@@ -191,4 +214,79 @@ Generic' g =
 
       impl     = appAll mkGeneric [from,to,fromToId,toFromId]
 
-   in MkInterfaceImpl "Generic" Public impl funType
+   in MkInterfaceImpl "Generic" vis impl funType
+
+||| Alias for `GenericVis Public`.
+export
+Generic : GenericUtil -> InterfaceImpl
+Generic = GenericVis Public
+
+--------------------------------------------------------------------------------
+--          Eq
+--------------------------------------------------------------------------------
+
+private
+mkEq : TTImp
+mkEq = var (singleCon "Eq") .$ `(genEq) .$ `(\a,b => not (a == b))
+
+||| Derives an `Eq` implementation for the given data type
+||| and visibility.
+export
+EqVis : Visibility -> GenericUtil -> InterfaceImpl
+EqVis vis g = MkInterfaceImpl "Eq" vis mkEq (implementationType `(Eq) g)
+
+||| Alias for `EqVis Public`.
+export
+Eq : GenericUtil -> InterfaceImpl
+Eq = EqVis Public
+
+--------------------------------------------------------------------------------
+--          Ord
+--------------------------------------------------------------------------------
+
+private
+mkOrd : Name
+mkOrd = singleCon "Ord"
+
+private
+ordFunctions : List TTImp
+ordFunctions = [ `(genCompare)
+               , `(\a,b => compare a b == LT)
+               , `(\a,b => compare a b == GT)
+               , `(\a,b => compare a b /= GT)
+               , `(\a,b => compare a b /= LT)
+               , `(\a,b => if compare a b == GT then a else b)
+               , `(\a,b => if compare a b == LT then a else b)
+               ]
+
+||| Derives an `Ord` implementation for the given data type
+||| and visibility.
+export
+OrdVis : Visibility -> GenericUtil -> InterfaceImpl
+OrdVis vis g = let eq   = var $ implName g "Eq"
+                   impl = appAll mkOrd (eq :: ordFunctions)
+                in MkInterfaceImpl "Ord" vis impl (implementationType `(Ord) g)
+
+||| Alias for `OrdVis Public`
+export
+Ord : GenericUtil -> InterfaceImpl
+Ord = OrdVis Public
+
+--------------------------------------------------------------------------------
+--          DecEq
+--------------------------------------------------------------------------------
+
+private
+mkDecEq : TTImp
+mkDecEq = var (singleCon "DecEq") .$ `(genDecEq)
+
+||| Derives a `DecEq` implementation for the given data type
+||| and visibility.
+export
+DecEqVis : Visibility -> GenericUtil -> InterfaceImpl
+DecEqVis vis g = MkInterfaceImpl "DecEq" vis mkEq (implementationType `(DecEq) g)
+
+||| Alias for `EqVis Public`.
+export
+DecEq : GenericUtil -> InterfaceImpl
+DecEq = DecEqVis Public
