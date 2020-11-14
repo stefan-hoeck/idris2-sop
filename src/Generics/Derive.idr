@@ -4,141 +4,11 @@ import public Generics.SOP
 
 import Decidable.Equality
 
-import Language.Reflection.Syntax
-import Language.Reflection.Types
+import Language.Reflection.Derive
 
 %language ElabReflection
 
 %default covering
-
-||| Utility data type for deriving interface implementations
-||| automatically. See implementation of `Eq'` and `Ord'`
-||| for examples.
-export
-record GenericUtil where
-  constructor MkGenericUtil
-
-  ||| The underlying type info containing the list and names
-  ||| of data constructors plus their arguments as well as
-  ||| the data type's name and type arguments.
-  typeInfo           : ParamTypeInfo
-
-  ||| Fully applied data type, i.e. `var "Either" .$ var "a" .$ var "b"`
-  appliedType        : TTImp 
-
-  ||| The names of type parameters
-  paramNames         : List Name
-
-  ||| Types of constructor arguments where at least one
-  ||| type parameter makes an appearance. These are the
-  ||| `tpe` fields of `ExplicitArg` where `hasParam`
-  ||| is set to true. See the documentation of `ExplicitArg`
-  ||| when this is the case
-  argTypesWithParams : List TTImp
-
-export
-genericUtil : ParamTypeInfo -> GenericUtil
-genericUtil ti = let pNames = map fst $ params ti
-                     appTpe = appNames (name ti) pNames
-                     twps   = concatMap hasParamTypes ti.cons
-                  in MkGenericUtil ti appTpe pNames twps
-
-||| Generates the name of an interface's implementation function
-export
-implName : GenericUtil -> String -> Name
-implName g interfaceName =  UN $ "impl" ++ interfaceName
-                                        ++ nameStr g.typeInfo.name
-
-||| Syntax tree and additional info about the
-||| implementation function of an interface.
-|||
-||| With 'implementation function', we mean the following:
-||| When deriving an interface implementation, the elaborator
-||| creates a function returning the corresponding record value:
-|||
-||| ```idris exampe
-||| public export
-||| implEqEither : {0 a : _} -> {0 b : _} -> Eq a => Eq b => Eq (Either a b)
-||| implEqEither = ?res
-||| ```
-public export
-record InterfaceImpl where
-  constructor MkInterfaceImpl
-  ||| The interface's name, for instance "Eq" ord "Ord".
-  ||| This is used to generate the name of the
-  ||| implementation function.
-  interfaceName : String
-
-  ||| Visibility of the implementation function.
-  visibility    : Visibility
-
-  ||| Actual implementation of the implementation function.
-  ||| This will be right hand side of the sole pattern clause
-  ||| in the function definition.
-  |||
-  ||| Here is an example, how this will be used:
-  |||
-  ||| ```idirs example
-  ||| def function [var function .= impl] 
-  ||| ```
-  impl          : TTImp
-
-  ||| Full type of the implementation function
-  |||
-  ||| Example:
-  |||
-  ||| ```idirs example
-  ||| `(Eq a => Eq b => Eq (Either a b))
-  ||| ```
-  type          : TTImp
-
-private
-implDecl : GenericUtil -> (GenericUtil -> InterfaceImpl) -> List Decl
-implDecl g f = let (MkInterfaceImpl iname vis impl type) = f g
-                   function = implName g iname
-
-                in [ interfaceHint vis function type
-                   , def function [var function .= impl] ]
-
-private
-deriveDecls : Name -> List (GenericUtil -> InterfaceImpl) -> Elab (List Decl)
-deriveDecls name fs = mkDecls <$> getParamInfo' name 
-  where mkDecls : ParamTypeInfo -> List Decl
-        mkDecls pi = let g = genericUtil pi
-                      in concatMap (implDecl g) fs
-                  
-
-||| Given a name of a data type plus a list of interfaces, tries
-||| to implement these interfaces automatically using
-||| elaborator reflection.
-|||
-||| ```idris example
-||| derive "Person" [Generic,Eq,OrdVis Export]
-||| ```
-export
-derive : Name -> List (GenericUtil -> InterfaceImpl) -> Elab ()
-derive name fs = do decls <- deriveDecls name fs
-                    declare decls
-
-||| Given a `TTImp` representing an interface, generates
-||| the type of the implementation function with all type
-||| parameters applied and auto implicits specified.
-|||
-||| Example: Given the `GenericUtil` info of `Either`, this
-||| will generate the following type for input ``(Eq)`:
-|||
-||| ```idris example
-||| {0 a : _} -> {0 b : _} -> Eq a => Eq b => Eq (Either a b)
-||| ```
-|||
-||| Note: This function is only to be used with single-parameter
-||| type classes, whose type parameters are of kind `Type`.
-export
-implementationType : (iface : TTImp) -> GenericUtil -> TTImp
-implementationType iface (MkGenericUtil _ appTp names argTypesWithParams) =
-  let appIface = iface .$ appTp
-      autoArgs = piAllAuto appIface $ map (iface .$) argTypesWithParams
-   in piAllImplicit autoArgs names
 
 --------------------------------------------------------------------------------
 --          Generic
@@ -199,7 +69,7 @@ conNames (MkParamCon con args) = let ns   = map (nameStr . name) args
 ||| Derives a `Generic` implementation for the given data type
 ||| and visibility.
 export
-GenericVis : Visibility -> GenericUtil -> InterfaceImpl
+GenericVis : Visibility -> DeriveUtil -> InterfaceImpl
 GenericVis vis g =
   let names    = zipWithIndex (map conNames g.typeInfo.cons)
       genType  = `(Generic) .$ g.appliedType .$ mkCode g.typeInfo
@@ -218,7 +88,7 @@ GenericVis vis g =
 
 ||| Alias for `GenericVis Public`.
 export
-Generic : GenericUtil -> InterfaceImpl
+Generic : DeriveUtil -> InterfaceImpl
 Generic = GenericVis Public
 
 --------------------------------------------------------------------------------
@@ -232,12 +102,12 @@ mkEq = var (singleCon "Eq") .$ `(genEq) .$ `(\a,b => not (a == b))
 ||| Derives an `Eq` implementation for the given data type
 ||| and visibility.
 export
-EqVis : Visibility -> GenericUtil -> InterfaceImpl
+EqVis : Visibility -> DeriveUtil -> InterfaceImpl
 EqVis vis g = MkInterfaceImpl "Eq" vis mkEq (implementationType `(Eq) g)
 
 ||| Alias for `EqVis Public`.
 export
-Eq : GenericUtil -> InterfaceImpl
+Eq : DeriveUtil -> InterfaceImpl
 Eq = EqVis Public
 
 --------------------------------------------------------------------------------
@@ -262,14 +132,14 @@ ordFunctions = [ `(genCompare)
 ||| Derives an `Ord` implementation for the given data type
 ||| and visibility.
 export
-OrdVis : Visibility -> GenericUtil -> InterfaceImpl
+OrdVis : Visibility -> DeriveUtil -> InterfaceImpl
 OrdVis vis g = let eq   = var $ implName g "Eq"
                    impl = appAll mkOrd (eq :: ordFunctions)
                 in MkInterfaceImpl "Ord" vis impl (implementationType `(Ord) g)
 
 ||| Alias for `OrdVis Public`
 export
-Ord : GenericUtil -> InterfaceImpl
+Ord : DeriveUtil -> InterfaceImpl
 Ord = OrdVis Public
 
 --------------------------------------------------------------------------------
@@ -283,10 +153,10 @@ mkDecEq = var (singleCon "DecEq") .$ `(genDecEq)
 ||| Derives a `DecEq` implementation for the given data type
 ||| and visibility.
 export
-DecEqVis : Visibility -> GenericUtil -> InterfaceImpl
+DecEqVis : Visibility -> DeriveUtil -> InterfaceImpl
 DecEqVis vis g = MkInterfaceImpl "DecEq" vis mkEq (implementationType `(DecEq) g)
 
 ||| Alias for `EqVis Public`.
 export
-DecEq : GenericUtil -> InterfaceImpl
+DecEq : DeriveUtil -> InterfaceImpl
 DecEq = DecEqVis Public
