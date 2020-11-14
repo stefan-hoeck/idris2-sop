@@ -13,6 +13,13 @@ data SOP' : (k : Type) -> (f : k -> Type) -> (kss : List $ List k) -> Type where
   Z : (vs : NP' k f ks)  -> SOP' k f (ks :: kss)
   S : SOP' k f kss -> SOP' k f (ks :: kss)
 
+||| Type alias for `SOP'` with type parameter `k` being
+||| implicit. This reflects the kind-polymorphic data type
+||| in Haskell.
+public export
+SOP : {k : Type} -> (f : k -> Type) -> (kss : List (List k)) -> Type
+SOP = SOP' k
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------

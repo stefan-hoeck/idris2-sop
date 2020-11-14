@@ -12,6 +12,13 @@ data NS' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
   Z : (v : f t)  -> NS' k f (t :: ks)
   S : NS' k f ks -> NS' k f (t :: ks)
 
+||| Type alias for `NS'` with type parameter `k` being
+||| implicit. This reflects the kind-polymorphic data type
+||| in Haskell.
+public export
+NS : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
+NS = NS' k
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
