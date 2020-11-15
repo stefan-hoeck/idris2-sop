@@ -14,6 +14,8 @@ This is a literate Idris source, hence:
 
 ```idris
 module Doc.Intro
+
+%default total
 ```
 
 ### Product Types
@@ -192,7 +194,7 @@ fromEitherId (Right $ Left s)   = Refl
 fromEitherId (Right $ Right ()) = Refl
 ```
 
-With that out of the way, we can reap the fruits of our labor
+With that out of the way, we can reap the fruits of our labour
 and implement `Eq` and `Ord`:
 
 ```idris
