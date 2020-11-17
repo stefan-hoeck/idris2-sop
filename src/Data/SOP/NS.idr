@@ -24,17 +24,25 @@ NS = NS' k
 --------------------------------------------------------------------------------
 
 public export
-All (Eq . f) ks => Eq (NS' k f ks) where
-  (Z x) == (Z y) = x == y
-  (S x) == (S y) = x == y
-  _     == _     = False
+Eq (NS' k f []) where
+  a == b impossible
 
 public export
-All (Eq . f) ks => All (Ord . f) ks => Ord (NS' k f ks) where
-  compare (Z x) (Z y) = compare x y
-  compare (Z _) (S _) = LT
-  compare (S _) (Z _) = GT
-  compare (S x) (S y) = compare y x
+Ord (NS' k f []) where
+  compare a b impossible
+
+public export
+Eq (f t) => Eq (NS' k f ks) => Eq (NS' k f (t :: ks)) where
+  (Z v)  == (Z w)  = v == w
+  (S vs) == (S ws) = vs == ws
+  _      == _      = False
+
+public export
+Ord (f t) => Ord (NS' k f ks) => Ord (NS' k f (t :: ks)) where
+  compare (Z v) (Z w)   = compare v w
+  compare (Z _)  (S _)  = LT
+  compare (S _)  (Z _)  = GT
+  compare (S vs) (S ws) = compare vs ws
 
 public export
 HFunctor k (List k) (NS' k) where
@@ -73,8 +81,12 @@ private
 sInjective : Data.SOP.NS.S x = Data.SOP.NS.S y -> x = y
 sInjective Refl = Refl
 
-export
-All (DecEq . f) ks => DecEq (NS' k f ks) where
+public export
+DecEq (NS' k f []) where
+  decEq a b impossible
+
+public export
+DecEq (f t) => DecEq (NS' k f ks) => DecEq (NS' k f (t :: ks)) where
   decEq (Z x) (Z y) with (decEq x y)
    decEq (Z x) (Z x) | Yes Refl = Yes Refl
    decEq (Z x) (Z y) | No contra = No (contra . zInjective)
@@ -83,3 +95,4 @@ All (DecEq . f) ks => DecEq (NS' k f ks) where
   decEq (S x) (S y) with (decEq x y)
    decEq (S x) (S x) | Yes Refl = Yes Refl
    decEq (S x) (S y) | No contra = No (contra . sInjective)
+

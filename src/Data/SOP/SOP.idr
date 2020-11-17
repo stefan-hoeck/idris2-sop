@@ -25,17 +25,26 @@ SOP = SOP' k
 --------------------------------------------------------------------------------
 
 public export
-All (Eq . f) kss => Eq (SOP' k f kss) where
-  (Z x) == (Z y) = x == y
-  (S x) == (S y) = x == y
-  _     == _     = False
+Eq (SOP' k f []) where
+  a == b impossible
 
 public export
-All (Eq . f) ks => All (Ord . f) ks => Ord (SOP' k f ks) where
-  compare (Z x) (Z y) = compare x y
-  compare (Z _) (S _) = LT
-  compare (S _) (Z _) = GT
-  compare (S x) (S y) = compare y x
+Ord (SOP' k f []) where
+  compare a b impossible
+
+public export
+Eq (NP' k f ks) => Eq (SOP' k f kss) => Eq (SOP' k f (ks :: kss)) where
+  (Z vs)  == (Z ws)  = vs == ws
+  (S vss) == (S wss) = vss == wss
+  _       == _       = False
+
+public export
+Ord (NP' k f ks) => Ord (SOP' k f kss) => Ord (SOP' k f (ks :: kss)) where
+  compare (Z vs) (Z ws)   = compare vs ws
+  compare (Z _)  (S _)    = LT
+  compare (S _)  (Z _)    = GT
+  compare (S vss) (S wss) = compare vss wss
+
 
 public export
 HFunctor k (List $ List k) (SOP' k) where
@@ -74,8 +83,12 @@ private
 sInjective : Data.SOP.SOP.S x = Data.SOP.SOP.S y -> x = y
 sInjective Refl = Refl
 
-export
-All (DecEq . f) ks => DecEq (SOP' k f ks) where
+public export
+DecEq (SOP' k f []) where
+  decEq a b impossible
+
+public export
+DecEq (NP' k f ks) => DecEq (SOP' k f kss) => DecEq (SOP' k f (ks :: kss)) where
   decEq (Z x) (Z y) with (decEq x y)
    decEq (Z x) (Z x) | Yes Refl = Yes Refl
    decEq (Z x) (Z y) | No contra = No (contra . zInjective)

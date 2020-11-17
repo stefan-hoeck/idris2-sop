@@ -25,14 +25,38 @@ POP = POP' k
 --------------------------------------------------------------------------------
 
 public export
-All (Eq . f) kss => Eq (POP' k f kss) where
-  []          == []          = True
+Eq (POP' k f []) where
+  [] == [] = True
+
+public export
+Ord (POP' k f []) where
+  compare [] [] = EQ
+
+public export
+Semigroup (POP' k f []) where
+  [] <+> [] = []
+
+public export
+Monoid (POP' k f []) where
+  neutral = []
+
+public export
+Eq (NP' k f ks) => Eq (POP' k f kss) => Eq (POP' k f (ks :: kss)) where
   (vs :: vss) == (ws :: wss) = vs == ws && vss == wss
 
 public export
-All (Eq . f) kss => All (Ord . f) kss => Ord (POP' k f kss) where
-  compare [] []                   = EQ
+Ord (NP' k f ks) => Ord (POP' k f kss) => Ord (POP' k f (ks :: kss)) where
   compare (vs :: vss) (ws :: wss) = compare vs ws <+> compare vss wss
+
+public export
+Semigroup (NP' k f ks) =>
+Semigroup (POP' k f kss) => Semigroup (POP' k f (ks::kss)) where
+  (vs :: vss) <+> (ws :: wss) = (vs <+> ws) :: (vss <+> wss)
+
+public export
+Monoid (NP' k f ks) =>
+Monoid (POP' k f kss) => Monoid (POP' k f (ks::kss)) where
+  neutral = neutral :: neutral
 
 public export
 HFunctor k (List $ List (k)) (POP' k) where
@@ -73,8 +97,12 @@ consInjective : Data.SOP.POP.(::) a b = Data.SOP.POP.(::) c d -> (a = c, b = d)
 consInjective Refl = (Refl, Refl)
 
 public export
-All (DecEq . f) kss => DecEq (POP' k f kss) where
-  decEq [] []               = Yes Refl
+DecEq (POP' k f []) where
+  decEq a b = ?res
+
+public export
+DecEq (NP' k f ks) =>
+DecEq (POP' k f kss) => DecEq (POP' k f (ks :: kss)) where
   decEq (x :: xs) (y :: ys) with (decEq x y)
     decEq (x :: xs) (y :: ys) | (No contra) =
       No $ contra . fst . consInjective

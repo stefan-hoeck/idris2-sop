@@ -88,24 +88,36 @@ projections {ks = (_ :: _)} = let ps  = projections {f = f}
 --------------------------------------------------------------------------------
 
 public export
-All (Eq . f) ks => Eq (NP' k f ks) where
-  []        == []        = True
+Eq (NP' k f []) where
+  [] == [] = True
+
+public export
+Ord (NP' k f []) where
+  compare [] [] = EQ
+
+public export
+Semigroup (NP' k f []) where
+  [] <+> [] = []
+
+public export
+Monoid (NP' k f []) where
+  neutral = []
+
+public export
+Eq (f t) => Eq (NP' k f ks) => Eq (NP' k f (t :: ks)) where
   (v :: vs) == (w :: ws) = v == w && vs == ws
 
 public export
-All (Eq . f) ks => All (Ord . f) ks => Ord (NP' k f ks) where
-  compare [] []               = EQ
+Ord (f t) => Ord (NP' k f ks) => Ord (NP' k f (t :: ks)) where
   compare (v :: vs) (w :: ws) = compare v w <+> compare vs ws
 
 public export
-All (Semigroup . f) ks => Semigroup (NP' k f ks) where
-  []        <+> []        = []
+Semigroup (f t) => Semigroup (NP' k f ks) => Semigroup (NP' k f (t::ks)) where
   (v :: vs) <+> (w :: ws) = (v <+> w) :: (vs <+> ws)
 
 public export
-{ks : _} -> All (Semigroup . f) ks => All (Monoid . f) ks => Monoid (NP' k f ks) where
-  neutral {ks = []}     = []
-  neutral {ks = _ :: _} = neutral :: neutral
+Monoid (f t) => Monoid (NP' k f ks) => Monoid (NP' k f (t::ks)) where
+  neutral = neutral :: neutral
 
 public export
 HFunctor k (List k) (NP' k) where
@@ -146,8 +158,11 @@ consInjective : Data.SOP.NP.(::) a b = Data.SOP.NP.(::) c d -> (a = c, b = d)
 consInjective Refl = (Refl, Refl)
 
 public export
-All (DecEq . f) ks => DecEq (NP' k f ks) where
-  decEq [] []               = Yes Refl
+DecEq (NP' k f []) where
+  decEq a b = ?res
+
+public export
+DecEq (f t) => DecEq (NP' k f ks) => DecEq (NP' k f (t :: ks)) where
   decEq (x :: xs) (y :: ys) with (decEq x y)
     decEq (x :: xs) (y :: ys) | (No contra) =
       No $ contra . fst . consInjective

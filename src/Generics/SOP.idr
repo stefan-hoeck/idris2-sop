@@ -47,19 +47,19 @@ fromInjective x y prf = rewrite sym $ fromToId y in lemma2
 ||| Default `(==)` implementation for data types with a `Generic`
 ||| instance.
 public export
-genEq : Generic t code => All Eq code => t -> t -> Bool
+genEq : Generic t code => Eq (SOP I code) => t -> t -> Bool
 genEq x y = from x == from y
 
 ||| Default `compare` implementation for data types with a `Generic`
 ||| instance.
 public export
-genCompare : Generic t code => All Ord code => All Eq code => t -> t -> Ordering
+genCompare : Generic t code => Ord (SOP I code) => t -> t -> Ordering
 genCompare x y = compare (from x) (from y)
 
 ||| Default `decEq` implementation for data types with a `Generic`
 ||| instance.
 public export
-genDecEq :  Generic t code => All DecEq code
+genDecEq :  Generic t code => DecEq (SOP I code)
          => (x : t) -> (y : t) -> Dec (x = y)
 genDecEq x y = case decEq (from x) (from y) of
                     (Yes prf)   => Yes $ fromInjective x y prf
