@@ -154,7 +154,7 @@ mkDecEq = var (singleCon "DecEq") .$ `(genDecEq)
 ||| and visibility.
 export
 DecEqVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecEqVis vis g = MkInterfaceImpl "DecEq" vis mkEq (implementationType `(DecEq) g)
+DecEqVis vis g = MkInterfaceImpl "DecEq" vis mkDecEq (implementationType `(DecEq) g)
 
 ||| Alias for `EqVis Public`.
 export

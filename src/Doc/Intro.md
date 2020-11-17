@@ -356,6 +356,6 @@ for a limited set of data types at least.
 
 ### What's next
 
-This was quite a lengthy introduction. In the next part
+This was quite a lengthy introduction. In the [next part](Barbies.md)
 we will put the functionality of this library to use with some
 example data types.

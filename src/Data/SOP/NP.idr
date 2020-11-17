@@ -1,5 +1,6 @@
 module Data.SOP.NP
 
+import Data.List.Elem
 import Data.SOP.Utils
 import Data.SOP.Interfaces
 
@@ -82,6 +83,64 @@ projections {ks = []}       = []
 projections {ks = (_ :: _)} = let ps  = projections {f = f}
                                   fun = shiftProjection {f = f}
                                in hd :: mapNP fun ps
+
+--------------------------------------------------------------------------------
+--          Accessing Values
+--------------------------------------------------------------------------------
+
+||| Access the first element of the given type in
+||| an n-ary product
+public export
+get : (t : k) -> {auto prf : Elem t ks} -> NP' k f ks -> f t
+get t {prf = Here}    (v :: _) = v
+get t {prf = There _} (_ :: vs) = get t vs
+
+--------------------------------------------------------------------------------
+--          Modifying Values
+--------------------------------------------------------------------------------
+
+public export
+data UpdateElem :  (t : k)
+                -> (t' : k)
+                -> (ks : List k)
+                -> (ks' : List k)
+                -> Type where
+  UpdateHere  : UpdateElem t t' (t :: ks) (t' :: ks)
+  UpdateThere : UpdateElem t t' ks ks' -> UpdateElem t t' (k :: ks) (k :: ks')
+
+||| Modify the first element of the given type
+||| in an n-ary product, thereby possibly changing the
+||| types of stored values.
+public export
+modify :  (fun : f t -> f t')
+       -> {auto prf : UpdateElem t t' ks ks'}
+       -> NP' k f ks
+       -> NP' k f ks'
+modify fun {prf = UpdateHere}    (v :: vs) = fun v :: vs
+modify fun {prf = UpdateThere _} (v :: vs) = v :: modify fun vs
+
+||| Replaces the first element of the given type
+||| in an n-ary product, thereby possibly changing the
+||| types of stored values.
+public export
+setAt :  (0 t : k)
+      -> (v' : f t')
+      -> {auto prf : UpdateElem t t' ks ks'}
+      -> NP' k f ks
+      -> NP' k f ks'
+setAt _ v' {prf = UpdateHere}    (_ :: vs) = v' :: vs
+setAt t v' {prf = UpdateThere y} (v :: vs) = v :: setAt t v' vs
+
+||| Alias for `setAt` for those occasions when
+||| Idris cannot infer the type of the new value.
+public export
+setAt' :  (0 t  : k)
+       -> (0 t' : k)
+       -> (v' : f t')
+       -> {auto prf : UpdateElem t t' ks ks'}
+       -> NP' k f ks
+       -> NP' k f ks'
+setAt' t _ v' np = setAt t v' np
 
 --------------------------------------------------------------------------------
 --          Implementations
