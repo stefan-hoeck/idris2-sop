@@ -29,7 +29,7 @@ import Decidable.Equality
 |||       interface functions like `hpure` was rather poor.
 |||
 |||       We therefore made `k` explicit and added a type alias `NP`
-|||       to be used in most occasions when `k` can be inferred.
+|||       to be used in those occasions when `k` can be inferred.
 |||
 ||| Examples:
 |||
@@ -132,8 +132,8 @@ HPure k (List k) (NP' k) where
   hpure {ks = []}       _ = []
   hpure {ks = (_ :: _)} f = f :: hpure f
 
-  cpure {ks = []}       _ _ = []
-  cpure {ks = (_ :: _)} c f = f :: cpure c f
+  hcpure {ks = []}       _ _ = []
+  hcpure {ks = (_ :: _)} c f = f :: hcpure c f
 
 public export
 HAp k (List k) (NP' k) where
@@ -218,7 +218,7 @@ HCMapRes = hcmap Show show Ex1
 -- HPureTest = hpure Nothing
 -- 
 -- CPureNeutralTest : NP I [String,String]
--- CPureNeutralTest = cpure Monoid neutral
+-- CPureNeutralTest = hcpure Monoid neutral
 
 Person : (f : Type -> Type) -> Type
 Person f = NP f [String,Int]
@@ -236,7 +236,7 @@ Foo : (f : Type -> Type) -> Type
 Foo f = NP f [String,String,List Int]
 
 neutralFoo : Foo I
-neutralFoo = cpure Monoid neutral
+neutralFoo = hcpure Monoid neutral
 
 update : forall a . Maybe a -> I a -> I a
 update (Just a) _ = a

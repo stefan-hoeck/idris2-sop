@@ -8,6 +8,18 @@ import Decidable.Equality
 
 %default total
 
+||| A sum of products.
+||| 
+||| Unlike in the Haskell version, not using a Newtype here allows us
+||| to overload the costructor names of NS'.
+||| The elements of the (inner) products
+||| are applications of the parameter f. The type SOP' is indexed by the list of
+||| lists that determines the sizes of both the (outer) sum and all the (inner)
+||| products, as well as the types of all the elements of the inner products.
+||| 
+||| A SOP I reflects the structure of a normal Idris datatype. The sum structure
+||| represents the choice between the different constructors, the product structure
+||| represents the arguments of each constructor.
 public export
 data SOP' : (k : Type) -> (f : k -> Type) -> (kss : List $ List k) -> Type where
   Z : (vs : NP' k f ks)  -> SOP' k f (ks :: kss)
@@ -19,18 +31,6 @@ data SOP' : (k : Type) -> (f : k -> Type) -> (kss : List $ List k) -> Type where
 public export
 SOP : {k : Type} -> (f : k -> Type) -> (kss : List (List k)) -> Type
 SOP = SOP' k
-
-||| Type alias for a `SOP'` with only a single value to choose
-||| from. This is isomorphic to the corresponding `NP f ks`.
-public export
-SOP1' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type
-SOP1' k f ks = SOP' k f [ks]
-
-||| Type alias for `SOP1'` with type parameter `k` being
-||| implicit.
-public export
-SOP1 : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
-SOP1 = SOP1' k
 
 --------------------------------------------------------------------------------
 --          Implementations

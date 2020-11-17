@@ -7,6 +7,36 @@ import Decidable.Equality
 
 %default total
 
+||| An n-ary sum.
+||| 
+||| The sum is parameterized by a type constructor f and indexed by a
+||| type-level list xs. The length of the list determines the number of choices
+||| in the sum and if the i-th element of the list is of type x, then the i-th
+||| choice of the sum is of type f x.
+||| 
+||| The constructor names are chosen to resemble Peano-style natural numbers,
+||| i.e., Z is for "zero", and S is for "successor". Chaining S and Z chooses
+||| the corresponding component of the sum.
+||| 
+||| Note that empty sums (indexed by an empty list) have no non-bottom
+||| elements.
+||| 
+||| Two common instantiations of f are the identity functor I and the constant
+||| functor K. For I, the sum becomes a direct generalization of the Either
+||| type to arbitrarily many choices. For K a, the result is a homogeneous
+||| choice type, where the contents of the type-level list are ignored, but its
+||| length specifies the number of options.
+||| 
+||| In the context of the SOP approach to generic programming, an n-ary sum
+||| describes the top-level structure of a datatype, which is a choice between
+||| all of its constructors.
+||| 
+||| Examples:
+||| 
+||| ```idris example
+||| the (NS' Type I [Char,Bool]) (Z 'x')
+||| the (NS' Type I [Char,Bool]) (S $ Z False)
+||| ```
 public export
 data NS' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
   Z : (v : f t)  -> NS' k f (t :: ks)
@@ -39,7 +69,7 @@ Eq (f t) => Eq (NS' k f ks) => Eq (NS' k f (t :: ks)) where
 
 public export
 Ord (f t) => Ord (NS' k f ks) => Ord (NS' k f (t :: ks)) where
-  compare (Z v) (Z w)   = compare v w
+  compare (Z v)  (Z w)  = compare v w
   compare (Z _)  (S _)  = LT
   compare (S _)  (Z _)  = GT
   compare (S vs) (S ws) = compare vs ws
@@ -96,3 +126,9 @@ DecEq (f t) => DecEq (NS' k f ks) => DecEq (NS' k f (t :: ks)) where
     decEq (S x) (S x) | Yes Refl = Yes Refl
     decEq (S x) (S y) | No contra = No (contra . sInjective)
 
+--------------------------------------------------------------------------------
+--          Examples and Tests
+--------------------------------------------------------------------------------
+
+Ex1 : let T = NS I [Char,Bool] in (T,T)
+Ex1 = (Z 'x', S $ Z False)

@@ -129,11 +129,11 @@ interface HFunctor k l p => HPure k l (p : (k -> Type) -> l -> Type) | p where
   ||| Foo f = NP f [String,String,List Int]
   |||
   ||| neutralFoo : Foo I
-  ||| neutralFoo = cpure Monoid neutral
+  ||| neutralFoo = hcpure Monoid neutral
   ||| ```
-  cpure :  {0 f : k -> Type} 
-        -> {ks : l}
-        -> (c : k -> Type) -> All c ks => (forall a . c a => f a) -> p f ks
+  hcpure :  {0 f : k -> Type} 
+         -> {ks : l}
+         -> (c : k -> Type) -> All c ks => (forall a . c a => f a) -> p f ks
 
 ||| Alias for `hpure empty`.
 public export

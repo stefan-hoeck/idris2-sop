@@ -8,6 +8,19 @@ import Decidable.Equality
 
 %default total
 
+||| A product of products.
+||| 
+||| Unlike in the Haskell version, not using a Newtype here allows us
+||| to overload the constructor names of `NP'`.
+||| The elements of the inner products are
+||| applications of the parameter f. The type POP is indexed by the list of lists
+||| that determines the lengths of both the outer and all the inner products, as
+||| well as the types of all the elements of the inner products.
+||| 
+||| A POP is reminiscent of a two-dimensional table (but the inner lists can all be
+||| of different length). In the context of the SOP approach to
+||| generic programming, a POP is useful to represent information
+||| that is available for all arguments of all constructors of a datatype.
 public export
 data POP' : (k : Type) -> (f : k -> Type) -> (kss : List (List k)) -> Type where
   Nil  : POP' k f []
@@ -71,8 +84,8 @@ HPure k (List $ List k) (POP' k) where
   hpure {ks = []}       _ = []
   hpure {ks = (_ :: _)} f = hpure f :: hpure f
 
-  cpure {ks = []}       _ _ = []
-  cpure {ks = (_ :: _)} c f = cpure c f :: cpure c f
+  hcpure {ks = []}       _ _ = []
+  hcpure {ks = (_ :: _)} c f = hcpure c f :: hcpure c f
 
 public export
 HAp k (List $ List k) (POP' k) where
