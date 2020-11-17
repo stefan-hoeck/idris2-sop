@@ -20,6 +20,18 @@ public export
 SOP : {k : Type} -> (f : k -> Type) -> (kss : List (List k)) -> Type
 SOP = SOP' k
 
+||| Type alias for a `SOP'` with only a single value to choose
+||| from. This is isomorphic to the corresponding `NP f ks`.
+public export
+SOP1' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type
+SOP1' k f ks = SOP' k f [ks]
+
+||| Type alias for `SOP1'` with type parameter `k` being
+||| implicit.
+public export
+SOP1 : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
+SOP1 = SOP1' k
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
@@ -90,10 +102,10 @@ DecEq (SOP' k f []) where
 public export
 DecEq (NP' k f ks) => DecEq (SOP' k f kss) => DecEq (SOP' k f (ks :: kss)) where
   decEq (Z x) (Z y) with (decEq x y)
-   decEq (Z x) (Z x) | Yes Refl = Yes Refl
-   decEq (Z x) (Z y) | No contra = No (contra . zInjective)
+    decEq (Z x) (Z x) | Yes Refl = Yes Refl
+    decEq (Z x) (Z y) | No contra = No (contra . zInjective)
   decEq (Z x) (S y) = No absurd
   decEq (S x) (Z y) = No absurd
   decEq (S x) (S y) with (decEq x y)
-   decEq (S x) (S x) | Yes Refl = Yes Refl
-   decEq (S x) (S y) | No contra = No (contra . sInjective)
+    decEq (S x) (S x) | Yes Refl = Yes Refl
+    decEq (S x) (S y) | No contra = No (contra . sInjective)

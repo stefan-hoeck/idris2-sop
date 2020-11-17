@@ -98,7 +98,7 @@ consInjective Refl = (Refl, Refl)
 
 public export
 DecEq (POP' k f []) where
-  decEq a b = ?res
+  decEq [] [] = Yes Refl
 
 public export
 DecEq (NP' k f ks) =>

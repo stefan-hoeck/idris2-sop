@@ -159,7 +159,7 @@ consInjective Refl = (Refl, Refl)
 
 public export
 DecEq (NP' k f []) where
-  decEq a b = ?res
+  decEq [] [] = Yes Refl
 
 public export
 DecEq (f t) => DecEq (NP' k f ks) => DecEq (NP' k f (t :: ks)) where
@@ -219,3 +219,31 @@ HCMapRes = hcmap Show show Ex1
 -- 
 -- CPureNeutralTest : NP I [String,String]
 -- CPureNeutralTest = cpure Monoid neutral
+
+Person : (f : Type -> Type) -> Type
+Person f = NP f [String,Int]
+
+toPersonMaybe : Person I -> Person Maybe
+toPersonMaybe = hmap Just
+
+personShowValues : Person I -> Person (K String)
+personShowValues = hcmap Show show
+
+emptyPerson : Person Maybe
+emptyPerson = hpure Nothing
+
+Foo : (f : Type -> Type) -> Type
+Foo f = NP f [String,String,List Int]
+
+neutralFoo : Foo I
+neutralFoo = cpure Monoid neutral
+
+update : forall a . Maybe a -> I a -> I a
+update (Just a) _ = a
+update Nothing  a = a
+
+updatePerson : Person (\a => a -> a)
+updatePerson = hmap update [Just "foo", Nothing]
+
+updatedPerson : Person I
+updatedPerson = hap updatePerson ["bar",12]

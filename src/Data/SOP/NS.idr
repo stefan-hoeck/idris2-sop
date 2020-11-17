@@ -88,11 +88,11 @@ DecEq (NS' k f []) where
 public export
 DecEq (f t) => DecEq (NS' k f ks) => DecEq (NS' k f (t :: ks)) where
   decEq (Z x) (Z y) with (decEq x y)
-   decEq (Z x) (Z x) | Yes Refl = Yes Refl
-   decEq (Z x) (Z y) | No contra = No (contra . zInjective)
+    decEq (Z x) (Z x) | Yes Refl = Yes Refl
+    decEq (Z x) (Z y) | No contra = No (contra . zInjective)
   decEq (Z x) (S y) = No absurd
   decEq (S x) (Z y) = No absurd
   decEq (S x) (S y) with (decEq x y)
-   decEq (S x) (S x) | Yes Refl = Yes Refl
-   decEq (S x) (S y) | No contra = No (contra . sInjective)
+    decEq (S x) (S x) | Yes Refl = Yes Refl
+    decEq (S x) (S y) | No contra = No (contra . sInjective)
 
