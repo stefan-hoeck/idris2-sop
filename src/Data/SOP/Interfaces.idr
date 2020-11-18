@@ -24,6 +24,12 @@ AllC k (List $ List (k)) where
   All f []          = ()
   All f (ks :: kss) = (All f ks, All f kss)
 
+-- Heterogeneous container
+%inline
+public export
+HCont : (k : Type) -> (l : Type) -> Type
+HCont k l = (k -> Type) -> l -> Type
+
 --------------------------------------------------------------------------------
 --          HFunctor
 --------------------------------------------------------------------------------
@@ -40,7 +46,7 @@ AllC k (List $ List (k)) where
 ||| HFunctor k (List k) (NP' k) where
 ||| ```
 public export
-interface AllC k l => HFunctor k l (p : (k -> Type) -> l -> Type) | p where 
+interface AllC k l => HFunctor k l (p : HCont k l) | p where
   ||| Maps the given function over all values in a
   ||| heterogeneous container, thus changing the wrappers
   ||| of all of its values.
@@ -108,7 +114,7 @@ hcliftA = hcmap
 ||| See `HFunctor` for an explanation of the type parameters
 ||| used here.
 public export
-interface HFunctor k l p => HPure k l (p : (k -> Type) -> l -> Type) | p where
+interface HFunctor k l p => HPure k l (p : HCont k l) | p where
   ||| Creates a heterogeneous container by generating values
   ||| using the given function.
   |||
@@ -216,7 +222,7 @@ hcliftA3 c fun fs gs hs = hcliftA2 c fun fs gs `hap` hs
 --------------------------------------------------------------------------------
 
 public export
-interface HFold k l (p : (k -> Type) -> l -> Type) | p where
+interface HFold k l (p : HCont k l) | p where
   hfoldl : {0 ks : l} -> (acc -> elem -> acc) -> acc -> p (K elem) ks -> acc
 
   hfoldr : {0 ks : l} -> (elem -> acc -> acc) -> acc -> p (K elem) ks -> acc
@@ -283,7 +289,7 @@ hany fun = hor . hmap fun
 --------------------------------------------------------------------------------
 
 public export
-interface HSequence k l (p : (k -> Type) -> l -> Type) | p where
+interface HSequence k l (p : HCont k l) | p where
   hsequence :  {0 ks : l}
             -> {0 f : k -> Type}
             -> Applicative g
