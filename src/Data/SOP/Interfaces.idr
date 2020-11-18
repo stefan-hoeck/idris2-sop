@@ -28,7 +28,7 @@ AllC k (List $ List (k)) where
 %inline
 public export
 HCont : (k : Type) -> (l : Type) -> Type
-HCont k l = (k -> Type) -> l -> Type
+HCont k l = (0 _ : k -> Type) -> l -> Type
 
 --------------------------------------------------------------------------------
 --          HFunctor
