@@ -14,16 +14,6 @@ public export
 interface AllC k l | l where
   All : (f : k -> Type) -> l -> Type
 
-public export
-AllC k (List k) where
-  All f [] = ()
-  All f (k :: ks) = (f k, All f ks)
-
-public export
-AllC k (List $ List (k)) where
-  All f []          = ()
-  All f (ks :: kss) = (All f ks, All f kss)
-
 -- Heterogeneous container
 %inline
 public export
@@ -138,7 +128,7 @@ interface HFunctor k l p => HPure k l (p : HCont k l) | p where
   ||| neutralFoo = hcpure Monoid neutral
   ||| ```
   hcpure :  {0 f : k -> Type} 
-         -> {ks : l}
+         -> {0 ks : l}
          -> (c : k -> Type) -> All c ks => (forall a . c a => f a) -> p f ks
 
 ||| Alias for `hpure empty`.

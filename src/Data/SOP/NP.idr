@@ -57,9 +57,70 @@ NP : {0 k : Type} -> (0 f : k -> Type) -> (0 ks : List k) -> Type
 NP = NP' k
 
 public export
+AllC k (List k) where
+  All f ks = NP f ks
+
+--------------------------------------------------------------------------------
+--          Specialized Interface Functions
+--------------------------------------------------------------------------------
+
+||| Specialiced version of `hmap`
+public export
 mapNP : (fun : forall a . f a -> g a) -> NP f ks -> NP g ks
 mapNP fun []        = []
 mapNP fun (v :: vs) = fun v :: mapNP fun vs
+
+||| Specialiced version of `hcmap`.
+public export
+cmapNP : (c : k -> Type)
+        -> (all : All c ks)
+        => (fun : forall a . c a => f a -> g a)
+        -> NP f ks
+        -> NP g ks
+cmapNP {all = []}     _ _ []        = []
+cmapNP {all = _ :: _} c f (v :: vs) = f v :: cmapNP c f vs
+
+||| Specialization of `hpure`.
+public export
+pureNP : {ks : _} -> (forall a . f a) -> NP f ks
+pureNP {ks = []}     _ = []
+pureNP {ks = _ :: _} f = f :: pureNP f
+
+||| Specialization of `cpure`.
+public export
+cpureNP :  (c : k -> Type)
+        -> (all : All c ks)
+        => (forall a . c a => f a) -> NP f ks
+cpureNP {all = []}     _ _ = []
+cpureNP {all = _ :: _} c f = f :: cpureNP c f
+
+||| Specialization of `hap`.
+public export
+hapNP : NP (\a => f a -> g a) ks -> NP f ks -> NP g ks
+hapNP []        []        = []
+hapNP (f :: fs) (v :: vs) = f v :: hapNP fs vs
+
+||| Specialization of `hfoldl`
+public export
+foldlNP : (fun : acc -> elem -> acc) -> acc -> NP (K elem) ks -> acc
+foldlNP _   acc []        = acc
+foldlNP fun acc (v :: vs) = foldlNP fun (fun acc v) vs
+
+||| Specialization of `hfoldr`
+public export
+foldrNP : (fun : elem -> acc -> acc) -> acc -> NP (K elem) ks -> acc
+foldrNP _   acc []        = acc
+foldrNP fun acc (v :: vs) = fun v (foldrNP fun acc vs)
+
+||| Specialization of `hsequence`
+public export
+sequenceNP : Applicative g => NP (\a => g (f a)) ks -> g (NP f ks)
+sequenceNP []        = pure []
+sequenceNP (v :: vs) = [| v :: sequenceNP vs |]
+
+--------------------------------------------------------------------------------
+--          Core Functions
+--------------------------------------------------------------------------------
 
 public export
 hd : NP f (k :: ks) -> f k
@@ -143,91 +204,81 @@ setAt' :  (0 t  : k)
 setAt' t _ v' np = setAt t v' np
 
 --------------------------------------------------------------------------------
+--          Interface Conversions
+--------------------------------------------------------------------------------
+
+||| This is needed to implement `Ord` below.
+public export %hint
+allOrdToAllEq :  {0 ks : List k} -> All (Ord . f) ks -> All (Eq . f) ks
+allOrdToAllEq = mapNP ordToEq
+
+||| This is needed to implement `Monoid` below.
+public export %hint
+allMonoidToAllSemigroup : {0 ks : List k}
+                        -> All (Monoid . f) ks
+                        -> All (Semigroup . f) ks
+allMonoidToAllSemigroup = mapNP monoidToSemigroup
+
+--------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
 
-public export
-Eq (NP' k f []) where
-  [] == [] = True
-
-public export
-Ord (NP' k f []) where
-  compare [] [] = EQ
-
-public export
-Semigroup (NP' k f []) where
-  [] <+> [] = []
-
-public export
-Monoid (NP' k f []) where
-  neutral = []
-
-public export
-Eq (f t) => Eq (NP' k f ks) => Eq (NP' k f (t :: ks)) where
-  (v :: vs) == (w :: ws) = v == w && vs == ws
-
-public export
-Ord (f t) => Ord (NP' k f ks) => Ord (NP' k f (t :: ks)) where
-  compare (v :: vs) (w :: ws) = compare v w <+> compare vs ws
-
-public export
-Semigroup (f t) => Semigroup (NP' k f ks) => Semigroup (NP' k f (t::ks)) where
-  (v :: vs) <+> (w :: ws) = (v <+> w) :: (vs <+> ws)
-
-public export
-Monoid (f t) => Monoid (NP' k f ks) => Monoid (NP' k f (t::ks)) where
-  neutral = neutral :: neutral
-
-public export
+public export %inline
 HFunctor k (List k) (NP' k) where
-   hmap _   []        = []
-   hmap fun (v :: vs) = fun v :: hmap fun vs
- 
-   hcmap c _   []        = []
-   hcmap c fun (v :: vs) = fun v :: hcmap c fun vs
- 
-public export
+  hmap  = mapNP
+  hcmap = cmapNP
+
+public export %inline
 HPure k (List k) (NP' k) where
-  hpure {ks = []}       _ = []
-  hpure {ks = (_ :: _)} f = f :: hpure f
+  hpure  = pureNP
+  hcpure = cpureNP
 
-  hcpure {ks = []}       _ _ = []
-  hcpure {ks = (_ :: _)} c f = f :: hcpure c f
-
-public export
+public export %inline
 HAp k (List k) (NP' k) where
-  hap []        []        = []
-  hap (f :: fs) (v :: vs) = f v :: hap fs vs
+  hap = hapNP
 
-public export
+public export %inline
 HFold k (List k) (NP' k) where
-  hfoldl _   acc []        = acc
-  hfoldl fun acc (v :: vs) = hfoldl fun (fun acc v) vs
-
-  hfoldr _   acc []        = acc
-  hfoldr fun acc (v :: vs) = fun v (hfoldr fun acc vs)
+  hfoldl = foldlNP
+  hfoldr = foldrNP
 
 public export
 HSequence k (List k) (NP' k) where
-  hsequence []        = pure []
-  hsequence (v :: vs) = [| v :: hsequence vs |]
+  hsequence = sequenceNP
+  
+public export
+(all : All (Eq . f) ks) => Eq (NP' k f ks) where
+  (==) {all = []}     [] []               = True
+  (==) {all = _ :: _} (v :: vs) (w :: ws) = v == w && vs == ws
+  
+public export
+(all : All (Ord . f) ks) => Ord (NP' k f ks) where
+  compare {all = []}     [] []               = EQ
+  compare {all = _ :: _} (v :: vs) (w :: ws) = compare v w <+> compare vs ws
+
+public export
+(all : All (Semigroup . f) ks) => Semigroup (NP' k f ks) where
+  (<+>) {all = []}     [] []               = []
+  (<+>) {all = _ :: _} (v :: vs) (w :: ws) = (v <+> w) :: (vs <+> ws)
+
+public export
+(all : All (Monoid . f) ks) => Monoid (NP' k f ks) where
+  neutral {all = []}     = []
+  neutral {all = _ :: _} = neutral :: neutral
 
 private
 consInjective : Data.SOP.NP.(::) a b = Data.SOP.NP.(::) c d -> (a = c, b = d)
 consInjective Refl = (Refl, Refl)
 
 public export
-DecEq (NP' k f []) where
-  decEq [] [] = Yes Refl
-
-public export
-DecEq (f t) => DecEq (NP' k f ks) => DecEq (NP' k f (t :: ks)) where
-  decEq (x :: xs) (y :: ys) with (decEq x y)
-    decEq (x :: xs) (y :: ys) | (No contra) =
+(all : All (DecEq . f) ks) => DecEq (NP' k f ks) where
+  decEq {all = []}     []        []        = Yes Refl
+  decEq {all = _ :: _} (v :: vs) (w :: ws) with (decEq v w)
+    decEq {all = _ :: _} (v :: vs) (w :: ws) | (No contra) =
       No $ contra . fst . consInjective
-    decEq (x :: xs) (x :: ys) | (Yes Refl) with (decEq xs ys)
-      decEq (x :: xs) (x :: xs) | (Yes Refl) | (Yes Refl) = Yes Refl
-      decEq (x :: xs) (x :: ys) | (Yes Refl) | (No contra) =
+    decEq {all = _ :: _} (v :: vs) (v :: ws) | (Yes Refl) with (decEq vs ws)
+      decEq {all = _ :: _} (v :: vs) (v :: vs) | (Yes Refl) | (Yes Refl) = Yes Refl
+      decEq {all = _ :: _} (v :: vs) (v :: ws) | (Yes Refl) | (No contra) =
         No $ contra . snd . consInjective
 
 --------------------------------------------------------------------------------
