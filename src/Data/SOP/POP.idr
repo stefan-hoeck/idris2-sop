@@ -9,14 +9,14 @@ import Decidable.Equality
 %default total
 
 ||| A product of products.
-||| 
+|||
 ||| Unlike in the Haskell version, not using a Newtype here allows us
 ||| to overload the constructor names of `NP'`.
 ||| The elements of the inner products are
 ||| applications of the parameter f. The type POP is indexed by the list of lists
 ||| that determines the lengths of both the outer and all the inner products, as
 ||| well as the types of all the elements of the inner products.
-||| 
+|||
 ||| A POP is reminiscent of a two-dimensional table (but the inner lists can all be
 ||| of different length). In the context of the SOP approach to
 ||| generic programming, a POP is useful to represent information
@@ -33,97 +33,150 @@ public export
 POP : {0 k : Type} -> (0 f : k -> Type) -> (0 kss : List (List k)) -> Type
 POP = POP' k
 
+public export
+AllC k (List $ List k) where
+  All f kss = POP f kss
+
+--------------------------------------------------------------------------------
+--          Specialized Interface Functions
+--------------------------------------------------------------------------------
+
+||| Specialiced version of `hmap`
+public export
+mapPOP : (fun : forall a . f a -> g a) -> POP f kss -> POP g kss
+mapPOP fun []          = []
+mapPOP fun (vs :: vss) = mapNP fun vs :: mapPOP fun vss
+
+||| Specialiced version of `hcmap`.
+public export
+cmapPOP : (c : k -> Type)
+        -> (all : All c kss)
+        => (fun : forall a . c a => f a -> g a)
+        -> POP f kss
+        -> POP g kss
+cmapPOP {all = []}     _ _ []          = []
+cmapPOP {all = _ :: _} c f (vs :: vss) = cmapNP c f vs :: cmapPOP c f vss
+
+||| Specialization of `hpure`.
+public export
+purePOP : {kss : _} -> (forall a . f a) -> POP f kss
+purePOP {kss = []}     _ = []
+purePOP {kss = _ :: _} f = pureNP f :: purePOP f
+
+||| Specialization of `cpure`.
+public export
+cpurePOP :  (c : k -> Type)
+        -> (all : All c kss)
+        => (forall a . c a => f a) -> POP f kss
+cpurePOP {all = []}     _ _ = []
+cpurePOP {all = _ :: _} c f = cpureNP c f :: cpurePOP c f
+
+||| Specialization of `hap`.
+public export
+hapPOP : POP (\a => f a -> g a) kss -> POP f kss -> POP g kss
+hapPOP []          []          = []
+hapPOP (fs :: fss) (vs :: vss) = hapNP fs vs :: hapPOP fss vss
+
+||| Specialization of `hfoldl`
+public export
+foldlPOP : (fun : acc -> elem -> acc) -> acc -> POP (K elem) kss -> acc
+foldlPOP _   acc []          = acc
+foldlPOP fun acc (vs :: vss) = foldlPOP fun (foldlNP fun acc vs) vss
+
+||| Specialization of `hfoldr`
+public export
+foldrPOP : (fun : elem -> acc -> acc) -> acc -> POP (K elem) kss -> acc
+foldrPOP _   acc []          = acc
+foldrPOP fun acc (vs :: vss) = foldrNP fun (foldrPOP fun acc vss) vs
+
+||| Specialization of `hsequence`
+public export
+sequencePOP : Applicative g => POP (\a => g (f a)) kss -> g (POP f kss)
+sequencePOP []          = pure []
+sequencePOP (vs :: vss) = [| sequenceNP vs :: sequencePOP vss |]
+
+--------------------------------------------------------------------------------
+--          Interface Conversions
+--------------------------------------------------------------------------------
+
+||| This is needed to implement `Ord` below.
+public export %hint
+allOrdToAllEqPOP :  {0 k : Type}
+                 -> {0 f : k -> Type}
+                 -> {0 kss : List $ List k}
+                 -> All (Ord . f) kss
+                 -> All (Eq . f) kss
+allOrdToAllEqPOP = mapPOP ordToEq
+
+||| This is needed to implement `Monoid` below.
+public export %hint
+allMonoidToAllSemigroup :  {0 k : Type}
+                        -> {0 f : k -> Type}
+                        -> {0 kss : List $ List k}
+                        -> All (Monoid . f) kss
+                        -> All (Semigroup . f) kss
+allMonoidToAllSemigroup = mapPOP monoidToSemigroup
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
 
-public export
-AllC k (List $ List (k)) where
-  All f kss = POP f kss
+public export %inline
+HFunctor k (List $ List k) (POP' k) where
+  hmap  = mapPOP
+  hcmap = cmapPOP
 
--- public export
--- Eq (POP' k f []) where
---   [] == [] = True
--- 
--- public export
--- Ord (POP' k f []) where
---   compare [] [] = EQ
--- 
--- public export
--- Semigroup (POP' k f []) where
---   [] <+> [] = []
--- 
--- public export
--- Monoid (POP' k f []) where
---   neutral = []
--- 
--- public export
--- Eq (NP' k f ks) => Eq (POP' k f kss) => Eq (POP' k f (ks :: kss)) where
---   (vs :: vss) == (ws :: wss) = vs == ws && vss == wss
--- 
--- public export
--- Ord (NP' k f ks) => Ord (POP' k f kss) => Ord (POP' k f (ks :: kss)) where
---   compare (vs :: vss) (ws :: wss) = compare vs ws <+> compare vss wss
--- 
--- public export
--- Semigroup (NP' k f ks) =>
--- Semigroup (POP' k f kss) => Semigroup (POP' k f (ks::kss)) where
---   (vs :: vss) <+> (ws :: wss) = (vs <+> ws) :: (vss <+> wss)
--- 
--- public export
--- Monoid (NP' k f ks) =>
--- Monoid (POP' k f kss) => Monoid (POP' k f (ks::kss)) where
---   neutral = neutral :: neutral
--- 
--- public export
--- HFunctor k (List $ List (k)) (POP' k) where
---    hmap _   []          = []
---    hmap fun (vs :: vss) = hmap fun vs :: hmap fun vss
---  
---    hcmap c _   []          = []
---    hcmap c fun (vs :: vss) = hcmap c fun vs :: hcmap c fun vss
---  
--- public export
--- HPure k (List $ List k) (POP' k) where
---   hpure {ks = []}       _ = []
---   hpure {ks = (_ :: _)} f = hpure f :: hpure f
--- 
---   hcpure {ks = []}       _ _ = []
---   hcpure {ks = (_ :: _)} c f = hcpure c f :: hcpure c f
--- 
--- public export
--- HAp k (List $ List k) (POP' k) where
---   hap []          []          = []
---   hap (fs :: fss) (vs :: vss) = hap fs vs :: hap fss vss
--- 
--- public export
--- HFold k (List $ List k) (POP' k) where
---   hfoldl _   acc []          = acc
---   hfoldl fun acc (vs :: vss) = hfoldl fun (hfoldl fun acc vs) vss
--- 
---   hfoldr _   acc []          = acc
---   hfoldr fun acc (vs :: vss) = hfoldr fun (hfoldr fun acc vs) vs
--- 
--- public export
--- HSequence k (List $ List k) (POP' k) where
---   hsequence []          = pure []
---   hsequence (vs :: vss) = [| hsequence vs :: hsequence vss |]
--- 
--- private
--- consInjective : Data.SOP.POP.(::) a b = Data.SOP.POP.(::) c d -> (a = c, b = d)
--- consInjective Refl = (Refl, Refl)
--- 
--- public export
--- DecEq (POP' k f []) where
---   decEq [] [] = Yes Refl
--- 
--- public export
--- DecEq (NP' k f ks) =>
--- DecEq (POP' k f kss) => DecEq (POP' k f (ks :: kss)) where
---   decEq (x :: xs) (y :: ys) with (decEq x y)
---     decEq (x :: xs) (y :: ys) | (No contra) =
---       No $ contra . fst . consInjective
---     decEq (x :: xs) (x :: ys) | (Yes Refl) with (decEq xs ys)
---       decEq (x :: xs) (x :: xs) | (Yes Refl) | (Yes Refl) = Yes Refl
---       decEq (x :: xs) (x :: ys) | (Yes Refl) | (No contra) =
---         No $ contra . snd . consInjective
+public export %inline
+HPure k (List $ List k) (POP' k) where
+  hpure  = purePOP
+  hcpure = cpurePOP
+
+public export %inline
+HAp k (List $ List k) (POP' k) where
+  hap = hapPOP
+
+public export %inline
+HFold k (List $ List k) (POP' k) where
+  hfoldl = foldlPOP
+  hfoldr = foldrPOP
+
+public export %inline
+HSequence k (List $ List k) (POP' k) where
+  hsequence = sequencePOP
+
+public export
+(all : All (Eq . f) kss) => Eq (POP' k f kss) where
+  (==) {all = []}     [] []                   = True
+  (==) {all = _ :: _} (vs :: vss) (ws :: wss) = vs == ws && vss == wss
+
+public export
+(all : All (Ord . f) kss) => Ord (POP' k f kss) where
+  compare {all = []}     [] []                   = EQ
+  compare {all = _ :: _} (vs :: vss) (ws :: wss) = compare vs ws <+>
+                                                   compare vss wss
+
+public export
+(all : All (Semigroup . f) kss) => Semigroup (POP' k f kss) where
+  (<+>) {all = []}     [] []                   = []
+  (<+>) {all = _ :: _} (vs :: vss) (ws :: wss) = (vs <+> ws) :: (vss <+> wss)
+
+public export
+(all : All (Monoid . f) kss) => Monoid (POP' k f kss) where
+  neutral {all = []}     = []
+  neutral {all = _ :: _} = neutral :: neutral
+
+private
+consInjective : Data.SOP.POP.(::) a b = Data.SOP.POP.(::) c d -> (a = c, b = d)
+consInjective Refl = (Refl, Refl)
+
+public export
+(all : All (DecEq . f) kss) => DecEq (POP' k f kss) where
+  decEq {all = []}     []        []        = Yes Refl
+  decEq {all = _::_} (vs::vss) (ws::wss) with (decEq vs ws)
+    decEq {all = _::_} (vs::vss) (ws::wss) | (No contra) =
+      No $ contra . fst . consInjective
+    decEq {all = _::_} (vs::vss) (vs::wss) | (Yes Refl) with (decEq vss wss)
+      decEq {all = _::_} (vs::vss) (vs::vss) | (Yes Refl) | (Yes Refl) =
+        Yes Refl
+      decEq {all = _::_} (vs::vss) (vs::wss) | (Yes Refl) | (No contra) =
+        No $ contra . snd . consInjective

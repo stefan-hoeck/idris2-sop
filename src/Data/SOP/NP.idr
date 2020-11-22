@@ -14,13 +14,13 @@ import Decidable.Equality
 ||| type-level list ks. The length of the list determines the number of
 ||| elements in the product, and if the i-th element of the list is of type k,
 ||| then the i-th element of the product is of type f k.
-||| 
+|||
 ||| Two common instantiations of f are the identity functor I and the constant
 ||| functor K. For I, the product becomes a heterogeneous list, where the
 ||| type-level list describes the types of its components.  For K a, the product
 ||| becomes a homogeneous list, where the contents of the type-level list are
 ||| ignored, but its length still specifies the number of elements.
-||| 
+|||
 ||| In the context of the SOP approach to generic programming, an n-ary product
 ||| describes the structure of the arguments of a single data constructor.
 |||
@@ -242,15 +242,15 @@ HFold k (List k) (NP' k) where
   hfoldl = foldlNP
   hfoldr = foldrNP
 
-public export
+public export %inline
 HSequence k (List k) (NP' k) where
   hsequence = sequenceNP
-  
+
 public export
 (all : All (Eq . f) ks) => Eq (NP' k f ks) where
   (==) {all = []}     [] []               = True
   (==) {all = _ :: _} (v :: vs) (w :: ws) = v == w && vs == ws
-  
+
 public export
 (all : All (Ord . f) ks) => Ord (NP' k f ks) where
   compare {all = []}     [] []               = EQ
@@ -273,12 +273,12 @@ consInjective Refl = (Refl, Refl)
 public export
 (all : All (DecEq . f) ks) => DecEq (NP' k f ks) where
   decEq {all = []}     []        []        = Yes Refl
-  decEq {all = _ :: _} (v :: vs) (w :: ws) with (decEq v w)
-    decEq {all = _ :: _} (v :: vs) (w :: ws) | (No contra) =
+  decEq {all = _::_} (v::vs) (w::ws) with (decEq v w)
+    decEq {all = _::_} (v::vs) (w::ws) | (No contra) =
       No $ contra . fst . consInjective
-    decEq {all = _ :: _} (v :: vs) (v :: ws) | (Yes Refl) with (decEq vs ws)
-      decEq {all = _ :: _} (v :: vs) (v :: vs) | (Yes Refl) | (Yes Refl) = Yes Refl
-      decEq {all = _ :: _} (v :: vs) (v :: ws) | (Yes Refl) | (No contra) =
+    decEq {all = _::_} (v::vs) (v::ws) | (Yes Refl) with (decEq vs ws)
+      decEq {all = _::_} (v::vs) (v::vs) | (Yes Refl) | (Yes Refl) = Yes Refl
+      decEq {all = _::_} (v::vs) (v::ws) | (Yes Refl) | (No contra) =
         No $ contra . snd . consInjective
 
 --------------------------------------------------------------------------------
@@ -326,7 +326,7 @@ HCMapRes = hcmap Show show Ex1
 
 -- HPureTest : NP Maybe [String,Int]
 -- HPureTest = hpure Nothing
--- 
+--
 -- CPureNeutralTest : NP I [String,String]
 -- CPureNeutralTest = hcpure Monoid neutral
 

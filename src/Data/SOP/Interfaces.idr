@@ -70,7 +70,7 @@ interface AllC k l => HFunctor k l (p : HCont k l) | p where
   ||| personShowValues : Person I -> Person (K String)
   ||| personShowValues = hcmap Show show
   ||| ```
-  hcmap :  {0 f,g : k -> Type}  
+  hcmap :  {0 f,g : k -> Type}
         -> {0 ks : l}
         -> (c : k -> Type)
         -> All c ks
@@ -127,7 +127,7 @@ interface HFunctor k l p => HPure k l (p : HCont k l) | p where
   ||| neutralFoo : Foo I
   ||| neutralFoo = hcpure Monoid neutral
   ||| ```
-  hcpure :  {0 f : k -> Type} 
+  hcpure :  {0 f : k -> Type}
          -> {0 ks : l}
          -> (c : k -> Type) -> All c ks => (forall a . c a => f a) -> p f ks
 

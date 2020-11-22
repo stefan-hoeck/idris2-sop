@@ -26,7 +26,7 @@ K t _ = t
 ||| ```idris
 ||| Eq (f t) => Eq (NP' k f ks) => Eq (NP' k f (t :: ks)) where
 |||   (v :: vs) == (w :: ws) = v == w && vs == ws
-||| 
+|||
 ||| Ord (f t) => Ord (NP' k f ks) => Ord (NP' k f (t :: ks)) where
 |||   compare (v :: vs) (w :: ws) = compare v w <+> compare vs ws
 ||| ```
