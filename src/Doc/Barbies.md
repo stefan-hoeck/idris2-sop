@@ -37,7 +37,7 @@ record User1 where
 
 While this is certainly a valid representation for a user data type,
 it comes with several drawbacks. Could we, for instance, use the same
-data type to create a new user from our web application? We could, but 
+data type to create a new user from our web application? We could, but
 the web application would have to provide a dummy value for the user's
 id, certainly a value the server application should be responsible
 to generate. We'd also rather not send back the password to
@@ -213,7 +213,7 @@ FieldType (PW PwYes) = String
 FieldType (PW PwNo)  = ()
 
 ||| There is no way to mix up field values. :-)
-User : (i : IdField) -> (pw : PasswordField) -> (f : Type -> Type) -> Type 
+User : (i : IdField) -> (pw : PasswordField) -> (f : Type -> Type) -> Type
 User i pw f = NP (f . FieldType) [Id i, Name, EMail, Age, PW pw]
 
 UserDB : Type

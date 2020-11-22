@@ -61,7 +61,7 @@ Ugh. Considering that we sometimes have to define records with many more
 fields, that's quite an amount of uninteresting code we have to write.
 
 However, at least for `compare` there is a utility function `comparing`
-allowing us to compare values through some other type with an 
+allowing us to compare values through some other type with an
 already existing `Ord` implementation.
 Realizing that we can convert our record to a tuple and that tuples
 of types with an `Ord` implementation have themselves an `Ord` implementation
@@ -234,7 +234,7 @@ ArticleCode = [Int,String,String,Double]
 articleToNp : Article -> NP ArticleCode
 articleToNp (MkArticle i n d p) = [i,n,d,p]
 
-npToArticle : NP ArticleCode -> Article 
+npToArticle : NP ArticleCode -> Article
 npToArticle [i,n,d,p] = MkArticle i n d p
 
 toNpId : (x : Article) -> npToArticle (articleToNp x) = x
@@ -351,7 +351,7 @@ It provides conversion functions for a data type from and to its
 generic representation as a sum of product plus the
 correpsonding proof that these functions actually represent
 an isomorphism. Plus it comes with elaborator reflection utilities
-to generate implementations of this interface automatically - 
+to generate implementations of this interface automatically -
 for a limited set of data types at least.
 
 ### What's next

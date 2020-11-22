@@ -58,7 +58,7 @@ NP = NP' k
 
 public export
 AllC k (List k) where
-  All f ks = NP f ks
+  All f ks = NP' k f ks
 
 --------------------------------------------------------------------------------
 --          Specialized Interface Functions

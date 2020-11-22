@@ -1,7 +1,8 @@
 module Data.SOP.NS
 
-import Data.SOP.Utils
 import Data.SOP.Interfaces
+import Data.SOP.NP
+import Data.SOP.Utils
 
 import Decidable.Equality
 
@@ -50,85 +51,103 @@ NS : {0 k : Type} -> (0 f : k -> Type) -> (0 ks : List k) -> Type
 NS = NS' k
 
 --------------------------------------------------------------------------------
+--          Specialized Interface Functions
+--------------------------------------------------------------------------------
+
+||| Specialiced version of `hmap`
+public export
+mapNS : (fun : forall a . f a -> g a) -> NS f ks -> NS g ks
+mapNS fun (Z v) = Z $ fun v
+mapNS fun (S x) = S $ mapNS fun x
+
+||| Specialiced version of `hcmap`.
+public export
+cmapNS :  (c : k -> Type)
+       -> (all : All c ks)
+       => (fun : forall a . c a => f a -> g a)
+       -> NS f ks
+       -> NS g ks
+cmapNS {all = _ :: _} _ f (Z v) = Z $ f v
+cmapNS {all = _ :: _} c f (S x) = S $ cmapNS c f x
+
+||| Specialization of `hfoldl`
+public export
+foldlNS : (fun : acc -> elem -> acc) -> acc -> NS (K elem) ks -> acc
+foldlNS fun acc (Z v) = fun acc v
+foldlNS fun acc (S x) = foldlNS fun acc x
+
+||| Specialization of `hfoldr`
+public export %inline
+foldrNS : (fun : elem -> acc -> acc) -> acc -> NS (K elem) ks -> acc
+foldrNS fun acc = foldlNS (flip fun) acc
+
+||| Specialization of `hsequence`
+public export
+sequenceNS : Applicative g => NS (\a => g (f a)) ks -> g (NS f ks)
+sequenceNS (Z v) = map Z v
+sequenceNS (S x) = S <$> sequenceNS x
+
+--------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
 
--- public export
--- Eq (NS' k f []) where
---   a == b impossible
---
--- public export
--- Ord (NS' k f []) where
---   compare a b impossible
---
--- public export
--- Eq (f t) => Eq (NS' k f ks) => Eq (NS' k f (t :: ks)) where
---   (Z v)  == (Z w)  = v == w
---   (S vs) == (S ws) = vs == ws
---   _      == _      = False
---
--- public export
--- Ord (f t) => Ord (NS' k f ks) => Ord (NS' k f (t :: ks)) where
---   compare (Z v)  (Z w)  = compare v w
---   compare (Z _)  (S _)  = LT
---   compare (S _)  (Z _)  = GT
---   compare (S vs) (S ws) = compare vs ws
---
--- public export
--- HFunctor k (List k) (NS' k) where
---   hmap fun (Z v) = Z $ fun v
---   hmap fun (S x) = S $ hmap fun x
---
---   hcmap c fun (Z v) = Z $ fun v
---   hcmap c fun (S x) = S $ hcmap c fun x
---
--- public export
--- HFold k (List k) (NS' k) where
---   hfoldl fun acc (Z v) = fun acc v
---   hfoldl fun acc (S x) = hfoldl fun acc x
---
---   hfoldr fun acc (Z v) = fun v acc
---   hfoldr fun acc (S x) = hfoldr fun acc x
---
--- public export
--- HSequence k (List k) (NS' k) where
---   hsequence (Z v) = map Z v
---   hsequence (S x) = map S $ hsequence x
---
--- public export
--- Uninhabited (Data.SOP.NS.Z x = Data.SOP.NS.S y) where
---   uninhabited Refl impossible
---
--- public export
--- Uninhabited (Data.SOP.NS.S x = Data.SOP.NS.Z y) where
---   uninhabited Refl impossible
---
--- private
--- zInjective : Data.SOP.NS.Z x = Data.SOP.NS.Z y -> x = y
--- zInjective Refl = Refl
---
--- private
--- sInjective : Data.SOP.NS.S x = Data.SOP.NS.S y -> x = y
--- sInjective Refl = Refl
---
--- public export
--- DecEq (NS' k f []) where
---   decEq a b impossible
---
--- public export
--- DecEq (f t) => DecEq (NS' k f ks) => DecEq (NS' k f (t :: ks)) where
---   decEq (Z x) (Z y) with (decEq x y)
---     decEq (Z x) (Z x) | Yes Refl = Yes Refl
---     decEq (Z x) (Z y) | No contra = No (contra . zInjective)
---   decEq (Z x) (S y) = No absurd
---   decEq (S x) (Z y) = No absurd
---   decEq (S x) (S y) with (decEq x y)
---     decEq (S x) (S x) | Yes Refl = Yes Refl
---     decEq (S x) (S y) | No contra = No (contra . sInjective)
---
--- --------------------------------------------------------------------------------
--- --          Examples and Tests
--- --------------------------------------------------------------------------------
---
--- Ex1 : let T = NS I [Char,Bool] in (T,T)
--- Ex1 = (Z 'x', S $ Z False)
+public export %inline
+HFunctor k (List k) (NS' k) where
+  hmap = mapNS
+  hcmap = cmapNS
+
+public export %inline
+HFold k (List k) (NS' k) where
+  hfoldl = foldlNS
+  hfoldr = foldrNS
+
+public export
+HSequence k (List k) (NS' k) where
+  hsequence = sequenceNS
+
+public export
+(all : All (Eq . f) ks) => Eq (NS' k f ks) where
+  (==) {all = _::_} (Z v) (Z w) = v == w
+  (==) {all = _::_} (S x) (S y) = x == y
+  (==) {all = _::_} _     _     = False
+
+public export
+(all : All (Ord . f) ks) => Ord (NS' k f ks) where
+  compare {all = _::_} (Z v) (Z w) = compare v w
+  compare {all = _::_} (S x) (S y) = compare x y
+  compare {all = _::_} (Z _) (S _) = LT
+  compare {all = _::_} (S _) (Z _) = GT
+
+public export
+Uninhabited (Data.SOP.NS.Z x = Data.SOP.NS.S y) where
+  uninhabited Refl impossible
+
+public export
+Uninhabited (Data.SOP.NS.S x = Data.SOP.NS.Z y) where
+  uninhabited Refl impossible
+
+private
+zInjective : Data.SOP.NS.Z x = Data.SOP.NS.Z y -> x = y
+zInjective Refl = Refl
+
+private
+sInjective : Data.SOP.NS.S x = Data.SOP.NS.S y -> x = y
+sInjective Refl = Refl
+
+public export
+(all : All (DecEq . f) ks) => DecEq (NS' k f ks) where
+  decEq {all = _::_} (Z x) (Z y) with (decEq x y)
+    decEq {all = _::_} (Z x) (Z x) | Yes Refl = Yes Refl
+    decEq {all = _::_} (Z x) (Z y) | No contra = No (contra . zInjective)
+  decEq {all = _::_} (Z x) (S y) = No absurd
+  decEq {all = _::_} (S x) (Z y) = No absurd
+  decEq {all = _::_} (S x) (S y) with (decEq x y)
+    decEq {all = _::_} (S x) (S x) | Yes Refl = Yes Refl
+    decEq {all = _::_} (S x) (S y) | No contra = No (contra . sInjective)
+
+--------------------------------------------------------------------------------
+--          Examples and Tests
+--------------------------------------------------------------------------------
+
+Ex1 : let T = NS I [Char,Bool] in (T,T)
+Ex1 = (Z 'x', S $ Z False)

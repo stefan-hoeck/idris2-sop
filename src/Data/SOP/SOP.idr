@@ -1,6 +1,7 @@
 module Data.SOP.SOP
 
 import Data.SOP.NP
+import Data.SOP.POP
 import Data.SOP.Utils
 import Data.SOP.Interfaces
 
@@ -33,79 +34,97 @@ SOP : {0 k : Type} -> (0 f : k -> Type) -> (0 kss : List (List k)) -> Type
 SOP = SOP' k
 
 --------------------------------------------------------------------------------
+--          Specialized Interface Functions
+--------------------------------------------------------------------------------
+
+||| Specialiced version of `hmap`
+public export
+mapSOP : (fun : forall a . f a -> g a) -> SOP f kss -> SOP g kss
+mapSOP fun (Z vs) = Z $ mapNP fun vs
+mapSOP fun (S x)  = S $ mapSOP fun x
+
+||| Specialiced version of `hcmap`.
+public export
+cmapSOP :  (c : k -> Type)
+        -> (all : All c kss)
+        => (fun : forall a . c a => f a -> g a)
+        -> SOP f kss
+        -> SOP g kss
+cmapSOP {all = _ :: _} c f (Z vs) = Z $ cmapNP c f vs
+cmapSOP {all = _ :: _} c f (S x)  = S $ cmapSOP c f x
+
+||| Specialization of `hfoldl`
+public export
+foldlSOP : (fun : acc -> elem -> acc) -> acc -> SOP (K elem) kss -> acc
+foldlSOP fun acc (Z vs) = foldlNP fun acc vs
+foldlSOP fun acc (S x)  = foldlSOP fun acc x
+
+||| Specialization of `hfoldr`
+public export %inline
+foldrSOP : (fun : elem -> acc -> acc) -> acc -> SOP (K elem) kss -> acc
+foldrSOP fun acc (Z vs) = foldrNP fun acc vs
+foldrSOP fun acc (S x)  = foldrSOP fun acc x
+
+||| Specialization of `hsequence`
+public export
+sequenceSOP : Applicative g => SOP (\a => g (f a)) kss -> g (SOP f kss)
+sequenceSOP (Z vs) = Z <$> sequenceNP vs
+sequenceSOP (S x)  = S <$> sequenceSOP x
+
+--------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
 
--- public export
--- Eq (SOP' k f []) where
---   a == b impossible
---
--- public export
--- Ord (SOP' k f []) where
---   compare a b impossible
---
--- public export
--- Eq (NP' k f ks) => Eq (SOP' k f kss) => Eq (SOP' k f (ks :: kss)) where
---   (Z vs)  == (Z ws)  = vs == ws
---   (S vss) == (S wss) = vss == wss
---   _       == _       = False
---
--- public export
--- Ord (NP' k f ks) => Ord (SOP' k f kss) => Ord (SOP' k f (ks :: kss)) where
---   compare (Z vs) (Z ws)   = compare vs ws
---   compare (Z _)  (S _)    = LT
---   compare (S _)  (Z _)    = GT
---   compare (S vss) (S wss) = compare vss wss
---
---
--- public export
--- HFunctor k (List $ List k) (SOP' k) where
---   hmap fun (Z v) = Z $ hmap fun v
---   hmap fun (S x) = S $ hmap fun x
---
---   hcmap c fun (Z v) = Z $ hcmap c fun v
---   hcmap c fun (S x) = S $ hcmap c fun x
---
--- public export
--- HFold k (List $ List k) (SOP' k) where
---   hfoldl fun acc (Z v) = hfoldl fun acc v
---   hfoldl fun acc (S x) = hfoldl fun acc x
---
---   hfoldr fun acc (Z v) = hfoldr fun acc v
---   hfoldr fun acc (S x) = hfoldr fun acc x
---
--- public export
--- HSequence k (List $ List k) (SOP' k) where
---   hsequence (Z v) = map Z $ hsequence v
---   hsequence (S x) = map S $ hsequence x
---
--- public export
--- Uninhabited (Data.SOP.SOP.Z x = Data.SOP.SOP.S y) where
---   uninhabited Refl impossible
---
--- public export
--- Uninhabited (Data.SOP.SOP.S x = Data.SOP.SOP.Z y) where
---   uninhabited Refl impossible
---
--- private
--- zInjective : Data.SOP.SOP.Z x = Data.SOP.SOP.Z y -> x = y
--- zInjective Refl = Refl
---
--- private
--- sInjective : Data.SOP.SOP.S x = Data.SOP.SOP.S y -> x = y
--- sInjective Refl = Refl
---
--- public export
--- DecEq (SOP' k f []) where
---   decEq a b impossible
---
--- public export
--- DecEq (NP' k f ks) => DecEq (SOP' k f kss) => DecEq (SOP' k f (ks :: kss)) where
---   decEq (Z x) (Z y) with (decEq x y)
---     decEq (Z x) (Z x) | Yes Refl = Yes Refl
---     decEq (Z x) (Z y) | No contra = No (contra . zInjective)
---   decEq (Z x) (S y) = No absurd
---   decEq (S x) (Z y) = No absurd
---   decEq (S x) (S y) with (decEq x y)
---     decEq (S x) (S x) | Yes Refl = Yes Refl
---     decEq (S x) (S y) | No contra = No (contra . sInjective)
+public export %inline
+HFunctor k (List $ List k) (SOP' k) where
+  hmap = mapSOP
+  hcmap = cmapSOP
+
+public export %inline
+HFold k (List $ List k) (SOP' k) where
+  hfoldl = foldlSOP
+  hfoldr = foldrSOP
+
+public export
+HSequence k (List $ List k) (SOP' k) where
+  hsequence = sequenceSOP
+
+public export
+(all : All (Eq . f) kss) => Eq (SOP' k f kss) where
+  (==) {all = _::_} (Z vs) (Z ws) = vs == ws
+  (==) {all = _::_} (S x)  (S y)  = x  == y
+  (==) {all = _::_} _      _      = False
+
+public export
+(all : All (Ord . f) kss) => Ord (SOP' k f kss) where
+  compare {all = _::_} (Z vs) (Z ws) = compare vs ws
+  compare {all = _::_} (S x)  (S y)  = compare x y
+  compare {all = _::_} (Z _)  (S _)  = LT
+  compare {all = _::_} (S _)  (Z _)  = GT
+
+public export
+Uninhabited (Data.SOP.SOP.Z x = Data.SOP.SOP.S y) where
+  uninhabited Refl impossible
+
+public export
+Uninhabited (Data.SOP.SOP.S x = Data.SOP.SOP.Z y) where
+  uninhabited Refl impossible
+
+private
+zInjective : Data.SOP.SOP.Z x = Data.SOP.SOP.Z y -> x = y
+zInjective Refl = Refl
+
+private
+sInjective : Data.SOP.SOP.S x = Data.SOP.SOP.S y -> x = y
+sInjective Refl = Refl
+
+public export
+(all : All (DecEq . f) kss) => DecEq (SOP' k f kss) where
+  decEq {all = _::_} (Z xs) (Z ys) with (decEq xs ys)
+    decEq {all = _::_} (Z xs) (Z xs) | Yes Refl = Yes Refl
+    decEq {all = _::_} (Z xs) (Z ys) | No contra = No (contra . zInjective)
+  decEq {all = _::_} (Z xs) (S y) = No absurd
+  decEq {all = _::_} (S x) (Z ys) = No absurd
+  decEq {all = _::_} (S x) (S y) with (decEq x y)
+    decEq {all = _::_} (S x) (S x) | Yes Refl = Yes Refl
+    decEq {all = _::_} (S x) (S y) | No contra = No (contra . sInjective)
