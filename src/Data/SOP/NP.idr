@@ -45,7 +45,7 @@ import Decidable.Equality
 ||| ex3 = [Just 'x', Nothing, Just 1]
 ||| ```
 public export
-data NP' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
+data NP' : (0 k : Type) -> (0 f : k -> Type) -> (0 ks : List k) -> Type where
   Nil  : NP' k f []
   (::) : (v : f t) -> (vs : NP' k f ks) -> NP' k f (t :: ks)
 
@@ -53,7 +53,7 @@ data NP' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
-NP : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
+NP : {0 k : Type} -> (0 f : k -> Type) -> (0 ks : List k) -> Type
 NP = NP' k
 
 public export

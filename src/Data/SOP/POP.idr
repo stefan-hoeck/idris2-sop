@@ -22,7 +22,7 @@ import Decidable.Equality
 ||| generic programming, a POP is useful to represent information
 ||| that is available for all arguments of all constructors of a datatype.
 public export
-data POP' : (k : Type) -> (f : k -> Type) -> (kss : List (List k)) -> Type where
+data POP' : (0 k : Type) -> (0 f : k -> Type) -> (0 kss : List (List k)) -> Type where
   Nil  : POP' k f []
   (::) : (vs : NP' k f ks) -> (vss : POP' k f kss) -> POP' k f (ks :: kss)
 
@@ -30,7 +30,7 @@ data POP' : (k : Type) -> (f : k -> Type) -> (kss : List (List k)) -> Type where
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
-POP : {k : Type} -> (f : k -> Type) -> (kss : List (List k)) -> Type
+POP : {0 k : Type} -> (0 f : k -> Type) -> (0 kss : List (List k)) -> Type
 POP = POP' k
 
 --------------------------------------------------------------------------------

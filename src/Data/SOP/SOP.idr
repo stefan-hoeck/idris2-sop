@@ -21,7 +21,7 @@ import Decidable.Equality
 ||| represents the choice between the different constructors, the product structure
 ||| represents the arguments of each constructor.
 public export
-data SOP' : (k : Type) -> (f : k -> Type) -> (kss : List $ List k) -> Type where
+data SOP' : (0 k : Type) -> (0 f : k -> Type) -> (0 kss : List $ List k) -> Type where
   Z : (vs : NP' k f ks)  -> SOP' k f (ks :: kss)
   S : SOP' k f kss -> SOP' k f (ks :: kss)
 
@@ -29,7 +29,7 @@ data SOP' : (k : Type) -> (f : k -> Type) -> (kss : List $ List k) -> Type where
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
-SOP : {k : Type} -> (f : k -> Type) -> (kss : List (List k)) -> Type
+SOP : {0 k : Type} -> (0 f : k -> Type) -> (0 kss : List (List k)) -> Type
 SOP = SOP' k
 
 --------------------------------------------------------------------------------
