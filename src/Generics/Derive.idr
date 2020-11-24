@@ -84,7 +84,7 @@ GenericVis vis g =
 
       impl     = appAll mkGeneric [from,to,fromToId,toFromId]
 
-   in MkInterfaceImpl "Generic" vis impl funType
+   in MkInterfaceImpl "Generic" vis [] impl funType
 
 ||| Alias for `GenericVis Public`.
 export
@@ -103,7 +103,7 @@ mkEq = var (singleCon "Eq") .$ `(genEq) .$ `(\a,b => not (a == b))
 ||| and visibility.
 export
 EqVis : Visibility -> DeriveUtil -> InterfaceImpl
-EqVis vis g = MkInterfaceImpl "Eq" vis mkEq (implementationType `(Eq) g)
+EqVis vis g = MkInterfaceImpl "Eq" vis [] mkEq (implementationType `(Eq) g)
 
 ||| Alias for `EqVis Public`.
 export
@@ -135,7 +135,7 @@ export
 OrdVis : Visibility -> DeriveUtil -> InterfaceImpl
 OrdVis vis g = let eq   = var $ implName g "Eq"
                    impl = appAll mkOrd (eq :: ordFunctions)
-                in MkInterfaceImpl "Ord" vis impl (implementationType `(Ord) g)
+                in MkInterfaceImpl "Ord" vis [] impl (implementationType `(Ord) g)
 
 ||| Alias for `OrdVis Public`
 export
@@ -154,7 +154,7 @@ mkDecEq = var (singleCon "DecEq") .$ `(genDecEq)
 ||| and visibility.
 export
 DecEqVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecEqVis vis g = MkInterfaceImpl "DecEq" vis mkDecEq (implementationType `(DecEq) g)
+DecEqVis vis g = MkInterfaceImpl "DecEq" vis [] mkDecEq (implementationType `(DecEq) g)
 
 ||| Alias for `EqVis Public`.
 export
