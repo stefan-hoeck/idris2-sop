@@ -73,7 +73,7 @@ mapNP fun (v :: vs) = fun v :: mapNP fun vs
 ||| Specialiced version of `hcmap`.
 public export
 cmapNP : (c : k -> Type)
-        -> (all : All c ks)
+        -> (all : NP c ks)
         => (fun : forall a . c a => f a -> g a)
         -> NP f ks
         -> NP g ks
@@ -89,7 +89,7 @@ pureNP {ks = _ :: _} f = f :: pureNP f
 ||| Specialization of `cpure`.
 public export
 cpureNP :  (c : k -> Type)
-        -> (all : All c ks)
+        -> (all : NP c ks)
         => (forall a . c a => f a) -> NP f ks
 cpureNP {all = []}     _ _ = []
 cpureNP {all = _ :: _} c f = f :: cpureNP c f
@@ -209,14 +209,14 @@ setAt' t _ v' np = setAt t v' np
 
 ||| This is needed to implement `Ord` below.
 public export %hint
-allOrdToAllEq :  {0 ks : List k} -> All (Ord . f) ks -> All (Eq . f) ks
+allOrdToAllEq :  {0 ks : List k} -> NP (Ord . f) ks -> NP (Eq . f) ks
 allOrdToAllEq = mapNP ordToEq
 
 ||| This is needed to implement `Monoid` below.
 public export %hint
 allMonoidToAllSemigroup : {0 ks : List k}
-                        -> All (Monoid . f) ks
-                        -> All (Semigroup . f) ks
+                        -> NP (Monoid . f) ks
+                        -> NP (Semigroup . f) ks
 allMonoidToAllSemigroup = mapNP monoidToSemigroup
 
 --------------------------------------------------------------------------------
@@ -247,22 +247,22 @@ HSequence k (List k) (NP' k) where
   hsequence = sequenceNP
 
 public export
-(all : All (Eq . f) ks) => Eq (NP' k f ks) where
+(all : NP (Eq . f) ks) => Eq (NP' k f ks) where
   (==) {all = []}     [] []               = True
   (==) {all = _ :: _} (v :: vs) (w :: ws) = v == w && vs == ws
 
 public export
-(all : All (Ord . f) ks) => Ord (NP' k f ks) where
+(all : NP (Ord . f) ks) => Ord (NP' k f ks) where
   compare {all = []}     [] []               = EQ
   compare {all = _ :: _} (v :: vs) (w :: ws) = compare v w <+> compare vs ws
 
 public export
-(all : All (Semigroup . f) ks) => Semigroup (NP' k f ks) where
+(all : NP (Semigroup . f) ks) => Semigroup (NP' k f ks) where
   (<+>) {all = []}     [] []               = []
   (<+>) {all = _ :: _} (v :: vs) (w :: ws) = (v <+> w) :: (vs <+> ws)
 
 public export
-(all : All (Monoid . f) ks) => Monoid (NP' k f ks) where
+(all : NP (Monoid . f) ks) => Monoid (NP' k f ks) where
   neutral {all = []}     = []
   neutral {all = _ :: _} = neutral :: neutral
 
@@ -271,7 +271,7 @@ consInjective : Data.SOP.NP.(::) a b = Data.SOP.NP.(::) c d -> (a = c, b = d)
 consInjective Refl = (Refl, Refl)
 
 public export
-(all : All (DecEq . f) ks) => DecEq (NP' k f ks) where
+(all : NP (DecEq . f) ks) => DecEq (NP' k f ks) where
   decEq {all = []}     []        []        = Yes Refl
   decEq {all = _::_} (v::vs) (w::ws) with (decEq v w)
     decEq {all = _::_} (v::vs) (w::ws) | (No contra) =

@@ -46,7 +46,7 @@ mapSOP fun (S x)  = S $ mapSOP fun x
 ||| Specialiced version of `hcmap`.
 public export
 cmapSOP :  (c : k -> Type)
-        -> (all : All c kss)
+        -> (all : POP c kss)
         => (fun : forall a . c a => f a -> g a)
         -> SOP f kss
         -> SOP g kss
@@ -90,13 +90,13 @@ HSequence k (List $ List k) (SOP' k) where
   hsequence = sequenceSOP
 
 public export
-(all : All (Eq . f) kss) => Eq (SOP' k f kss) where
+(all : POP (Eq . f) kss) => Eq (SOP' k f kss) where
   (==) {all = _::_} (Z vs) (Z ws) = vs == ws
   (==) {all = _::_} (S x)  (S y)  = x  == y
   (==) {all = _::_} _      _      = False
 
 public export
-(all : All (Ord . f) kss) => Ord (SOP' k f kss) where
+(all : POP (Ord . f) kss) => Ord (SOP' k f kss) where
   compare {all = _::_} (Z vs) (Z ws) = compare vs ws
   compare {all = _::_} (S x)  (S y)  = compare x y
   compare {all = _::_} (Z _)  (S _)  = LT
@@ -119,7 +119,7 @@ sInjective : Data.SOP.SOP.S x = Data.SOP.SOP.S y -> x = y
 sInjective Refl = Refl
 
 public export
-(all : All (DecEq . f) kss) => DecEq (SOP' k f kss) where
+(all : POP (DecEq . f) kss) => DecEq (SOP' k f kss) where
   decEq {all = _::_} (Z xs) (Z ys) with (decEq xs ys)
     decEq {all = _::_} (Z xs) (Z xs) | Yes Refl = Yes Refl
     decEq {all = _::_} (Z xs) (Z ys) | No contra = No (contra . zInjective)

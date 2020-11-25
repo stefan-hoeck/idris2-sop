@@ -50,7 +50,7 @@ mapPOP fun (vs :: vss) = mapNP fun vs :: mapPOP fun vss
 ||| Specialiced version of `hcmap`.
 public export
 cmapPOP : (c : k -> Type)
-        -> (all : All c kss)
+        -> (all : POP c kss)
         => (fun : forall a . c a => f a -> g a)
         -> POP f kss
         -> POP g kss
@@ -66,7 +66,7 @@ purePOP {kss = _ :: _} f = pureNP f :: purePOP f
 ||| Specialization of `cpure`.
 public export
 cpurePOP :  (c : k -> Type)
-        -> (all : All c kss)
+        -> (all : POP c kss)
         => (forall a . c a => f a) -> POP f kss
 cpurePOP {all = []}     _ _ = []
 cpurePOP {all = _ :: _} c f = cpureNP c f :: cpurePOP c f
@@ -104,8 +104,8 @@ public export %hint
 allOrdToAllEqPOP :  {0 k : Type}
                  -> {0 f : k -> Type}
                  -> {0 kss : List $ List k}
-                 -> All (Ord . f) kss
-                 -> All (Eq . f) kss
+                 -> POP (Ord . f) kss
+                 -> POP (Eq . f) kss
 allOrdToAllEqPOP = mapPOP ordToEq
 
 ||| This is needed to implement `Monoid` below.
@@ -113,8 +113,8 @@ public export %hint
 allMonoidToAllSemigroup :  {0 k : Type}
                         -> {0 f : k -> Type}
                         -> {0 kss : List $ List k}
-                        -> All (Monoid . f) kss
-                        -> All (Semigroup . f) kss
+                        -> POP (Monoid . f) kss
+                        -> POP (Semigroup . f) kss
 allMonoidToAllSemigroup = mapPOP monoidToSemigroup
 
 --------------------------------------------------------------------------------
@@ -145,23 +145,23 @@ HSequence k (List $ List k) (POP' k) where
   hsequence = sequencePOP
 
 public export
-(all : All (Eq . f) kss) => Eq (POP' k f kss) where
+(all : POP (Eq . f) kss) => Eq (POP' k f kss) where
   (==) {all = []}     [] []                   = True
   (==) {all = _ :: _} (vs :: vss) (ws :: wss) = vs == ws && vss == wss
 
 public export
-(all : All (Ord . f) kss) => Ord (POP' k f kss) where
+(all : POP (Ord . f) kss) => Ord (POP' k f kss) where
   compare {all = []}     [] []                   = EQ
   compare {all = _ :: _} (vs :: vss) (ws :: wss) = compare vs ws <+>
                                                    compare vss wss
 
 public export
-(all : All (Semigroup . f) kss) => Semigroup (POP' k f kss) where
+(all : POP (Semigroup . f) kss) => Semigroup (POP' k f kss) where
   (<+>) {all = []}     [] []                   = []
   (<+>) {all = _ :: _} (vs :: vss) (ws :: wss) = (vs <+> ws) :: (vss <+> wss)
 
 public export
-(all : All (Monoid . f) kss) => Monoid (POP' k f kss) where
+(all : POP (Monoid . f) kss) => Monoid (POP' k f kss) where
   neutral {all = []}     = []
   neutral {all = _ :: _} = neutral :: neutral
 
@@ -170,7 +170,7 @@ consInjective : Data.SOP.POP.(::) a b = Data.SOP.POP.(::) c d -> (a = c, b = d)
 consInjective Refl = (Refl, Refl)
 
 public export
-(all : All (DecEq . f) kss) => DecEq (POP' k f kss) where
+(all : POP (DecEq . f) kss) => DecEq (POP' k f kss) where
   decEq {all = []}     []        []        = Yes Refl
   decEq {all = _::_} (vs::vss) (ws::wss) with (decEq vs ws)
     decEq {all = _::_} (vs::vss) (ws::wss) | (No contra) =

@@ -63,7 +63,7 @@ mapNS fun (S x) = S $ mapNS fun x
 ||| Specialiced version of `hcmap`.
 public export
 cmapNS :  (c : k -> Type)
-       -> (all : All c ks)
+       -> (all : NP c ks)
        => (fun : forall a . c a => f a -> g a)
        -> NS f ks
        -> NS g ks
@@ -106,13 +106,13 @@ HSequence k (List k) (NS' k) where
   hsequence = sequenceNS
 
 public export
-(all : All (Eq . f) ks) => Eq (NS' k f ks) where
+(all : NP (Eq . f) ks) => Eq (NS' k f ks) where
   (==) {all = _::_} (Z v) (Z w) = v == w
   (==) {all = _::_} (S x) (S y) = x == y
   (==) {all = _::_} _     _     = False
 
 public export
-(all : All (Ord . f) ks) => Ord (NS' k f ks) where
+(all : NP (Ord . f) ks) => Ord (NS' k f ks) where
   compare {all = _::_} (Z v) (Z w) = compare v w
   compare {all = _::_} (S x) (S y) = compare x y
   compare {all = _::_} (Z _) (S _) = LT
@@ -135,7 +135,7 @@ sInjective : Data.SOP.NS.S x = Data.SOP.NS.S y -> x = y
 sInjective Refl = Refl
 
 public export
-(all : All (DecEq . f) ks) => DecEq (NS' k f ks) where
+(all : NP (DecEq . f) ks) => DecEq (NS' k f ks) where
   decEq {all = _::_} (Z x) (Z y) with (decEq x y)
     decEq {all = _::_} (Z x) (Z x) | Yes Refl = Yes Refl
     decEq {all = _::_} (Z x) (Z y) | No contra = No (contra . zInjective)
