@@ -149,7 +149,7 @@ updateUser4 upd old = let upd' = setAt' () Int Nothing upd
 Let's break this down a bit: Function `setAt` replaces the
 first occurence of the given type with a value of
 a new type wrapped in the desired effect (`Maybe` in this case).
-Since Idris can not always infer the type of the new value
+Since Idris cannot always infer the type of the new value
 (as is the case here), function `setAt'` allows us to give
 the type of the new value explicitly. So `upd'` now contains
 values of the same type in the same order as `User4DB`
