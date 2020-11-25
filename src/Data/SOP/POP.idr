@@ -101,21 +101,13 @@ sequencePOP (vs :: vss) = [| sequenceNP vs :: sequencePOP vss |]
 
 ||| This is needed to implement `Ord` below.
 public export %hint
-allOrdToAllEqPOP :  {0 k : Type}
-                 -> {0 f : k -> Type}
-                 -> {0 kss : List $ List k}
-                 -> POP (Ord . f) kss
-                 -> POP (Eq . f) kss
-allOrdToAllEqPOP = mapPOP ordToEq
+ordToEqPOP :  POP (Ord . f) kss -> POP (Eq . f) kss
+ordToEqPOP = mapPOP (\_ => materialize Eq)
 
 ||| This is needed to implement `Monoid` below.
 public export %hint
-allMonoidToAllSemigroup :  {0 k : Type}
-                        -> {0 f : k -> Type}
-                        -> {0 kss : List $ List k}
-                        -> POP (Monoid . f) kss
-                        -> POP (Semigroup . f) kss
-allMonoidToAllSemigroup = mapPOP monoidToSemigroup
+monoidToSemigroupPOP : POP (Monoid . f) kss -> POP (Semigroup . f) kss
+monoidToSemigroupPOP = mapPOP (\_ => materialize Semigroup)
 
 --------------------------------------------------------------------------------
 --          Implementations

@@ -209,15 +209,13 @@ setAt' t _ v' np = setAt t v' np
 
 ||| This is needed to implement `Ord` below.
 public export %hint
-allOrdToAllEq :  {0 ks : List k} -> NP (Ord . f) ks -> NP (Eq . f) ks
-allOrdToAllEq = mapNP ordToEq
+ordToEqNP : NP (Ord . f) ks -> NP (Eq . f) ks
+ordToEqNP = mapNP (\_ => materialize Eq)
 
 ||| This is needed to implement `Monoid` below.
 public export %hint
-allMonoidToAllSemigroup : {0 ks : List k}
-                        -> NP (Monoid . f) ks
-                        -> NP (Semigroup . f) ks
-allMonoidToAllSemigroup = mapNP monoidToSemigroup
+monoidToSemigroupNP : NP (Monoid . f) ks -> NP (Semigroup . f) ks
+monoidToSemigroupNP = mapNP (\_ => materialize Semigroup)
 
 --------------------------------------------------------------------------------
 --          Implementations
