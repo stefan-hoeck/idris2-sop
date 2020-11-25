@@ -260,7 +260,13 @@ Idris often expects us to provide some additional type-level
 hints to be satisfied with our code. Still, so far I like
 the way Idris handles things a lot. The ability to
 partially apply type-level functions as in the definition
-of  `User` is a really cool feature.
+of `User` is a really cool feature.
+
+In addition, Idris allows us to use exactly the same data structures
+for defining constraints, therefore, functions like `hcmap`
+and `hcpure` can be implemented directly from `hliftA2`
+and `hmap` respectively. This reduces the number of interfaces
+we need.
 
 ### Conclusion
 
