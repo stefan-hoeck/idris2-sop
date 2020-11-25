@@ -297,7 +297,7 @@ data StoreCommand : Type where
   Checkout   : (arts : List Article) -> (pay : Payment) -> StoreCommand
 ```
 
-In order to encode this kind of sums of products, the sop library
+In order to encode this kind of sums of products, the *sop* library
 provides data type `SOP`. We have to define this and
 the remaining examples in this tutorial in their own namespace
 to prevent constructor names from clashing with the ones
@@ -349,7 +349,7 @@ provides one more utility to complete the picture: Interface `Generic`.
 
 It provides conversion functions for a data type from and to its
 generic representation as a sum of product plus the
-correpsonding proof that these functions actually represent
+correpsonding proofs that these functions actually represent
 an isomorphism. Plus it comes with elaborator reflection utilities
 to generate implementations of this interface automatically -
 for a limited set of data types at least.
