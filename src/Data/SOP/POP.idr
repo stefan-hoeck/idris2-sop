@@ -33,10 +33,6 @@ public export
 POP : {0 k : Type} -> (0 f : k -> Type) -> (0 kss : List (List k)) -> Type
 POP = POP' k
 
-public export
-AllC k (List $ List k) where
-  All f kss = POP f kss
-
 --------------------------------------------------------------------------------
 --          Specialized Interface Functions
 --------------------------------------------------------------------------------
@@ -114,17 +110,17 @@ monoidToSemigroupPOP = mapPOP (\_ => materialize Semigroup)
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List $ List k) (POP' k) where
+HFunctor k (List $ List k) (POP' k) (POP' k) where
   hmap  = mapPOP
   hcmap = cmapPOP
 
 public export %inline
-HPure k (List $ List k) (POP' k) where
+HPure k (List $ List k) (POP' k) (POP' k) where
   hpure  = purePOP
   hcpure = cpurePOP
 
 public export %inline
-HAp k (List $ List k) (POP' k) where
+HAp k (List $ List k) (POP' k) (POP' k) where
   hap = hapPOP
 
 public export %inline

@@ -76,7 +76,7 @@ sequenceSOP (S x)  = S <$> sequenceSOP x
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List $ List k) (SOP' k) where
+HFunctor k (List $ List k) (POP' k) (SOP' k) where
   hmap = mapSOP
   hcmap = cmapSOP
 

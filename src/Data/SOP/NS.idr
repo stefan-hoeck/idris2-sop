@@ -92,7 +92,7 @@ sequenceNS (S x) = S <$> sequenceNS x
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List k) (NS' k) where
+HFunctor k (List k) (NP' k) (NS' k) where
   hmap = mapNS
   hcmap = cmapNS
 
