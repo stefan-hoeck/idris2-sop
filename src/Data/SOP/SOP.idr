@@ -61,12 +61,21 @@ sequenceSOP : Applicative g => SOP (\a => g (f a)) kss -> g (SOP f kss)
 sequenceSOP (Z vs) = Z <$> sequenceNP vs
 sequenceSOP (S x)  = S <$> sequenceSOP x
 
+||| Specialization of `hap`
+public export
+hapSOP : POP (\a => f a -> g a) kss -> SOP f kss -> SOP g kss
+hapSOP (funs :: _)     (Z vs) = Z $ hapNP funs vs
+hapSOP (_    :: funss) (S y)  = S $ hapSOP funss y
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
 
 public export %inline
 HFunctor k (List $ List k) (SOP' k) where hmap = mapSOP
+
+public export %inline
+HAp k (List $ List k) (POP' k) (SOP' k) where hap = hapSOP
 
 public export %inline
 HFold k (List $ List k) (SOP' k) where

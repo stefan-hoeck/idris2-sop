@@ -77,12 +77,21 @@ sequenceNS : Applicative g => NS (\a => g (f a)) ks -> g (NS f ks)
 sequenceNS (Z v) = map Z v
 sequenceNS (S x) = S <$> sequenceNS x
 
+||| Specialization of `hap`
+public export
+hapNS : NP (\a => f a -> g a) ks -> NS f ks -> NS g ks
+hapNS (fun :: _)    (Z v) = Z $ fun v
+hapNS (_   :: funs) (S y) = S $ hapNS funs y
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
 
 public export %inline
 HFunctor k (List k) (NS' k) where hmap = mapNS
+
+public export %inline
+HAp k (List k) (NP' k) (NS' k) where hap = hapNS
 
 public export %inline
 HFold k (List k) (NS' k) where
