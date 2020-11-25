@@ -66,29 +66,11 @@ mapNP : (fun : forall a . f a -> g a) -> NP f ks -> NP g ks
 mapNP fun []        = []
 mapNP fun (v :: vs) = fun v :: mapNP fun vs
 
-||| Specialiced version of `hcmap`.
-public export
-cmapNP : (c : k -> Type)
-        -> (all : NP c ks)
-        => (fun : forall a . c a => f a -> g a)
-        -> NP f ks
-        -> NP g ks
-cmapNP {all = []}     _ _ []        = []
-cmapNP {all = _ :: _} c f (v :: vs) = f v :: cmapNP c f vs
-
 ||| Specialization of `hpure`.
 public export
 pureNP : {ks : _} -> (forall a . f a) -> NP f ks
 pureNP {ks = []}     _ = []
 pureNP {ks = _ :: _} f = f :: pureNP f
-
-||| Specialization of `cpure`.
-public export
-cpureNP :  (c : k -> Type)
-        -> (all : NP c ks)
-        => (forall a . c a => f a) -> NP f ks
-cpureNP {all = []}     _ _ = []
-cpureNP {all = _ :: _} c f = f :: cpureNP c f
 
 ||| Specialization of `hap`.
 public export
@@ -218,18 +200,13 @@ monoidToSemigroupNP = mapNP (\_ => materialize Semigroup)
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List k) (NP' k) (NP' k) where
-  hmap  = mapNP
-  hcmap = cmapNP
+HPure k (List k) (NP' k) where hpure  = pureNP
 
 public export %inline
-HPure k (List k) (NP' k) (NP' k) where
-  hpure  = pureNP
-  hcpure = cpureNP
+HFunctor k (List k) (NP' k) where hmap  = mapNP
 
 public export %inline
-HAp k (List k) (NP' k) (NP' k) where
-  hap = hapNP
+HAp k (List k) (NP' k) (NP' k) where hap = hapNP
 
 public export %inline
 HFold k (List k) (NP' k) where
@@ -237,8 +214,7 @@ HFold k (List k) (NP' k) where
   hfoldr = foldrNP
 
 public export %inline
-HSequence k (List k) (NP' k) where
-  hsequence = sequenceNP
+HSequence k (List k) (NP' k) where hsequence = sequenceNP
 
 public export
 (all : NP (Eq . f) ks) => Eq (NP' k f ks) where
@@ -279,75 +255,75 @@ public export
 --          Examples and Tests
 --------------------------------------------------------------------------------
 
--- Ex1 : NP I [Char,Bool]
--- Ex1 = ['c',True]
--- 
--- Ex2 : NP Maybe [Int,Int,Int]
--- Ex2 = [Nothing,Nothing,Just 2]
--- 
--- Ex3 : NP (K String) [Char,Bool,Int]
--- Ex3 = ["Hello","World","!"]
--- 
--- EqTest1 : Ex1 == Ex1 = True
--- EqTest1 = Refl
--- 
--- EqTest2 : Ex1 == ['x',False] = False
--- EqTest2 = Refl
--- 
--- OrdTest1 : compare Ex1 Ex1 = EQ
--- OrdTest1 = Refl
--- 
--- OrdTest2 : compare Ex1 ['x',False] = LT
--- OrdTest2 = Refl
--- 
--- HdTest : hd Ex1 = 'c'
--- HdTest = Refl
--- 
--- TlTest : tl Ex1 = [True]
--- TlTest = Refl
--- 
--- SemiTest : the (NP I [String]) ["hello"] <+> ["world"] = ["helloworld"]
--- SemiTest = Refl
--- 
--- NeutralTest : the (NP I [String,List Int]) Prelude.neutral = ["",[]]
--- NeutralTest = Refl
--- 
--- HMapTest : hmap Just Ex1 = [Just 'c', Just True]
--- HMapTest = Refl
--- 
--- HCMapRes : NP (K String) [Char,Bool]
--- HCMapRes = hcmap Show show Ex1
--- 
--- -- HPureTest : NP Maybe [String,Int]
--- -- HPureTest = hpure Nothing
--- --
--- -- CPureNeutralTest : NP I [String,String]
--- -- CPureNeutralTest = hcpure Monoid neutral
--- 
--- Person : (f : Type -> Type) -> Type
--- Person f = NP f [String,Int]
--- 
--- toPersonMaybe : Person I -> Person Maybe
--- toPersonMaybe = hmap Just
--- 
--- personShowValues : Person I -> Person (K String)
--- personShowValues = hcmap Show show
--- 
--- emptyPerson : Person Maybe
--- emptyPerson = hpure Nothing
--- 
--- Foo : (f : Type -> Type) -> Type
--- Foo f = NP f [String,String,List Int]
--- 
--- neutralFoo : Foo I
--- neutralFoo = hcpure Monoid neutral
--- 
--- update : forall a . Maybe a -> I a -> I a
--- update (Just a) _ = a
--- update Nothing  a = a
--- 
--- updatePerson : Person (\a => a -> a)
--- updatePerson = hmap update [Just "foo", Nothing]
--- 
--- updatedPerson : Person I
--- updatedPerson = hap updatePerson ["bar",12]
+Ex1 : NP I [Char,Bool]
+Ex1 = ['c',True]
+
+Ex2 : NP Maybe [Int,Int,Int]
+Ex2 = [Nothing,Nothing,Just 2]
+
+Ex3 : NP (K String) [Char,Bool,Int]
+Ex3 = ["Hello","World","!"]
+
+EqTest1 : Ex1 == Ex1 = True
+EqTest1 = Refl
+
+EqTest2 : Ex1 == ['x',False] = False
+EqTest2 = Refl
+
+OrdTest1 : compare Ex1 Ex1 = EQ
+OrdTest1 = Refl
+
+OrdTest2 : compare Ex1 ['x',False] = LT
+OrdTest2 = Refl
+
+HdTest : hd Ex1 = 'c'
+HdTest = Refl
+
+TlTest : tl Ex1 = [True]
+TlTest = Refl
+
+SemiTest : the (NP I [String]) ["hello"] <+> ["world"] = ["helloworld"]
+SemiTest = Refl
+
+NeutralTest : the (NP I [String,List Int]) Prelude.neutral = ["",[]]
+NeutralTest = Refl
+
+HMapTest : hmap Just Ex1 = [Just 'c', Just True]
+HMapTest = Refl
+
+HCMapRes : NP (K String) [Char,Bool]
+HCMapRes = hcmap Show show Ex1
+
+-- HPureTest : NP Maybe [String,Int]
+-- HPureTest = hpure Nothing
+--
+-- CPureNeutralTest : NP I [String,String]
+-- CPureNeutralTest = hcpure Monoid neutral
+
+Person : (f : Type -> Type) -> Type
+Person f = NP f [String,Int]
+
+toPersonMaybe : Person I -> Person Maybe
+toPersonMaybe = hmap Just
+
+personShowValues : Person I -> Person (K String)
+personShowValues = hcmap Show show
+
+emptyPerson : Person Maybe
+emptyPerson = hpure Nothing
+
+Foo : (f : Type -> Type) -> Type
+Foo f = NP f [String,String,List Int]
+
+neutralFoo : Foo I
+neutralFoo = hcpure Monoid neutral
+
+update : forall a . Maybe a -> I a -> I a
+update (Just a) _ = a
+update Nothing  a = a
+
+updatePerson : Person (\a => a -> a)
+updatePerson = hmap update [Just "foo", Nothing]
+
+updatedPerson : Person I
+updatedPerson = hap updatePerson ["bar",12]

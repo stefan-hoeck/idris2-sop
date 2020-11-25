@@ -43,16 +43,6 @@ mapSOP : (fun : forall a . f a -> g a) -> SOP f kss -> SOP g kss
 mapSOP fun (Z vs) = Z $ mapNP fun vs
 mapSOP fun (S x)  = S $ mapSOP fun x
 
-||| Specialiced version of `hcmap`.
-public export
-cmapSOP :  (c : k -> Type)
-        -> (all : POP c kss)
-        => (fun : forall a . c a => f a -> g a)
-        -> SOP f kss
-        -> SOP g kss
-cmapSOP {all = _ :: _} c f (Z vs) = Z $ cmapNP c f vs
-cmapSOP {all = _ :: _} c f (S x)  = S $ cmapSOP c f x
-
 ||| Specialization of `hfoldl`
 public export
 foldlSOP : (fun : acc -> elem -> acc) -> acc -> SOP (K elem) kss -> acc
@@ -76,9 +66,7 @@ sequenceSOP (S x)  = S <$> sequenceSOP x
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List $ List k) (POP' k) (SOP' k) where
-  hmap = mapSOP
-  hcmap = cmapSOP
+HFunctor k (List $ List k) (SOP' k) where hmap = mapSOP
 
 public export %inline
 HFold k (List $ List k) (SOP' k) where
@@ -86,8 +74,7 @@ HFold k (List $ List k) (SOP' k) where
   hfoldr = foldrSOP
 
 public export
-HSequence k (List $ List k) (SOP' k) where
-  hsequence = sequenceSOP
+HSequence k (List $ List k) (SOP' k) where hsequence = sequenceSOP
 
 public export
 (all : POP (Eq . f) kss) => Eq (SOP' k f kss) where

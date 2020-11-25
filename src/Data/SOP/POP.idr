@@ -43,29 +43,11 @@ mapPOP : (fun : forall a . f a -> g a) -> POP f kss -> POP g kss
 mapPOP fun []          = []
 mapPOP fun (vs :: vss) = mapNP fun vs :: mapPOP fun vss
 
-||| Specialiced version of `hcmap`.
-public export
-cmapPOP : (c : k -> Type)
-        -> (all : POP c kss)
-        => (fun : forall a . c a => f a -> g a)
-        -> POP f kss
-        -> POP g kss
-cmapPOP {all = []}     _ _ []          = []
-cmapPOP {all = _ :: _} c f (vs :: vss) = cmapNP c f vs :: cmapPOP c f vss
-
 ||| Specialization of `hpure`.
 public export
 purePOP : {kss : _} -> (forall a . f a) -> POP f kss
 purePOP {kss = []}     _ = []
 purePOP {kss = _ :: _} f = pureNP f :: purePOP f
-
-||| Specialization of `cpure`.
-public export
-cpurePOP :  (c : k -> Type)
-        -> (all : POP c kss)
-        => (forall a . c a => f a) -> POP f kss
-cpurePOP {all = []}     _ _ = []
-cpurePOP {all = _ :: _} c f = cpureNP c f :: cpurePOP c f
 
 ||| Specialization of `hap`.
 public export
@@ -110,18 +92,13 @@ monoidToSemigroupPOP = mapPOP (\_ => materialize Semigroup)
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List $ List k) (POP' k) (POP' k) where
-  hmap  = mapPOP
-  hcmap = cmapPOP
+HPure k (List $ List k) (POP' k) where hpure  = purePOP
 
 public export %inline
-HPure k (List $ List k) (POP' k) (POP' k) where
-  hpure  = purePOP
-  hcpure = cpurePOP
+HFunctor k (List $ List k) (POP' k) where hmap  = mapPOP
 
 public export %inline
-HAp k (List $ List k) (POP' k) (POP' k) where
-  hap = hapPOP
+HAp k (List $ List k) (POP' k) (POP' k) where hap = hapPOP
 
 public export %inline
 HFold k (List $ List k) (POP' k) where
@@ -129,8 +106,7 @@ HFold k (List $ List k) (POP' k) where
   hfoldr = foldrPOP
 
 public export %inline
-HSequence k (List $ List k) (POP' k) where
-  hsequence = sequencePOP
+HSequence k (List $ List k) (POP' k) where hsequence = sequencePOP
 
 public export
 (all : POP (Eq . f) kss) => Eq (POP' k f kss) where

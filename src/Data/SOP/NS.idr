@@ -60,16 +60,6 @@ mapNS : (fun : forall a . f a -> g a) -> NS f ks -> NS g ks
 mapNS fun (Z v) = Z $ fun v
 mapNS fun (S x) = S $ mapNS fun x
 
-||| Specialiced version of `hcmap`.
-public export
-cmapNS :  (c : k -> Type)
-       -> (all : NP c ks)
-       => (fun : forall a . c a => f a -> g a)
-       -> NS f ks
-       -> NS g ks
-cmapNS {all = _ :: _} _ f (Z v) = Z $ f v
-cmapNS {all = _ :: _} c f (S x) = S $ cmapNS c f x
-
 ||| Specialization of `hfoldl`
 public export
 foldlNS : (fun : acc -> elem -> acc) -> acc -> NS (K elem) ks -> acc
@@ -92,9 +82,7 @@ sequenceNS (S x) = S <$> sequenceNS x
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List k) (NP' k) (NS' k) where
-  hmap = mapNS
-  hcmap = cmapNS
+HFunctor k (List k) (NS' k) where hmap = mapNS
 
 public export %inline
 HFold k (List k) (NS' k) where
@@ -102,8 +90,7 @@ HFold k (List k) (NS' k) where
   hfoldr = foldrNS
 
 public export
-HSequence k (List k) (NS' k) where
-  hsequence = sequenceNS
+HSequence k (List k) (NS' k) where hsequence = sequenceNS
 
 public export
 (all : NP (Eq . f) ks) => Eq (NS' k f ks) where
