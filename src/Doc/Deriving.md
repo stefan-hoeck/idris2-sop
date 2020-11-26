@@ -14,6 +14,7 @@ We start with the necessary imports and language extensions:
 ```idris
 module Doc.Deriving
 
+import Data.Strings
 import Decidable.Equality
 import Generics.Derive
 
@@ -27,13 +28,19 @@ available very soon.
 
 ### Product Types
 
-Product types constist of a single constructor. Here is
+Product types consist of a single constructor. Here is
 an example of a spell in a role playing game (casting costs
-plus the spell's name):
+plus the spell's name).
 
 ```idris
 data Spell = MkSpell Nat String
+```
 
+Deriving the most common interface implementations is
+straight forward (make sure to import `Generics.Derive`
+and enable `%language ElabReflection`):
+
+```idris
 %runElab derive "Spell" [Generic, Eq, Ord, DecEq]
 ```
 
@@ -47,7 +54,7 @@ spellOrd1 : MkSpell 120 "" > MkSpell 12 "" = True
 spellOrd1 = Refl
 ```
 
-The library also supports additional types of
+The library also supports additional forms of
 product types.
 
 Records:
@@ -66,14 +73,14 @@ record Dragon where
 Parameterized types:
 
 ```idris
-record DragonF (treasureTpe : Type) (f : Type -> Type) where
-  constructor MkDragonF
-  nameF       : f String
-  hintPointsF : f Int
-  spellsF     : f $ List Spell
-  treasureF   : f $ List treasureTpe
+record BarbieDragon (treasureTpe : Type) (f : Type -> Type) where
+  constructor MkBarbieDragon
+  nameBD       : f String
+  hintPointsBD : f Int
+  spellsBD     : f $ List Spell
+  treasureBD   : f $ List treasureTpe
 
-%runElab derive "DragonF" [Generic, Eq, Ord, DecEq]
+%runElab derive "BarbieDragon" [Generic, Eq, Ord, DecEq]
 ```
 
 Recursive types:
@@ -89,10 +96,361 @@ record Hero where
 %runElab derive "Hero" [Generic, Eq, Ord, DecEq]
 ```
 
+Some implementations like the ones for `Semigroup` or `Monoid` can
+only be derived for product types:
+
+```idris
+record Employees where
+  constructor MkEmployees
+  names     : List String
+  addresses : List String
+  salaries  : List Double
+
+%runElab derive "Employees" [Generic, Eq, Ord, Semigroup, Monoid]
+
+tableTest : MkEmployees [] [] [] = neutral {ty = Employees}
+tableTest = Refl
+
+tableTest2 : MkEmployees ["a"] [] [1] <+> MkEmployees ["a"] ["b"] [2,3] =
+             MkEmployees ["a","a"] ["b"] [1,2,3]
+tableTest2 = Refl
+```
+
 ### Sum Types
 
-To be added.
+Sum types have more than one constructor but other than that,
+deriving instances for them is just as easy as for products:
+
+```idris
+data Monster : Type where
+  Goblin   : (hp : Int) -> (name : String) -> Monster
+  Demon    : (hp : Int) -> (sp : Int) -> (spells : List Spell) -> Monster
+  Skeleton : (hp : Int) -> (armor : Int) -> Monster
+
+%runElab derive "Monster" [Generic, Eq, Ord, DecEq]
+```
+
+Likewise, parameterized and inductive types are supported
+as well:
+
+```idris
+data Treasure : Type where
+  Coins  : (value : Nat) -> Treasure
+  Jewels : (types : List (Nat,String)) -> Treasure
+  Chest  : (content : List Treasure) -> Treasure
+
+%runElab derive "Treasure" [Generic, Eq, Ord, DecEq]
+```
 
 ### Deriving your own Interfaces
 
-To be added.
+As an example, in this part we are going to implement basic interfaces
+to encode and decode values from a list of string tokens. These tokens
+could for instance be the fields on a single line of a .csv file.
+
+To keep things simple, we quickly write our own parser for string tokens.
+
+#### A Simple Parser for Decoding Lists of Strings
+
+```idris
+||| Tries to convert parts of a list of string tokens
+||| returning either the result plus the remainder
+||| of the list or the remainder of he list at which parsing failed.
+public export
+record Parser (t : Type) where
+  constructor MkParser 
+  run : List String -> Either (List String) (t, List String)
+
+public export
+Functor Parser where
+  map f pa = MkParser \ts => do (a,ts') <- pa.run ts
+                                pure (f a, ts')
+
+public export
+Applicative Parser where
+  pure a = MkParser \ts => Right (a,ts)
+
+  pf <*> pa = MkParser \ts => do (f, ts' ) <- pf.run ts
+                                 (a, ts'') <- pa.run ts'
+                                 pure (f a, ts'')
+
+public export
+Monad Parser where
+  pa >>= f = MkParser \ts => do (a, ts' ) <- pa.run ts
+                                (f a).run ts'
+
+public export
+Alternative Parser where
+  empty = MkParser Left
+
+  p1 <|> p2 = MkParser \ts => case p1.run ts of
+                                   Left _ => p2.run ts
+                                   res    => res
+
+public export
+next : Parser String
+next = MkParser \ts => case ts of
+                            []     => Left []
+                            (h::t) => Right (h,t)
+
+public export
+mapMaybe : (a -> Maybe b) -> Parser a -> Parser b
+mapMaybe f = (>>= maybe empty pure . f)
+
+public export
+repeat : Parser a -> Nat -> Parser (List a)
+repeat _ 0     = pure []
+repeat p (S n) = [| p :: repeat p n |]
+
+public export
+parse : Parser t -> List String -> Either (List String) t
+parse p ts = case p.run ts of
+                  Right (t,[]) => Right t
+                  Right (_,ts) => Left ts
+                  Left ts      => Left ts
+```
+
+#### Generically derivide Encoders
+
+Next, we provide some primitives for encoding values to
+lists of string tokens:
+
+```idris
+public export
+interface Encode t where
+  encode : t -> List String
+
+public export
+Encode Int where encode = pure . show
+
+public export
+Encode Double where encode = pure . show
+
+public export
+Encode Bool where encode = pure . show
+
+public export
+Encode Nat where encode = pure . show . cast {to = Integer}
+
+public export
+Encode String where encode = pure
+
+||| Encoded lists are prefixed with an ecoding of
+||| the number of elements
+public export
+Encode a => Encode (List a) where
+  encode as = encode (length as) ++ concatMap encode as
+```
+
+Now, we need an instance for products. As a prerequisite, we
+require every element in an n-ary product to have an
+instance of `Encode`. We can use an implicit value of
+type `NP (Encode . f) ks` to encode this prerequisite.
+This allows us to either implement `encode` by pattern matching
+on the product we'd like to encode or by using some
+of the combinators provided by this library. `hcmap` followed
+by `hconcat` will do the job:
+
+```idris
+public export
+NP (Encode . f) ks => Encode (NP f ks) where
+  encode = hconcat . hcmap (Encode . f) encode
+```
+
+We also need an instance for sums of products. In this case, we
+only want to allow sums consisting of a single choice. This
+can be done by using the `SingletonList` predicate from `Data.SOP.Utils`.
+Otherwise, the implementation uses exactly the same combinators
+as the one for `NP`.
+
+```idris
+public export
+POP (Encode . f) kss => SingletonList kss => Encode (SOP f kss) where
+  encode = hconcat . hcmap (Encode . f) encode
+```
+
+Note that in the case of a sum type, we still need the corresponding
+product type as a witnesses that we have interface implementations
+for all possible fields of the sum.
+
+Next, we define a generic version of `encode`:
+
+```idris
+public export
+genEncode :  Generic t code
+          => POP Encode code
+          => SingletonList code
+          => t -> List String
+genEncode = encode . from
+```
+
+With this, we can already write derived implementations manually:
+
+```idris
+Encode Spell where encode = genEncode
+
+||| The result can't be reduced any further, since `show` and
+||| `cast` of primitives is involved.
+encodeSpellTest : encode (MkSpell 10 "foo") =
+                  [show (cast {from = Nat} {to = Integer} 10), "foo"]
+encodeSpellTest = Refl
+```
+
+In order to make the interface available to function `derive`,
+we have to write a minimal amount of elaborator reflection code:
+
+```idris
+||| It is important that this is publicly exported, in case
+||| we later on want to proof the interface's implementation
+||| to be correct.
+public export
+mkEncode : (t -> List String) -> Encode t
+mkEncode = %runElab check (var $ singleCon "Encode")
+
+||| Derives a `Encode` implementation for the given data type
+||| and visibility.
+export
+EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
+EncodeVis vis g = MkInterfaceImpl "Encode" vis []
+                       `(mkEncode genEncode)
+                       (implementationType `(Encode) g)
+
+||| Alias for `EncodeVis Public`.
+export
+Encode' : DeriveUtil -> InterfaceImpl
+Encode' = EncodeVis Public
+```
+
+Let's encode us some dragons:
+
+```idris
+%runElab derive "Dragon" [Encode']
+```
+
+#### Generically derivide Decoders
+
+Deriving decoders is only slightly more involved. First, we
+need again some primitives:
+
+```idris
+public export
+interface Decode t where
+  decode : Parser t
+
+public export
+Decode Int where decode = mapMaybe parseInteger next
+
+public export
+Decode Double where decode = mapMaybe parseDouble next
+
+public export
+Decode Bool where
+  decode = mapMaybe parseBool next
+    where parseBool : String -> Maybe Bool
+          parseBool "False" = Just False
+          parseBool "True"  = Just True
+          parseBool _       = Nothing
+
+public export
+Decode Nat where decode = mapMaybe parsePositive next
+
+public export
+Decode String where decode = next
+
+||| First, the number of elements is decoded, followed
+||| by a repeated application of the element Decoder.
+public export
+Decode a => Decode (List a) where
+  decode = decode >>= repeat decode
+```
+
+Now come the decoders for n-ary products.
+We can use `hcpure` and `hsequence` for this:
+
+```idris
+public export
+NP (Decode . f) ks => Decode (NP f ks) where
+  decode = hsequence $ hcpure (Decode . f) decode
+```
+
+For sums of products, we once again allow only sums representing
+product types (types with a single constructor). In this
+case we need to pattern match on the implicitly available `Decode` instances
+to make them available to the call to decode the inner `NP`
+value:
+
+```idris
+public export
+(decs : POP (Decode . f) kss) => SingletonList kss => Decode (SOP f kss) where
+  decode {decs = _ :: _} = map Z decode
+```
+
+And again, we provide a generic version of `decode`:
+
+```idris
+public export
+genDecode :  Generic t code
+          => POP Decode code
+          => SingletonList code
+          => Parser t
+genDecode = map to decode
+```
+
+Finally, the necessary reflection code:
+
+```idris
+public export
+mkDecode : Parser t -> Decode t
+mkDecode = %runElab check (var $ singleCon "Decode")
+
+||| Derives a `Decode` implementation for the given data type
+||| and visibility.
+export
+DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
+DecodeVis vis g = MkInterfaceImpl "Decode" vis []
+                       `(mkDecode genDecode)
+                       (implementationType `(Decode) g)
+
+||| Alias for `DecodeVis Public`.
+export
+Decode' : DeriveUtil -> InterfaceImpl
+Decode' = DecodeVis Public
+```
+
+Let's decode us some dragons:
+
+```idris
+%runElab derive "Spell" [Decode']
+
+%runElab derive "Dragon" [Decode']
+```
+
+In order to play around with this in the REPL, we need access
+to a dragon:
+
+```idris
+public export
+gorgar : Dragon
+gorgar = MkDragon "GORGAR" 15000 
+           [MkSpell 100 "Fireball", MkSpell 20 "Invisibility"]
+           ["Mail of Mithril", "1'000 gold coins"]
+
+export
+printGorgar : IO ()
+printGorgar = printLn $ encode gorgar
+
+export
+testDecodingGorgar : IO ()
+testDecodingGorgar = printLn $ Right gorgar == parse decode (encode gorgar)
+```
+
+### Conclusion
+
+This post demonstrated the most important aspects of deriving
+interface implementations automatically from generic representations
+of data types as well as the most basic pieces of reflection
+code necessary to make intefaces available to `derive`.
+For a much more thorough introduction to concepts and code
+behinde `derive`, see the tutorials on *Generic* at
+the [idris2-elab-util](https://github.com/stefan-hoeck/idris2-elab-util)
+package.
