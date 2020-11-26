@@ -1,4 +1,4 @@
-## Barbies : Types that can change their Clothes
+## Barbies : Data Types that can change their Clothes
 
 Before we continue with generic representations of data types,
 I'd like to give a proper introduction to the higher-kinded version
