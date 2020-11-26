@@ -1,6 +1,6 @@
 ## Deriving Interface Implementations
 
-A lot of ink has alreday been spilled over how we can use
+A lot of ink has already been spilled over how we can use
 generic representations to automatically derive interface
 implementations, and I wrote several lengthy posts
 about this topic for the
@@ -466,6 +466,6 @@ interface implementations automatically from generic representations
 of data types as well as the most basic pieces of reflection
 code necessary to make intefaces available to `derive`.
 For a much more thorough introduction to the concepts and code
-behinde `derive`, see the tutorials on *Generics* at
+behind `derive`, see the tutorials on *Generics* at
 the [idris2-elab-util](https://github.com/stefan-hoeck/idris2-elab-util)
 package.
