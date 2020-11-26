@@ -8,3 +8,4 @@ depends    = base, sop, elab-util
 
 modules = Doc.Intro
         , Doc.Barbies
+        , Doc.Deriving
