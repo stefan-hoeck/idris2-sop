@@ -4,7 +4,7 @@ import public Generics.SOP
 
 import Decidable.Equality
 
-import Language.Reflection.Derive
+import public Language.Reflection.Derive
 
 %language ElabReflection
 
