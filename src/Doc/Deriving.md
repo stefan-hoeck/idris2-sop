@@ -2,12 +2,14 @@
 
 A lot of ink has alreday been spilled over how we can use
 generic representations to automatically derive interface
-implementations, and I worte several lengthy posts
+implementations, and I wrote several lengthy posts
 about this topic for the
 [idris2-elab-util](https://github.com/stefan-hoeck/idris2-elab-util)
 package. Therefore, in this post, I'll only give examples about
 how this library can be used to derive interface implementations
-for a large group of data types automatically.
+for a large group of data types automatically, without
+going into the details about the underlying metaprogramming
+machinery.
 
 We start with the necessary imports and language extensions:
 
@@ -142,20 +144,23 @@ data Treasure : Type where
 %runElab derive "Treasure" [Generic, Eq, Ord, DecEq]
 ```
 
-### Deriving your own Interfaces
+### Deriving Implementations for your own Interfaces
 
-As an example, in this part we are going to implement basic interfaces
-to encode and decode values from a list of string tokens. These tokens
-could for instance be the fields on a single line of a .csv file.
+As a fully worked out example, in this part we are going to
+implement basic interfaces
+for encoding and decoding values to and from lists of string tokens.
+These tokens could for instance represent the fields on a single line
+of a .csv file.
 
-To keep things simple, we quickly write our own parser for string tokens.
+To keep things simple, we quickly write our own very basic
+parser type.
 
 #### A Simple Parser for Decoding Lists of Strings
 
 ```idris
 ||| Tries to convert parts of a list of string tokens
 ||| returning either the result plus the remainder
-||| of the list or the remainder of he list at which parsing failed.
+||| of the list or the remainder of the list where parsing failed.
 public export
 record Parser (t : Type) where
   constructor MkParser 
@@ -187,21 +192,29 @@ Alternative Parser where
                                    Left _ => p2.run ts
                                    res    => res
 
+||| Returns the next string token, failing if
+||| the list of tokens is empty.
 public export
 next : Parser String
 next = MkParser \ts => case ts of
                             []     => Left []
                             (h::t) => Right (h,t)
 
+||| Maps a partial function over the result
+||| of a parser. This fails, if the function returns
+||| `Nothing`-
 public export
 mapMaybe : (a -> Maybe b) -> Parser a -> Parser b
 mapMaybe f = (>>= maybe empty pure . f)
 
+||| Tries to parse the given number of values.
 public export
 repeat : Parser a -> Nat -> Parser (List a)
 repeat _ 0     = pure []
 repeat p (S n) = [| p :: repeat p n |]
 
+||| Runs a parser against a list of string tokens.
+||| Fails if not the whole list is consumed.
 public export
 parse : Parser t -> List String -> Either (List String) t
 parse p ts = case p.run ts of
@@ -210,7 +223,7 @@ parse p ts = case p.run ts of
                   Left ts      => Left ts
 ```
 
-#### Generically derivide Encoders
+#### Generically derived Encoders
 
 Next, we provide some primitives for encoding values to
 lists of string tokens:
@@ -245,7 +258,7 @@ Encode a => Encode (List a) where
 Now, we need an instance for products. As a prerequisite, we
 require every element in an n-ary product to have an
 instance of `Encode`. We can use an implicit value of
-type `NP (Encode . f) ks` to encode this prerequisite.
+type `NP (Encode . f) ks` to formulate this prerequisite.
 This allows us to either implement `encode` by pattern matching
 on the product we'd like to encode or by using some
 of the combinators provided by this library. `hcmap` followed
@@ -284,6 +297,9 @@ genEncode :  Generic t code
 genEncode = encode . from
 ```
 
+Just as we like it: The type declaration takes up far more space
+than the actual implementation. :-)
+
 With this, we can already write derived implementations manually:
 
 ```idris
@@ -297,17 +313,16 @@ encodeSpellTest = Refl
 ```
 
 In order to make the interface available to function `derive`,
-we have to write a minimal amount of elaborator reflection code:
+we have to write a minimal amount of reflection code:
 
 ```idris
 ||| It is important that this is publicly exported, in case
-||| we later on want to proof the interface's implementation
-||| to be correct.
+||| we later on want to proof the correctnes of implementations.
 public export
 mkEncode : (t -> List String) -> Encode t
 mkEncode = %runElab check (var $ singleCon "Encode")
 
-||| Derives a `Encode` implementation for the given data type
+||| Derives an `Encode` implementation for the given data type
 ||| and visibility.
 export
 EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
@@ -327,7 +342,7 @@ Let's encode us some dragons:
 %runElab derive "Dragon" [Encode']
 ```
 
-#### Generically derivide Decoders
+#### Generically derived Decoders
 
 Deriving decoders is only slightly more involved. First, we
 need again some primitives:
@@ -374,9 +389,9 @@ NP (Decode . f) ks => Decode (NP f ks) where
 ```
 
 For sums of products, we once again allow only sums representing
-product types (types with a single constructor). In this
+types with a single constructor. In this
 case we need to pattern match on the implicitly available `Decode` instances
-to make them available to the call to decode the inner `NP`
+to make them available when decoding the inner `NP`
 value:
 
 ```idris
@@ -450,7 +465,7 @@ This post demonstrated the most important aspects of deriving
 interface implementations automatically from generic representations
 of data types as well as the most basic pieces of reflection
 code necessary to make intefaces available to `derive`.
-For a much more thorough introduction to concepts and code
-behinde `derive`, see the tutorials on *Generic* at
+For a much more thorough introduction to the concepts and code
+behinde `derive`, see the tutorials on *Generics* at
 the [idris2-elab-util](https://github.com/stefan-hoeck/idris2-elab-util)
 package.
