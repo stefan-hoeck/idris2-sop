@@ -95,15 +95,13 @@ Generic = GenericVis Public
 --          Eq
 --------------------------------------------------------------------------------
 
-private
-mkEq : TTImp
-mkEq = var (singleCon "Eq") .$ `(genEq) .$ `(\a,b => not (a == b))
-
 ||| Derives an `Eq` implementation for the given data type
 ||| and visibility.
 export
 EqVis : Visibility -> DeriveUtil -> InterfaceImpl
-EqVis vis g = MkInterfaceImpl "Eq" vis [] mkEq (implementationType `(Eq) g)
+EqVis vis g = MkInterfaceImpl "Eq" vis []
+                `(mkEq genEq)
+                (implementationType `(Eq) g)
 
 ||| Alias for `EqVis Public`.
 export
@@ -114,28 +112,13 @@ Eq = EqVis Public
 --          Ord
 --------------------------------------------------------------------------------
 
-private
-mkOrd : Name
-mkOrd = singleCon "Ord"
-
-private
-ordFunctions : List TTImp
-ordFunctions = [ `(genCompare)
-               , `(\a,b => compare a b == LT)
-               , `(\a,b => compare a b == GT)
-               , `(\a,b => compare a b /= GT)
-               , `(\a,b => compare a b /= LT)
-               , `(\a,b => if compare a b == GT then a else b)
-               , `(\a,b => if compare a b == LT then a else b)
-               ]
-
 ||| Derives an `Ord` implementation for the given data type
 ||| and visibility.
 export
 OrdVis : Visibility -> DeriveUtil -> InterfaceImpl
-OrdVis vis g = let eq   = var $ implName g "Eq"
-                   impl = appAll mkOrd (eq :: ordFunctions)
-                in MkInterfaceImpl "Ord" vis [] impl (implementationType `(Ord) g)
+OrdVis vis g = MkInterfaceImpl "Ord" vis []
+                 `(mkOrd genCompare)
+                 (implementationType `(Ord) g)
 
 ||| Alias for `OrdVis Public`
 export
@@ -146,15 +129,13 @@ Ord = OrdVis Public
 --          DecEq
 --------------------------------------------------------------------------------
 
-private
-mkDecEq : TTImp
-mkDecEq = var (singleCon "DecEq") .$ `(genDecEq)
-
 ||| Derives a `DecEq` implementation for the given data type
 ||| and visibility.
 export
 DecEqVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecEqVis vis g = MkInterfaceImpl "DecEq" vis [] mkDecEq (implementationType `(DecEq) g)
+DecEqVis vis g = MkInterfaceImpl "DecEq" vis []
+                   `(mkDecEq genDecEq)
+                   (implementationType `(DecEq) g)
 
 ||| Alias for `EqVis Public`.
 export
