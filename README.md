@@ -29,6 +29,8 @@ module README
 
 import Generics.Derive
 
+%language ElabReflection
+
 record Employee where
   constructor MkEmployee
   name       : String
@@ -36,7 +38,7 @@ record Employee where
   salary     : Double
   supervisor : Maybe Employee
 
-%runElab derive "Employee" [Generic, Eq, Ord, DecEq]
+%runElab derive "Employee" [Generic, Eq, Ord]
 ```
 
 ## Documentation
