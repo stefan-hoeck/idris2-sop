@@ -98,6 +98,24 @@ public export
   compare {all = _::_} (Z _)  (S _)  = LT
   compare {all = _::_} (S _)  (Z _)  = GT
 
+||| Sums of products have instances of `Semigroup` and `Monoid`
+||| only when they consist of a single choice, which must itself be
+||| a `Semigroup` or `Monoid`.
+public export
+(all : POP (Semigroup . f) kss) =>
+(prf : SingletonList kss) => Semigroup (SOP' k f kss) where
+  (<+>) {all = _ :: _} {prf = IsSingletonList _} (Z l) (Z r) = Z $ l <+> r
+  (<+>) {all = _ :: _} {prf = IsSingletonList _} (S _) _    impossible
+  (<+>) {all = _ :: _} {prf = IsSingletonList _} _    (S _) impossible
+
+||| Sums of products have instances of `Semigroup` and `Monoid`
+||| only when they consist of a single choice, which must itself be
+||| a `Semigroup` or `Monoid`.
+public export
+(all : POP (Monoid . f) kss) =>
+(prf : SingletonList kss) => Monoid (SOP' k f kss) where
+  neutral {all = _ :: _} {prf = IsSingletonList _} = Z neutral
+
 public export
 Uninhabited (Data.SOP.SOP.Z x = Data.SOP.SOP.S y) where
   uninhabited Refl impossible

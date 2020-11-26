@@ -62,6 +62,21 @@ genDecEq x y = case decEq (from x) (from y) of
                     (Yes prf)   => Yes $ fromInjective x y prf
                     (No contra) => No \h => contra (cong from h)
 
+||| Default `(<+>)` implementation for data types with a `Generic`
+||| instance.
+public export
+genAppend :  Generic t code
+          => POP Semigroup code
+          => SingletonList code
+          => t -> t -> t
+genAppend x y = to $ from x <+> from y
+
+||| Default `neutral` implementation for data types with a `Generic`
+||| instance.
+public export
+genNeutral :  Generic t code => POP Monoid code => SingletonList code => t
+genNeutral = to neutral
+
 --------------------------------------------------------------------------------
 --          Prelude Implementations
 --------------------------------------------------------------------------------

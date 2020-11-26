@@ -141,3 +141,37 @@ DecEqVis vis g = MkInterfaceImpl "DecEq" vis []
 export
 DecEq : DeriveUtil -> InterfaceImpl
 DecEq = DecEqVis Public
+
+--------------------------------------------------------------------------------
+--          Semigroup
+--------------------------------------------------------------------------------
+
+||| Derives a `Semigroup` implementation for the given data type
+||| and visibility.
+export
+SemigroupVis : Visibility -> DeriveUtil -> InterfaceImpl
+SemigroupVis vis g = MkInterfaceImpl "Semigroup" vis []
+                       `(mkSemigroup genAppend)
+                       (implementationType `(Semigroup) g)
+
+||| Alias for `SemigroupVis Public`.
+export
+Semigroup : DeriveUtil -> InterfaceImpl
+Semigroup = SemigroupVis Public
+
+--------------------------------------------------------------------------------
+--          Monoid
+--------------------------------------------------------------------------------
+
+||| Derives a `Monoid` implementation for the given data type
+||| and visibility.
+export
+MonoidVis : Visibility -> DeriveUtil -> InterfaceImpl
+MonoidVis vis g = MkInterfaceImpl "Monoid" vis []
+                       `(mkMonoid genNeutral)
+                       (implementationType `(Monoid) g)
+
+||| Alias for `MonoidVis Public`.
+export
+Monoid : DeriveUtil -> InterfaceImpl
+Monoid = MonoidVis Public
