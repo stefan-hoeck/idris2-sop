@@ -16,5 +16,6 @@ modules = Data.SOP
         , Data.SOP.SOP
         , Data.SOP.Utils
 
-        , Generics.SOP
         , Generics.Derive
+        , Generics.Meta
+        , Generics.SOP
