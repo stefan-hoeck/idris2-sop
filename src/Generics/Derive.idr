@@ -2,7 +2,7 @@ module Generics.Derive
 
 import public Generics.SOP
 
-import Decidable.Equality
+import public Decidable.Equality
 
 import public Language.Reflection.Derive
 
