@@ -1,6 +1,7 @@
 module Generics.Derive
 
 import public Generics.SOP
+import public Generics.Meta
 
 import public Decidable.Equality
 
@@ -92,6 +93,72 @@ GenericVis vis g =
 export
 Generic : DeriveUtil -> InterfaceImpl
 Generic = GenericVis Public
+
+--------------------------------------------------------------------------------
+--          Meta
+--------------------------------------------------------------------------------
+
+-- a string constant
+private
+str : String -> TTImp
+str = primVal . Str
+
+-- an int constant
+private
+int : Int -> TTImp
+int = primVal . I
+
+-- creates a NSName's TTImp from a namespaced name
+-- otherwise uses an empty namespace
+private
+nsNameTTImp : Name -> TTImp
+nsNameTTImp (NS (MkNS ss) (UN s)) = let ss' = listOf $ map str ss
+                                     in `(MkNSName) .$ ss' .$ str s
+nsNameTTImp n                     = ?res
+
+-- creates an ArgName's TTImp from an argument's index and name
+private
+argNameTTImp : (Int,Name) -> TTImp
+argNameTTImp (k, UN n) = `(NamedArg)   .$ int k .$ str n
+argNameTTImp (k, _)    = `(UnnamedArg) .$ int k
+
+-- creates a ConInfo's TTImp from a `ParamCon`.
+-- returns a Left, if the `ParamCon's` name is not fully
+-- qualified
+private
+conTTImp : ParamCon -> TTImp
+conTTImp (MkParamCon n args) =
+  let np = listOf $ map argNameTTImp (zipWithIndex $ map name args)
+   in `(ConInfo) .$ nsNameTTImp n .$ np
+
+private
+tiTTImp : ParamTypeInfo -> TTImp
+tiTTImp (MkParamTypeInfo n _ cons) =
+  let nps     = map conTTImp cons
+   in `(MkTypeInfo) .$ nsNameTTImp n .$ listOf nps
+
+||| Creates a `Meta` value from the passed `TypeInfo`
+public export %inline
+mkMeta' : (1 _ : Generic t code) -> TypeInfo Type code -> Meta t code
+mkMeta' = %runElab check (var $ singleCon "Meta")
+
+||| Creates a `Meta` value from the passed `TypeInfo`
+public export %inline
+mkMeta : (1 prf : Generic t code) => TypeInfo Type code -> Meta t code
+mkMeta = mkMeta' prf
+
+||| Derives a `Generic` implementation for the given data type
+||| and visibility.
+export
+MetaVis : Visibility -> DeriveUtil -> InterfaceImpl
+MetaVis vis g =
+  let genType  = `(Meta) .$ g.appliedType .$ mkCode g.typeInfo
+      funType  = piAllImplicit  genType g.paramNames
+
+      impl     = `(mkMeta) .$ tiTTImp g.typeInfo
+
+   in MkInterfaceImpl "Meta" vis [] impl funType
+
 
 --------------------------------------------------------------------------------
 --          Eq
