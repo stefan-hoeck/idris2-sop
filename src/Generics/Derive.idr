@@ -2,7 +2,6 @@ module Generics.Derive
 
 import public Generics.SOP
 import public Generics.Meta
-
 import public Decidable.Equality
 
 import public Language.Reflection.Derive
@@ -114,7 +113,8 @@ private
 nsNameTTImp : Name -> TTImp
 nsNameTTImp (NS (MkNS ss) (UN s)) = let ss' = listOf $ map str ss
                                      in `(MkNSName) .$ ss' .$ str s
-nsNameTTImp n                     = ?res
+nsNameTTImp n                     = let s = str $ nameStr n
+                                     in `(MkNSName []) .$ s
 
 -- creates an ArgName's TTImp from an argument's index and name
 private
@@ -123,8 +123,6 @@ argNameTTImp (k, UN n) = `(NamedArg)   .$ int k .$ str n
 argNameTTImp (k, _)    = `(UnnamedArg) .$ int k
 
 -- creates a ConInfo's TTImp from a `ParamCon`.
--- returns a Left, if the `ParamCon's` name is not fully
--- qualified
 private
 conTTImp : ParamCon -> TTImp
 conTTImp (MkParamCon n args) =
@@ -147,7 +145,7 @@ public export %inline
 mkMeta : (1 prf : Generic t code) => TypeInfo Type code -> Meta t code
 mkMeta = mkMeta' prf
 
-||| Derives a `Generic` implementation for the given data type
+||| Derives a `Meta` implementation for the given data type
 ||| and visibility.
 export
 MetaVis : Visibility -> DeriveUtil -> InterfaceImpl
@@ -159,6 +157,10 @@ MetaVis vis g =
 
    in MkInterfaceImpl "Meta" vis [] impl funType
 
+||| Alias for `EqVis Public`.
+export
+Meta : DeriveUtil -> InterfaceImpl
+Meta = MetaVis Public
 
 --------------------------------------------------------------------------------
 --          Eq
@@ -244,3 +246,20 @@ MonoidVis vis g = MkInterfaceImpl "Monoid" vis []
 export
 Monoid : DeriveUtil -> InterfaceImpl
 Monoid = MonoidVis Public
+
+--------------------------------------------------------------------------------
+--          Show
+--------------------------------------------------------------------------------
+
+||| Derives a `Show` implementation for the given data type
+||| and visibility.
+export
+ShowVis : Visibility -> DeriveUtil -> InterfaceImpl
+ShowVis vis g = MkInterfaceImpl "Show" vis []
+                  `(mkShow genShow)
+                  (implementationType `(Show) g)
+
+||| Alias for `ShowVis Public`.
+export
+Show : DeriveUtil -> InterfaceImpl
+Show = ShowVis Public

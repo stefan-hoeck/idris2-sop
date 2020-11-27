@@ -54,14 +54,20 @@ metaFor t = meta {t = t}
 --------------------------------------------------------------------------------
 
 showCon : NP (Show . f) ks => (p : Prec) -> ConInfo k ks -> NP f ks -> String
-showCon p info args = showCon p conName argStr
-  where conName : String
-        conName = let con = info.conName.con
-                   in if isOperator info.conName then "(" ++ con ++ ")" else con
+showCon p info args = showCon p con argStr
+  where con : String
+        con = let con = info.conName.con
+               in if isOperator info.conName then "(" ++ con ++ ")" else con
 
         argStr : String
         argStr = hconcat $ hcmap (Show . f) showArg args
 
-showValue : (all : POP (Show . f) kss) => Prec -> TypeInfo k kss -> SOP f kss -> String
+showValue :  (all : POP (Show . f) kss)
+          => Prec -> TypeInfo k kss -> SOP f kss -> String
 showValue {all = MkPOP _} p (MkTypeInfo _ cons) =
   hconcat . hcliftA2 (NP $ Show . f) (showCon p) cons . unSOP
+
+
+public export
+genShow : Meta t code => POP Show code => Prec -> t -> String
+genShow p v = showValue p (metaFor t) (from v)
