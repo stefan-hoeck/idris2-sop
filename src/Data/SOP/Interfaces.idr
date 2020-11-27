@@ -37,7 +37,7 @@ import Data.SOP.Utils
 %inline
 public export
 HCont : (k : Type) -> (l : Type) -> Type
-HCont k l = (0 _ : k -> Type) -> (0 _ : l) -> Type
+HCont k l = (k -> Type) -> l -> Type
 
 --------------------------------------------------------------------------------
 --          HPure

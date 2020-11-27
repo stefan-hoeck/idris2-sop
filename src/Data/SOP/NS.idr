@@ -39,7 +39,7 @@ import Decidable.Equality
 ||| the (NS' Type I [Char,Bool]) (S $ Z False)
 ||| ```
 public export
-data NS' : (0 k : Type) -> (0 f : k -> Type) -> (0 ks : List k) -> Type where
+data NS' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
   Z : (v : f t)  -> NS' k f (t :: ks)
   S : NS' k f ks -> NS' k f (t :: ks)
 
@@ -47,7 +47,7 @@ data NS' : (0 k : Type) -> (0 f : k -> Type) -> (0 ks : List k) -> Type where
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
-NS : {0 k : Type} -> (0 f : k -> Type) -> (0 ks : List k) -> Type
+NS : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
 NS = NS' k
 
 --------------------------------------------------------------------------------
