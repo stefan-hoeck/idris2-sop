@@ -17,7 +17,6 @@ We start with the necessary imports and language extensions:
 module Doc.Deriving
 
 import Data.Strings
-import Decidable.Equality
 import Generics.Derive
 
 %language ElabReflection
@@ -281,7 +280,6 @@ as the one for `NP`.
 
 
 ```idris
-public export
 NP (Encode . f) ks => SingletonList ks => Encode (NS f ks) where
   encode = hconcat . hcmap (Encode . f) encode
 ```
@@ -294,7 +292,6 @@ public export
 POP (Encode . f) kss => Encode (POP f kss) where
   encode (MkPOP nps) = encode nps
   
-public export
 POP (Encode . f) kss => SingletonList kss => Encode (SOP f kss) where
   encode (MkSOP v) = encode v
 ```
@@ -306,7 +303,6 @@ for all possible fields of the sum.
 Next, we define a generic version of `encode`:
 
 ```idris
-public export
 genEncode :  Generic t code
           => POP Encode code
           => SingletonList code
@@ -341,14 +337,12 @@ mkEncode = %runElab check (var $ singleCon "Encode")
 
 ||| Derives an `Encode` implementation for the given data type
 ||| and visibility.
-export
 EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 EncodeVis vis g = MkInterfaceImpl "Encode" vis []
                        `(mkEncode genEncode)
                        (implementationType `(Encode) g)
 
 ||| Alias for `EncodeVis Public`.
-export
 Encode' : DeriveUtil -> InterfaceImpl
 Encode' = EncodeVis Public
 ```
@@ -412,7 +406,6 @@ to make it available when decoding the inner
 value:
 
 ```idris
-public export
 (decs : NP (Decode . f) ks) => SingletonList ks => Decode (NS f ks) where
   decode {decs = _ :: _ } = map Z decode
 ```
@@ -424,7 +417,6 @@ public export
 POP (Decode . f) kss => Decode (POP f kss) where
   decode = map MkPOP decode
   
-public export
 POP (Decode . f) kss => SingletonList kss => Decode (SOP f kss) where
   decode = map MkSOP decode
 ```
