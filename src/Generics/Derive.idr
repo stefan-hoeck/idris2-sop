@@ -28,8 +28,10 @@ mkGeneric = singleCon "Generic"
 -- constructor.
 private
 mkSOP : (k : Int) -> (args : List TTImp) -> TTImp
-mkSOP k args     = if k <= 0 then `(Z) .$ listOf args
-                             else `(S) .$ mkSOP (k-1) args
+mkSOP k args = `(MkSOP) .$ run k args
+where run : (n : Int) -> (as : List TTImp) -> TTImp
+      run n as     = if n <= 0 then `(Z) .$ listOf as
+                               else `(S) .$ run (n-1) as
 
 ||| Creates the syntax tree for the code of the given data type.
 ||| We export this since it might be useful elsewhere.

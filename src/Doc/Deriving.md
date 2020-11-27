@@ -268,18 +268,35 @@ by `hconcat` will do the job:
 public export
 NP (Encode . f) ks => Encode (NP f ks) where
   encode = hconcat . hcmap (Encode . f) encode
+
 ```
 
-We also need an instance for sums of products. In this case, we
-only want to allow sums consisting of a single choice. This
-can be done by using the `SingletonList` predicate from `Data.SOP.Utils`.
+The same goes for n-ary sums. Here, as a precodition, we only
+accept single constructor sums, otherwise we'd had
+to some encode the constructor as a prefix to the remainer
+of the list. This can be done by using the `SingletonList`
+predicate from `Data.SOP.Utils`.
 Otherwise, the implementation uses exactly the same combinators
 as the one for `NP`.
 
+
 ```idris
 public export
-POP (Encode . f) kss => SingletonList kss => Encode (SOP f kss) where
+NP (Encode . f) ks => SingletonList ks => Encode (NS f ks) where
   encode = hconcat . hcmap (Encode . f) encode
+```
+
+From the above, we can directly derive instances
+for products of products and sums of products.
+
+```idris
+public export
+POP (Encode . f) kss => Encode (POP f kss) where
+  encode (MkPOP nps) = encode nps
+  
+public export
+POP (Encode . f) kss => SingletonList kss => Encode (SOP f kss) where
+  encode (MkSOP v) = encode v
 ```
 
 Note that in the case of a sum type, we still need the corresponding
@@ -388,16 +405,28 @@ NP (Decode . f) ks => Decode (NP f ks) where
   decode = hsequence $ hcpure (Decode . f) decode
 ```
 
-For sums of products, we once again allow only sums representing
+For sums, we once again allow only sums representing
 types with a single constructor. In this
-case we need to pattern match on the implicitly available `Decode` instances
-to make them available when decoding the inner `NP`
+case we need to pattern match on the implicitly available `Decode` instance
+to make it available when decoding the inner
 value:
 
 ```idris
 public export
-(decs : POP (Decode . f) kss) => SingletonList kss => Decode (SOP f kss) where
-  decode {decs = _ :: _} = map Z decode
+(decs : NP (Decode . f) ks) => SingletonList ks => Decode (NS f ks) where
+  decode {decs = _ :: _ } = map Z decode
+```
+
+Finally, the trivial versions for `POP` and `SOP`:
+
+```idris
+public export
+POP (Decode . f) kss => Decode (POP f kss) where
+  decode = map MkPOP decode
+  
+public export
+POP (Decode . f) kss => SingletonList kss => Decode (SOP f kss) where
+  decode = map MkSOP decode
 ```
 
 And again, we provide a generic version of `decode`:

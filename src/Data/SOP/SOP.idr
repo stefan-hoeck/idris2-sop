@@ -1,6 +1,7 @@
 module Data.SOP.SOP
 
 import Data.SOP.NP
+import Data.SOP.NS
 import Data.SOP.POP
 import Data.SOP.Utils
 import Data.SOP.Interfaces
@@ -23,8 +24,7 @@ import Decidable.Equality
 ||| represents the arguments of each constructor.
 public export
 data SOP' : (k : Type) -> (f : k -> Type) -> (kss : List $ List k) -> Type where
-  Z : (vs : NP' k f ks)  -> SOP' k f (ks :: kss)
-  S : SOP' k f kss -> SOP' k f (ks :: kss)
+  MkSOP : NS' (List k) (NP' k f) kss -> SOP' k f kss
 
 ||| Type alias for `SOP'` with type parameter `k` being
 ||| implicit. This reflects the kind-polymorphic data type
@@ -33,6 +33,10 @@ public export
 SOP : {k : Type} -> (f : k -> Type) -> (kss : List (List k)) -> Type
 SOP = SOP' k
 
+public export %inline
+unSOP : SOP' k f kss -> NS' (List k) (NP' k f) kss
+unSOP (MkSOP ns) = ns
+
 --------------------------------------------------------------------------------
 --          Specialized Interface Functions
 --------------------------------------------------------------------------------
@@ -40,32 +44,29 @@ SOP = SOP' k
 ||| Specialiced version of `hmap`
 public export
 mapSOP : (fun : forall a . f a -> g a) -> SOP f kss -> SOP g kss
-mapSOP fun (Z vs) = Z $ mapNP fun vs
-mapSOP fun (S x)  = S $ mapSOP fun x
-
-||| Specialization of `hfoldl`
-public export
-foldlSOP : (fun : acc -> elem -> acc) -> acc -> SOP (K elem) kss -> acc
-foldlSOP fun acc (Z vs) = foldlNP fun acc vs
-foldlSOP fun acc (S x)  = foldlSOP fun acc x
-
-||| Specialization of `hfoldr`
-public export %inline
-foldrSOP : (fun : elem -> acc -> acc) -> acc -> SOP (K elem) kss -> acc
-foldrSOP fun acc (Z vs) = foldrNP fun acc vs
-foldrSOP fun acc (S x)  = foldrSOP fun acc x
-
-||| Specialization of `hsequence`
-public export
-sequenceSOP : Applicative g => SOP (\a => g (f a)) kss -> g (SOP f kss)
-sequenceSOP (Z vs) = Z <$> sequenceNP vs
-sequenceSOP (S x)  = S <$> sequenceSOP x
+mapSOP fun = MkSOP . mapNS (\p => mapNP fun p) . unSOP
 
 ||| Specialization of `hap`
 public export
 hapSOP : POP (\a => f a -> g a) kss -> SOP f kss -> SOP g kss
-hapSOP (funs :: _)     (Z vs) = Z $ hapNP funs vs
-hapSOP (_    :: funss) (S y)  = S $ hapSOP funss y
+hapSOP (MkPOP fs) = MkSOP . hliftA2 (\p => hapNP p) fs . unSOP
+
+||| Specialization of `hfoldl`
+public export
+foldlSOP : (fun : acc -> elem -> acc) -> acc -> SOP (K elem) kss -> acc
+foldlSOP fun acc (MkSOP $ Z vs) = foldlNP fun acc vs
+foldlSOP fun acc (MkSOP $ S x)  = foldlSOP fun acc (MkSOP x)
+
+||| Specialization of `hfoldr`
+public export %inline
+foldrSOP : (fun : elem -> acc -> acc) -> acc -> SOP (K elem) kss -> acc
+foldrSOP fun acc (MkSOP $ Z vs) = foldrNP fun acc vs
+foldrSOP fun acc (MkSOP $ S x)  = foldrSOP fun acc (MkSOP x)
+
+||| Specialization of `hsequence`
+public export
+sequenceSOP : Applicative g => SOP (\a => g (f a)) kss -> g (SOP f kss)
+sequenceSOP = map MkSOP . sequenceNS . mapNS (\p => sequenceNP p) . unSOP
 
 --------------------------------------------------------------------------------
 --          Implementations
@@ -86,59 +87,35 @@ public export
 HSequence k (List $ List k) (SOP' k) where hsequence = sequenceSOP
 
 public export
-(all : POP (Eq . f) kss) => Eq (SOP' k f kss) where
-  (==) {all = _::_} (Z vs) (Z ws) = vs == ws
-  (==) {all = _::_} (S x)  (S y)  = x  == y
-  (==) {all = _::_} _      _      = False
+POP (Eq . f) kss => Eq (SOP' k f kss) where
+  MkSOP a == MkSOP b = a == b
 
 public export
-(all : POP (Ord . f) kss) => Ord (SOP' k f kss) where
-  compare {all = _::_} (Z vs) (Z ws) = compare vs ws
-  compare {all = _::_} (S x)  (S y)  = compare x y
-  compare {all = _::_} (Z _)  (S _)  = LT
-  compare {all = _::_} (S _)  (Z _)  = GT
+POP (Ord . f) kss => Ord (SOP' k f kss) where
+  compare (MkSOP a) (MkSOP b) = compare a b
 
 ||| Sums of products have instances of `Semigroup` and `Monoid`
 ||| only when they consist of a single choice, which must itself be
 ||| a `Semigroup` or `Monoid`.
 public export
-(all : POP (Semigroup . f) kss) =>
-(prf : SingletonList kss) => Semigroup (SOP' k f kss) where
-  (<+>) {all = _ :: _} {prf = IsSingletonList _} (Z l) (Z r) = Z $ l <+> r
-  (<+>) {all = _ :: _} {prf = IsSingletonList _} (S _) _    impossible
-  (<+>) {all = _ :: _} {prf = IsSingletonList _} _    (S _) impossible
+POP (Semigroup . f) kss =>
+SingletonList kss       => Semigroup (SOP' k f kss) where
+  MkSOP a <+> MkSOP b = MkSOP $ a <+> b
 
 ||| Sums of products have instances of `Semigroup` and `Monoid`
 ||| only when they consist of a single choice, which must itself be
 ||| a `Semigroup` or `Monoid`.
 public export
-(all : POP (Monoid . f) kss) =>
-(prf : SingletonList kss) => Monoid (SOP' k f kss) where
-  neutral {all = _ :: _} {prf = IsSingletonList _} = Z neutral
-
-public export
-Uninhabited (Data.SOP.SOP.Z x = Data.SOP.SOP.S y) where
-  uninhabited Refl impossible
-
-public export
-Uninhabited (Data.SOP.SOP.S x = Data.SOP.SOP.Z y) where
-  uninhabited Refl impossible
+POP (Monoid . f) kss =>
+SingletonList kss    => Monoid (SOP' k f kss) where
+  neutral = MkSOP neutral
 
 private
-zInjective : Data.SOP.SOP.Z x = Data.SOP.SOP.Z y -> x = y
-zInjective Refl = Refl
-
-private
-sInjective : Data.SOP.SOP.S x = Data.SOP.SOP.S y -> x = y
-sInjective Refl = Refl
+mkSOPInjective : MkSOP a = MkSOP b -> a = b
+mkSOPInjective Refl = Refl
 
 public export
-(all : POP (DecEq . f) kss) => DecEq (SOP' k f kss) where
-  decEq {all = _::_} (Z xs) (Z ys) with (decEq xs ys)
-    decEq {all = _::_} (Z xs) (Z xs) | Yes Refl = Yes Refl
-    decEq {all = _::_} (Z xs) (Z ys) | No contra = No (contra . zInjective)
-  decEq {all = _::_} (Z xs) (S y) = No absurd
-  decEq {all = _::_} (S x) (Z ys) = No absurd
-  decEq {all = _::_} (S x) (S y) with (decEq x y)
-    decEq {all = _::_} (S x) (S x) | Yes Refl = Yes Refl
-    decEq {all = _::_} (S x) (S y) | No contra = No (contra . sInjective)
+POP (DecEq . f) kss => DecEq (SOP' k f kss) where
+  decEq (MkSOP a) (MkSOP b) with (decEq a b)
+    decEq (MkSOP a) (MkSOP a) | Yes Refl   = Yes $ cong MkSOP Refl
+    decEq (MkSOP a) (MkSOP b) | No  contra = No (contra . mkSOPInjective)
