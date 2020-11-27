@@ -31,25 +31,22 @@ demon = Demon 530 120 [MkSpell 20 "Disintegrate"]
 ```
 
 ```idris
-encodeSOP :  (all : POP' k (Encode . f) kss)
-          => TypeInfo k kss -> SOP' k f kss -> List String
-encodeSOP {all = MkPOP _} (MkTypeInfo _ cons) (MkSOP ns) =
-  hconcat $ hcliftA2 (Encode . NP' k f) doEncode cons ns
-    where doEncode :  Encode (NP' k f ks)
-                   => ConInfo k ks -> NP' k f ks -> List String
-          doEncode ci np = ci.conName.con :: encode np
+encodeCon : Encode (NP f ks) => ConInfo k ks -> NP f ks -> List String
+encodeCon ci np = ci.conName.con :: encode np
+
+encodeSOP :  (all : POP (Encode . f) kss)
+          => TypeInfo k kss -> SOP f kss -> List String
+encodeSOP {all = MkPOP _} (MkTypeInfo _ cons) =
+  hconcat . hcliftA2 (Encode . NP f) encodeCon cons . unSOP
 
 genEncode : Meta t code => POP Encode code => t -> List String
 genEncode = encodeSOP (metaFor t) . from
 
-||| Derives an `Encode` implementation for the given data type
-||| and visibility.
 EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 EncodeVis vis g = MkInterfaceImpl "Encode" vis []
                        `(mkEncode genEncode)
                        (implementationType `(Encode) g)
 
-||| Alias for `EncodeVis Public`.
 Encode' : DeriveUtil -> InterfaceImpl
 Encode' = EncodeVis Public
 

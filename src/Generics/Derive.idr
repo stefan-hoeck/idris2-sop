@@ -127,7 +127,7 @@ private
 conTTImp : ParamCon -> TTImp
 conTTImp (MkParamCon n args) =
   let np = listOf $ map argNameTTImp (zipWithIndex $ map name args)
-   in `(ConInfo) .$ nsNameTTImp n .$ np
+   in `(MkConInfo) .$ nsNameTTImp n .$ np
 
 private
 tiTTImp : ParamTypeInfo -> TTImp
@@ -256,7 +256,7 @@ Monoid = MonoidVis Public
 export
 ShowVis : Visibility -> DeriveUtil -> InterfaceImpl
 ShowVis vis g = MkInterfaceImpl "Show" vis []
-                  `(mkShow genShow)
+                  `(mkShowPrec genShow)
                   (implementationType `(Show) g)
 
 ||| Alias for `ShowVis Public`.
