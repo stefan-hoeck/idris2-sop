@@ -101,18 +101,24 @@ sequenceNP (v :: vs) = [| v :: sequenceNP vs |]
 --          Core Functions
 --------------------------------------------------------------------------------
 
+||| Returns the head of a non-empty n-ary product
 public export
 hd : NP f (k :: ks) -> f k
 hd (v :: _) = v
 
+||| Returns the tail of a non-empty n-ary product
 public export
 tl : NP f (k :: ks) -> NP f ks
 tl (_ :: vs) = vs
 
+||| A projection of an n-ary product p extracts the
+||| value of p at a certain position.
 public export
 Projection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
 Projection f ks v = NP f ks -> f v
 
+||| The set of projections of an n-ary product `NP f ks` can
+||| itself be wrapped in an n-ary product of the same shape.
 public export
 projections : {ks : _} -> NP (Projection f ks) ks
 projections {ks = []}       = []
