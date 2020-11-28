@@ -27,7 +27,8 @@ import Decidable.Equality
 ||| Note: `NP'` takes an additional type parameter `k` to simulate
 |||       Haskell's kind polymorphism. In theory, this could be left
 |||       as an implicit argument. However, type-inference when calling
-|||       interface functions like `hpure` was rather poor.
+|||       interface functions like `hpure` was rather poor with `k`
+|||       being implicit.
 |||
 |||       We therefore made `k` explicit and added a type alias `NP`
 |||       to be used in those occasions when `k` can be inferred.
@@ -294,11 +295,11 @@ HMapTest = Refl
 HCMapRes : NP (K String) [Char,Bool]
 HCMapRes = hcmap Show show Ex1
 
--- HPureTest : NP Maybe [String,Int]
--- HPureTest = hpure Nothing
---
--- CPureNeutralTest : NP I [String,String]
--- CPureNeutralTest = hcpure Monoid neutral
+HPureTest : NP Maybe [String,Int]
+HPureTest = hpure Nothing
+
+CPureNeutralTest : NP I [String,String]
+CPureNeutralTest = hcpure Monoid neutral
 
 Person : (f : Type -> Type) -> Type
 Person f = NP f [String,Int]
@@ -311,6 +312,9 @@ personShowValues = hcmap Show show
 
 emptyPerson : Person Maybe
 emptyPerson = hpure Nothing
+
+fooPerson : Person (K String)
+fooPerson = hconst "foo"
 
 Foo : (f : Type -> Type) -> Type
 Foo f = NP f [String,String,List Int]

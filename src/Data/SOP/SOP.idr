@@ -5,6 +5,7 @@ import Data.SOP.NS
 import Data.SOP.POP
 import Data.SOP.Utils
 import Data.SOP.Interfaces
+import Data.Maybe
 
 import Decidable.Equality
 
@@ -12,8 +13,6 @@ import Decidable.Equality
 
 ||| A sum of products.
 |||
-||| Unlike in the Haskell version, not using a Newtype here allows us
-||| to overload the costructor names of NS'.
 ||| The elements of the (inner) products
 ||| are applications of the parameter f. The type SOP' is indexed by the list of
 ||| lists that determines the sizes of both the (outer) sum and all the (inner)
@@ -119,3 +118,13 @@ POP (DecEq . f) kss => DecEq (SOP' k f kss) where
   decEq (MkSOP a) (MkSOP b) with (decEq a b)
     decEq (MkSOP a) (MkSOP a) | Yes Refl   = Yes $ cong MkSOP Refl
     decEq (MkSOP a) (MkSOP b) | No  contra = No (contra . mkSOPInjective)
+
+--------------------------------------------------------------------------------
+--          Examples and Tests
+--------------------------------------------------------------------------------
+
+neutralTest : SOP I [[String, Maybe Int],[()]] 
+neutralTest = hcpure Monoid neutral
+
+hapTest : SOP Maybe [[String,Int]] -> SOP I [[String,Int]]
+hapTest = hap (MkPOP $ [[fromMaybe "foo", const 12]])

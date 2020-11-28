@@ -9,7 +9,8 @@
 ||| of type `k` plus a type-level function `f` of type `k -> Type`.
 ||| The values of the container index together with `f` determine
 ||| the types of values at each position in the
-||| heterogeneous product or sum.
+||| heterogeneous product or sum, which the shape of container
+||| indices mirror the shape of the corresponding product types.
 ||| 
 ||| The interfaces in this module allow us to create
 ||| hetereogeneous containers from sufficiently general functions
@@ -25,15 +26,26 @@
 ||| while all other arguments have to be product types.
 ||| This makes sense, since when combining values of two sum types,
 ||| we typically cannot guarantee that the values point at
-||| same choice.
+||| same choice and are therefore compatible.
+|||
+||| Implementation notes:
+|||
+||| For many of the functions in this module, there is a constrained
+||| version taking an implicit heterogeneous product holding
+||| the desired implementations. Since Idris2 uses the same
+||| mechanisms for resolving interface constraints and auto implicits,
+||| we do not need an additional structure for these constraints.
+||| The disadvantage of this is, that we more often have to explicitly
+||| pattern match on these constraint products in order for Idris2
+||| to know where to look for implementations.
 module Data.SOP.Interfaces
 
 import Data.SOP.Utils
 
 %default total
 
-||| A heterogeneous container indexed over a container `l`
-||| of values of type `k`.
+||| A heterogeneous container indexed over a container type `l`
+||| holding values of type `k`.
 %inline
 public export
 HCont : (k : Type) -> (l : Type) -> Type
@@ -44,7 +56,7 @@ HCont k l = (k -> Type) -> l -> Type
 --------------------------------------------------------------------------------
 
 ||| This interface allows a heterogenous product to be filled
-||| with values, given functions which produce values of
+||| with values, given a function which produce values of
 ||| every possible type required.
 |||
 ||| @ k kind of Types in a heterogeneous container's  type level code
@@ -55,8 +67,9 @@ HCont k l = (k -> Type) -> l -> Type
 ||| @ p the heterogeneous product
 public export
 interface HPure k l (p : HCont k l) | p where
-  ||| Creates a heterogeneous product by generating values
-  ||| using the given function.
+
+  ||| Creates a heterogeneous product by using the given functio
+  ||| to produce values.
   |||
   ||| ```idris example
   ||| Person : (f : Type -> Type) -> Type
@@ -65,15 +78,32 @@ interface HPure k l (p : HCont k l) | p where
   ||| emptyPerson : Person Maybe
   ||| emptyPerson = hpure Nothing
   ||| ```
-  hpure : {0 f : k -> Type} -> {ks : l} -> (forall a . f a) -> p f ks
+  hpure :  {0 f : k -> Type} -> {ks : l}
+        -> (forall a . f a) -> p f ks
 
 ||| Alias for `hpure empty`.
+|||
+||| ```idris example
+||| Person : (f : Type -> Type) -> Type
+||| Person f = NP f [String,Int]
+|||
+||| emptyPerson : Person Maybe
+||| emptyPerson = empty
+||| ```
 public export
 hempty : {ks : _} -> Alternative f => HPure Type l p => p f ks
 hempty = hpure empty
 
 ||| Fills a heterogeneous structure with a constant value
 ||| in the (K a) functor.
+|||
+||| ```idris example
+||| Person : (f : Type -> Type) -> Type
+||| Person f = NP f [String,Int]
+|||
+||| fooPerson : Person (K String)
+||| fooPerson = hconst "foo"
+||| ```
 public export
 hconst : {ks : _} -> HPure k l p => (v : a) -> p (K a) ks
 hconst v = hpure v
@@ -84,7 +114,7 @@ hconst v = hpure v
 --------------------------------------------------------------------------------
 
 ||| A higher kinded functor allowing us to change the
-||| wrapper type of an n-ary sum or product.
+||| wrapper type or context of an n-ary sum or product.
 |||
 ||| @ k kind of Types in a heterogeneous container's  type level code
 |||
@@ -92,18 +122,16 @@ hconst v = hpure v
 |||     level code
 |||
 ||| @ p the actual heterogeneous container
-|||
-||| ```idris example
-||| HFunctor k (List k) (NP' k) where
-||| ```
 public export
 interface HFunctor k l (p : HCont k l) | p where
+
   ||| Maps the given function over all values in a
-  ||| heterogeneous container, thus changing the wrappers
+  ||| heterogeneous container, thus changing the context
   ||| of all of its values.
   |||
-  ||| @ fun maps all values in a heterogeneous container to
-  |||       a new context
+  ||| @ fun maps values in a heterogeneous container to a new context
+  |||
+  ||| @ p   the heterogeneous container, over which `fun` is mapped.
   |||
   ||| ```idris example
   ||| Person : (f : Type -> Type) -> Type
@@ -125,23 +153,39 @@ hliftA = hmap
 
 ||| Like `hpure` but using a constrained function for
 ||| generating values. Since Idris is able to provide
-||| the constrained function
+||| the required constraints
 ||| already wrapped in a container of the correct
-||| shape, this is a derivative of `HFunctor` and not
-||| `HPure`.
+||| shape, this is actually a derivative of `HFunctor` and not
+||| `HPure`. This has interesting consequences for sum
+||| types, for which this function is available as well.
+||| Since Idris has to choose a value of the sum
+||| itself, it will use the first possibility it
+||| can fill with the requested constraints.
+|||
+||| In the first example below, Idris generates the value
+||| `MkSOP (Z ["","",[]])`. However, if the first choice does
+||| not have a Monoid instance, Idris faithfully chooses the
+||| next working possibility. In the second example,
+||| the result is `MkSOP (S (Z [[],[]]))`:
 |||
 ||| ```idris example
-||| Foo : (f : Type -> Type) -> Type
-||| Foo f = NP f [String,String,List Int]
-|||
-||| neutralFoo : Foo I
+||| neutralFoo : SOP I [[String,String,List Int],[Int]]
 ||| neutralFoo = hcpure Monoid neutral
+|||
+||| neutralBar : SOP I [[String,Int,List Int],[List String, List Int]]
+||| neutralBar = hcpure Monoid neutral
 ||| ```
+|||
+||| @ c   erased function argument to specify the constraint
+|||       to use
+|||
+||| @ fun generates values depending on the availability of
+|||       a constraint
 public export
 hcpure :  HFunctor k l p
        => (0 c : k -> Type)
        -> (cs : p c ks)
-       => (forall a . c a => f a)
+       => (fund : forall a . c a => f a)
        -> p f ks
 hcpure _ {cs} fun = hmap (\_ => fun) cs
 
@@ -152,10 +196,9 @@ hcpure _ {cs} fun = hmap (\_ => fun) cs
 ||| Like `Applicative`, this interface allows to
 ||| map arbitrary n-ary Rank-2 functions over
 ||| heterogeneous data structures of the same shape.
-||| However, in order to support product as well as sum types
-||| all arguments except the last one have to be product
-||| types indexed over the same container type as
-||| the actual sum or produc type.
+||| However, in order to support products as well as sum types
+||| all arguments except the last one have to be products
+||| indexed over the same container as the last argument.
 |||
 ||| @ k kind of Types in a heterogeneous container's  type level code
 |||
@@ -166,14 +209,25 @@ hcpure _ {cs} fun = hmap (\_ => fun) cs
 |||     this is the same as `p`, for sum types it is the corresponding
 |||     product type.
 |||
-||| @ p the actual heterogeneous container
+||| @ p the actual heterogeneous container (sum or product)
 public export
 interface HFunctor k l q => HFunctor k l p => HAp k l q p | p where
+
   ||| Higher kinded equivalent to `(<*>)`.
   |||
   ||| Applies wrapped functions in the product
   ||| container to the corresponding values in the
   ||| second container.
+  |||
+  ||| @ q product holding unary Rank-2 functions.
+  |||
+  ||| @ p sum or product to whose values the functions in `q` should
+  |||     be applied
+  |||
+  ||| ```idris example
+  ||| hapTest : SOP Maybe [[String,Int]] -> SOP I [[String,Int]]
+  ||| hapTest = hap (MkPOP $ [[fromMaybe "foo", const 12]])
+  ||| ```
   hap :  {0 f,g : k -> Type}
       -> {0 ks : l}
       -> q (\a => f a -> g a) ks
@@ -181,6 +235,8 @@ interface HFunctor k l q => HFunctor k l p => HAp k l q p | p where
       -> p g ks
 
 ||| Higher kinded version of `liftA2`.
+||| This is a generalization of `hliftA` to binary
+||| functions.
 public export
 hliftA2 :  HAp k l q p
         => (forall a . f a -> g a -> h a)
@@ -190,6 +246,8 @@ hliftA2 :  HAp k l q p
 hliftA2 fun fs gs  = hliftA fun fs `hap` gs
 
 ||| Higher kinded version of `liftA3`.
+||| This is a generalization of `hliftA` to ternary
+||| functions.
 public export
 hliftA3 :  (HAp k l q q, HAp k l q p)
         => (forall a . f a -> g a -> h a -> i a)
@@ -200,6 +258,8 @@ hliftA3 :  (HAp k l q q, HAp k l q p)
 hliftA3 fun fs gs hs = hliftA2 fun fs gs `hap` hs
 
 ||| Higher kinded version of `liftA4`.
+||| This is a generalization of `hliftA` to quartenary
+||| functions.
 public export
 hliftA4 :  (HAp k l q q, HAp k l q p)
         => (forall a . f a -> g a -> h a -> i a -> j a)
@@ -218,11 +278,8 @@ hliftA4 fun fs gs hs is = hliftA3 fun fs gs hs `hap` is
 |||       a new context
 |||
 ||| ```idris example
-||| Person : (f : Type -> Type) -> Type
-||| Person f = NP f [String,Int]
-|||
-||| personShowValues : Person I -> Person (K String)
-||| personShowValues = hcmap Show show
+||| showValues : NP I [String,Int] -> NP (K String) [String,Int]
+||| showValues = hcmap Show show
 ||| ```
 public export
 hcmap :  HAp k l q p
