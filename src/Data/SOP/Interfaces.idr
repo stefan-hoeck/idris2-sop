@@ -9,7 +9,7 @@
 ||| of type `k` plus a type-level function `f` of type `k -> Type`.
 ||| The values of the container index together with `f` determine
 ||| the types of values at each position in the
-||| heterogeneous product or sum, which the shape of container
+||| heterogeneous product or sum, while the shape of container
 ||| indices mirror the shape of the corresponding product types.
 ||| 
 ||| The interfaces in this module allow us to create
@@ -33,8 +33,9 @@
 ||| For many of the functions in this module, there is a constrained
 ||| version taking an implicit heterogeneous product holding
 ||| the desired implementations. Since Idris2 uses the same
-||| mechanisms for resolving interface constraints and auto implicits,
-||| we do not need an additional structure for these constraints.
+||| mechanism for resolving interface constraints and auto implicits,
+||| we do not need an additional structure or interface
+||| for these constraints.
 ||| The disadvantage of this is, that we more often have to explicitly
 ||| pattern match on these constraint products in order for Idris2
 ||| to know where to look for implementations.
@@ -64,7 +65,7 @@ HCont k l = (k -> Type) -> l -> Type
 ||| @ l kind of container used to describe a heterogeneous containr's type
 |||     level code
 |||
-||| @ p the heterogeneous product
+||| @ p the heterogeneous sum or product
 public export
 interface HPure k l (p : HCont k l) | p where
 
