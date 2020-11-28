@@ -399,6 +399,10 @@ hany :  (HFunctor k l p, HFold k l p)
      -> p f ks -> Bool
 hany fun = hor . hmap fun
 
+export
+hchoice : HFold k l p => Alternative f =>  p (K $ f a) ks -> f a
+hchoice = hfoldr (\a,b => a <|> b) empty
+
 --------------------------------------------------------------------------------
 --          HSequence
 --------------------------------------------------------------------------------
