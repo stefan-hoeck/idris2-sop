@@ -377,7 +377,7 @@ hfor_ = flip htraverse_
 
 public export
 hand : HFold k l p => p (K Bool) ks -> Bool
-hand = hfoldl (\a,b => a && b) True
+hand = hfoldr (\a,b => a && b) True
 
 export
 htoList : (HFunctor k l p, HFold k l p) => p (K a) ks -> List a
@@ -385,7 +385,7 @@ htoList = hconcatMap pure
 
 export
 hor : HFold k l p => p (K Bool) ks -> Bool
-hor = hfoldl (\a,b => a || b) False
+hor = hfoldr (\a,b => a || b) False
 
 export
 hall :   (HFunctor k l p, HFold k l p)
