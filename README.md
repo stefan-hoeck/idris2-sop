@@ -1,6 +1,5 @@
 # idris2-sop : Sums of Products
 
-
 This is a library about generic representations of algebraic data types
 as n-ary sums over n-ary products
 inspired by Haskell's [sop-core](https://hackage.haskell.org/package/sop-core)
@@ -15,9 +14,8 @@ using elaborator reflection. In addition, implementations for
 derived automatically by going via a data type's generic representation.
 
 Support for providing access to metadata like constructor and argument names
-of data types
-will follow shortly, together with the ability to automatically derive
-implementations for `Show`.
+of data types has been added recently,
+together with the ability to automatically derive implementations for `Show`.
 
 ## Motivating Example
 
@@ -38,13 +36,13 @@ record Employee where
   salary     : Double
   supervisor : Maybe Employee
 
-%runElab derive "Employee" [Generic, Eq, Ord]
+%runElab derive "Employee" [Generic, Meta, Eq, Ord, Show]
 ```
 
 ## Documentation
 
 Most of the exported functions have been properly annotated
-with doc strings. In addition, there is a - still growing - 
+with doc strings. In addition, there is an extensive - and still growing -
 [tutorial](src/Doc/Index.md) about the core ideas and techniques
 behind the SOP approach to generic programming.
 

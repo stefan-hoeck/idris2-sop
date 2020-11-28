@@ -199,6 +199,12 @@ next = MkParser \ts => case ts of
                             []     => Left []
                             (h::t) => Right (h,t)
 
+||| Succeeds if the next token matches exactly the
+||| given String.
+public export
+string : String -> Parser ()
+string s = next >>= guard . (s ==)
+
 ||| Maps a partial function over the result
 ||| of a parser. This fails, if the function returns
 ||| `Nothing`-
@@ -424,7 +430,6 @@ POP (Decode . f) kss => SingletonList kss => Decode (SOP f kss) where
 And again, we provide a generic version of `decode`:
 
 ```idris
-public export
 genDecode :  Generic t code
           => POP Decode code
           => SingletonList code
@@ -441,14 +446,12 @@ mkDecode = %runElab check (var $ singleCon "Decode")
 
 ||| Derives a `Decode` implementation for the given data type
 ||| and visibility.
-export
 DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 DecodeVis vis g = MkInterfaceImpl "Decode" vis []
                        `(mkDecode genDecode)
                        (implementationType `(Decode) g)
 
 ||| Alias for `DecodeVis Public`.
-export
 Decode' : DeriveUtil -> InterfaceImpl
 Decode' = DecodeVis Public
 ```

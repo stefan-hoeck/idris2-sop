@@ -1,3 +1,5 @@
+## Metadata
+
 ```idris
 module Doc.Metadata
 
@@ -49,8 +51,48 @@ EncodeVis vis g = MkInterfaceImpl "Encode" vis []
 
 Encode' : DeriveUtil -> InterfaceImpl
 Encode' = EncodeVis Public
+```
 
-%runElab derive "Doc.Metadata.Spell" [Encode']
+```idris
+-- Decodes a value prefixed by the given constructor's name
+decodeCon : Decode a => ConInfo k ks -> (f : a -> b) -> Parser b
+decodeCon ci f = string ci.conName.con *> map f decode
 
-%runElab derive "Doc.Metadata.Monster" [Encode']
+-- Tries to decode a sum type by first reading
+-- a constructor's name before decoding the corresponding
+-- n-ary product.
+decodeSOP :  {kss : _} -> (all : POP (Decode . f) kss)
+          => TypeInfo k kss -> Parser (SOP f kss)
+decodeSOP {all = MkPOP _} (MkTypeInfo _ cons) =
+  let is      = injections {f = NP' k f} {ks = kss}
+      parsers = hcliftA2 (Decode . NP f) decodeCon cons is
+   in MkSOP <$> hchoice parsers
+
+-- Generic decoding function
+genDecode : {code : _} -> Meta t code => POP Decode code => Parser t
+genDecode = to <$> decodeSOP (metaFor t)
+
+DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
+DecodeVis vis g = MkInterfaceImpl "Decode" vis []
+                       `(mkDecode genDecode)
+                       (implementationType `(Decode) g)
+
+Decode' : DeriveUtil -> InterfaceImpl
+Decode' = DecodeVis Public
+
+%runElab derive "Doc.Metadata.Spell" [Encode', Decode']
+
+%runElab derive "Doc.Metadata.Monster" [Encode', Decode']
+
+export
+encDemon : List String
+encDemon = encode demon
+
+export
+decDemon : Either (List String) Monster
+decDemon = parse decode encDemon
+
+export
+printDecDemon : IO ()
+printDecDemon = printLn decDemon
 ```
