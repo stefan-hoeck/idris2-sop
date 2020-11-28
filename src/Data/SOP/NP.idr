@@ -114,15 +114,9 @@ Projection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
 Projection f ks v = NP f ks -> f v
 
 public export
-shiftProjection : forall v . Projection f ks v -> Projection f (k :: ks) v
-shiftProjection g (_ :: vs) = g vs
-
-public export
 projections : {ks : _} -> NP (Projection f ks) ks
 projections {ks = []}       = []
-projections {ks = (_ :: _)} = let ps  = projections {f = f}
-                                  fun = shiftProjection {f = f}
-                               in hd :: mapNP fun ps
+projections {ks = (_ :: _)} = hd :: mapNP (. tl) projections
 
 --------------------------------------------------------------------------------
 --          Accessing Values
