@@ -330,9 +330,17 @@ hcliftA3 _ {cs} fun = hliftA4 (\_ => fun) cs
 
 public export
 interface HFold k l (p : HCont k l) | p where
+
+  ||| Strict fold over a heterogeneous sum or product
+  ||| parameterized by the constant functor (and thus being actually
+  ||| a homogeneous sum or product).
   hfoldl : {0 ks : l} -> (acc -> elem -> acc) -> acc -> p (K elem) ks -> acc
 
-  hfoldr : {0 ks : l} -> (elem -> acc -> acc) -> acc -> p (K elem) ks -> acc
+  ||| Lazy fold over a heterogeneous sum or product
+  ||| parameterized by the constant functor (and thus being actually
+  ||| a homogeneous sum or product).
+  hfoldr :  {0 ks : l}
+         -> (elem -> Lazy acc -> acc) -> Lazy acc -> p (K elem) ks -> acc
 
 
 public export

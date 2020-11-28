@@ -68,8 +68,9 @@ foldlNS fun acc (S x) = foldlNS fun acc x
 
 ||| Specialization of `hfoldr`
 public export %inline
-foldrNS : (fun : elem -> acc -> acc) -> acc -> NS (K elem) ks -> acc
-foldrNS fun acc = foldlNS (flip fun) acc
+foldrNS : (fun : elem -> Lazy acc -> acc) -> Lazy acc -> NS (K elem) ks -> acc
+foldrNS fun acc (Z v) = fun v acc
+foldrNS fun acc (S x) = foldrNS fun acc x
 
 ||| Specialization of `hsequence`
 public export

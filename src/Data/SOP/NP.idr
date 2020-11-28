@@ -87,7 +87,7 @@ foldlNP fun acc (v :: vs) = foldlNP fun (fun acc v) vs
 
 ||| Specialization of `hfoldr`
 public export
-foldrNP : (fun : elem -> acc -> acc) -> acc -> NP (K elem) ks -> acc
+foldrNP : (fun : elem -> Lazy acc -> acc) -> Lazy acc -> NP (K elem) ks -> acc
 foldrNP _   acc []        = acc
 foldrNP fun acc (v :: vs) = fun v (foldrNP fun acc vs)
 

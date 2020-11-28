@@ -65,7 +65,7 @@ foldlPOP fun acc (MkPOP (h::t)) = foldlPOP fun (foldlNP fun acc h) (MkPOP t)
 
 ||| Specialization of `hfoldr`
 public export
-foldrPOP : (fun : elem -> acc -> acc) -> acc -> POP (K elem) kss -> acc
+foldrPOP : (fun : elem -> Lazy acc -> acc) -> Lazy acc -> POP (K elem) kss -> acc
 foldrPOP _   acc (MkPOP [])     = acc
 foldrPOP fun acc (MkPOP (h::t)) = foldrNP fun (foldrPOP fun acc (MkPOP t)) h
 

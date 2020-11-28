@@ -58,7 +58,7 @@ foldlSOP fun acc (MkSOP $ S x)  = foldlSOP fun acc (MkSOP x)
 
 ||| Specialization of `hfoldr`
 public export %inline
-foldrSOP : (fun : elem -> acc -> acc) -> acc -> SOP (K elem) kss -> acc
+foldrSOP : (fun : elem -> Lazy acc -> acc) -> Lazy acc -> SOP (K elem) kss -> acc
 foldrSOP fun acc (MkSOP $ Z vs) = foldrNP fun acc vs
 foldrSOP fun acc (MkSOP $ S x)  = foldrSOP fun acc (MkSOP x)
 
