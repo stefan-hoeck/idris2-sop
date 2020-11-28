@@ -84,6 +84,19 @@ hapNS (fun :: _)    (Z v) = Z $ fun v
 hapNS (_   :: funs) (S y) = S $ hapNS funs y
 
 --------------------------------------------------------------------------------
+--          Injections
+--------------------------------------------------------------------------------
+
+public export
+Injection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
+Injection f ks v = f v -> K (NS f ks) v
+
+public export
+injections : {ks : _} -> NP (Injection f ks) ks
+injections {ks = []}   = []
+injections {ks = _::_} = Z :: mapNP (S .) injections
+
+--------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
 
