@@ -104,15 +104,14 @@ metaFor t = meta {t = t}
 --          Show Implementations
 --------------------------------------------------------------------------------
 
--- displays a single applied constructor
--- wrapping 
+-- Displays a single applied constructor wrapping it in parens if necessary
 showC : NP (Show . f) ks => (p : Prec) -> ConInfo ks -> NP f ks -> String
 
--- No need to wrap a constant constructor in parentheses
+-- No need to wrap a constant in parens
 showC _ info []   = info.conName
 
 -- This uses `showCon` from the Prelude to wrap an applied
--- constructor in parens depending on `p`.
+-- constructor in parentheses depending on `p`.
 showC p info args = let con    = wrapOperator info.conName
                         argStr = hconcat $ hcmap (Show . f) showArg args
                      in showCon p con argStr
@@ -121,7 +120,6 @@ showSOP :  (all : POP (Show . f) kss)
         => Prec -> TypeInfo kss -> SOP f kss -> String
 showSOP {all = MkPOP _} p (MkTypeInfo _ _ cons) =
   hconcat . hcliftA2 (NP $ Show . f) (showC p) cons . unSOP
-
 
 ||| Generic show function.
 |||

@@ -1,5 +1,17 @@
 ## Metadata
 
+In the [last part](Deriving.md) of the tutorial, we experienced with
+automatically deriving different interface implementations. Those
+examples could be derived directly from a data type's type-level
+code without the need for additional information.
+
+For some interfaces like `Show`, however, this is not enough: In order
+to derive a `Show` instance, we need to know about constructor names and
+possibly record field names. In this part of the tutorial we learn how to
+get access to those and how to make use of this information
+to enhance our own `Encoder` and `Decoder` interfaces from the
+last part.
+
 ```idris
 module Doc.Metadata
 
@@ -8,6 +20,19 @@ import Doc.Deriving
 
 %language ElabReflection
 ```
+
+### `Meta`: An Interface for Metadata
+
+Getting access to a data types metadata is as simple as deriving
+its `Meta` interface (from module `Generics.Meta`). This gives us access
+to functions `meta` and `metaFor`, both of which return a `TypeInfo`
+record, wrapping a product of `ConInfo` values. 
+Like `SOP`, `TypeInfo` is indexed over a list of lists of values to
+match the structure of the genetic code of a data type.
+
+Before we learn how to use meta data to write our own interface
+implementations, here are two data types with automatically
+derived `Meta` and `Show` implementations:
 
 ```idris
 export
@@ -22,27 +47,37 @@ data Monster : Type where
   Skeleton : (hp : Int) -> (armor : Int) -> Monster
 
 %runElab derive "Doc.Metadata.Monster" [Generic, Meta, Eq, Ord, DecEq, Show]
-
-export
-goblin : Monster
-goblin = Goblin 87 "Garguzz"
-
-export
-demon : Monster
-demon = Demon 530 120 [MkSpell 20 "Disintegrate"]
 ```
 
+### An `Encoder` for Sum Types
+
+So far, we only supported the deriving of decoders for product
+types. We'd like to also support sum types, by using a constructor's
+name as part of the list of strings encoding:
+
 ```idris
-encodeCon : Encode (NP f ks) => ConInfo k ks -> NP f ks -> List String
-encodeCon ci np = ci.conName.con :: encode np
+encodeCon : Encode (NP f ks) => ConInfo ks -> NP f ks -> List String
+encodeCon ci np = ci.conName :: encode np
+```
 
-encodeSOP :  (all : POP (Encode . f) kss)
-          => TypeInfo k kss -> SOP f kss -> List String
-encodeSOP {all = MkPOP _} (MkTypeInfo _ cons) =
-  hconcat . hcliftA2 (Encode . NP f) encodeCon cons . unSOP
+Since a type's constructors are wrapped in an `NP` parameterized
+by the same type level list as its generic representation,
+we can use the usual SOP combinators to generate an
+encoding for a `SOP` value. Given the type of `encodeCon`
+we use `hcliftA2` followed by `hconcat`:
 
-genEncode : Meta t code => POP Encode code => t -> List String
-genEncode = encodeSOP (metaFor t) . from
+```idris
+genEncode : Meta t code => (all : POP Encode code) => t -> List String
+genEncode {all = MkPOP _} = encodeSOP (metaFor t) . from
+  where encodeSOP : TypeInfo code -> SOP I code -> List String
+        encodeSOP (MkTypeInfo _ _ cons) =
+          hconcat . hcliftA2 (Encode . NP I) encodeCon cons . unSOP
+```
+
+The functions used in `derive` are a verbatim copy of the
+ones used in the last post:
+
+```idris
 
 EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 EncodeVis vis g = MkInterfaceImpl "Encode" vis []
@@ -53,17 +88,25 @@ Encode' : DeriveUtil -> InterfaceImpl
 Encode' = EncodeVis Public
 ```
 
-```idris
--- Decodes a value prefixed by the given constructor's name
-decodeCon : Decode a => ConInfo k ks -> (f : a -> b) -> Parser b
-decodeCon ci f = string ci.conName.con *> map f decode
+### Decoding Sum Types: A Use Case for `injections`
 
+We will need a new SOP technique for decoding sum types.
+But first, decoding a single constructor is straight
+forward: We read the expected constructor name before
+decoding the arguments:
+
+```idris
+decodeCon : Decode a => ConInfo ks -> (f : a -> b) -> Parser b
+decodeCon ci f = string ci.conName *> map f decode
+```
+
+```idris
 -- Tries to decode a sum type by first reading
 -- a constructor's name before decoding the corresponding
 -- n-ary product.
 decodeSOP :  {kss : _} -> (all : POP (Decode . f) kss)
-          => TypeInfo k kss -> Parser (SOP f kss)
-decodeSOP {all = MkPOP _} (MkTypeInfo _ cons) =
+          => TypeInfo' k kss -> Parser (SOP f kss)
+decodeSOP {all = MkPOP _} (MkTypeInfo _ _ cons) =
   let is      = injections {f = NP' k f} {ks = kss}
       parsers = hcliftA2 (Decode . NP f) decodeCon cons is
    in MkSOP <$> hchoice parsers
@@ -83,6 +126,14 @@ Decode' = DecodeVis Public
 %runElab derive "Doc.Metadata.Spell" [Encode', Decode']
 
 %runElab derive "Doc.Metadata.Monster" [Encode', Decode']
+
+export
+goblin : Monster
+goblin = Goblin 87 "Garguzz"
+
+export
+demon : Monster
+demon = Demon 530 120 [MkSpell 20 "Disintegrate"]
 
 export
 encDemon : List String
