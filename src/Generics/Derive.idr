@@ -107,14 +107,14 @@ private
 int : Int -> TTImp
 int = primVal . I
 
--- creates a NSName's TTImp from a namespaced name
--- otherwise uses an empty namespace
+-- applies a name's namespace (List String) and name value
+-- to a function (`con`) wrapped in a `TTImp`.
 private
-nsNameTTImp : Name -> TTImp
-nsNameTTImp (NS (MkNS ss) (UN s)) = let ss' = listOf $ map str ss
-                                     in `(MkNSName) .$ ss' .$ str s
-nsNameTTImp n                     = let s = str $ nameStr n
-                                     in `(MkNSName []) .$ s
+appNSName : Name -> (con : TTImp) -> TTImp
+appNSName (NS (MkNS ss) (UN s)) con = let ss' = listOf $ reverse $ map str ss
+                                       in con .$ ss' .$ str s
+appNSName n con                     = let s = str $ nameStr n
+                                       in `(~(con) []) .$ s
 
 -- creates an ArgName's TTImp from an argument's index and name
 private
@@ -127,22 +127,22 @@ private
 conTTImp : ParamCon -> TTImp
 conTTImp (MkParamCon n args) =
   let np = listOf $ map argNameTTImp (zipWithIndex $ map name args)
-   in `(MkConInfo) .$ nsNameTTImp n .$ np
+   in appNSName n `(MkConInfo) .$ np
 
 private
 tiTTImp : ParamTypeInfo -> TTImp
 tiTTImp (MkParamTypeInfo n _ cons) =
   let nps     = map conTTImp cons
-   in `(MkTypeInfo) .$ nsNameTTImp n .$ listOf nps
+   in appNSName n `(MkTypeInfo) .$ listOf nps
 
 ||| Creates a `Meta` value from the passed `TypeInfo`
 public export %inline
-mkMeta' : (1 _ : Generic t code) -> TypeInfo Type code -> Meta t code
+mkMeta' : (1 _ : Generic t code) -> TypeInfo code -> Meta t code
 mkMeta' = %runElab check (var $ singleCon "Meta")
 
 ||| Creates a `Meta` value from the passed `TypeInfo`
 public export %inline
-mkMeta : (1 prf : Generic t code) => TypeInfo Type code -> Meta t code
+mkMeta : (1 prf : Generic t code) => TypeInfo code -> Meta t code
 mkMeta = mkMeta' prf
 
 ||| Derives a `Meta` implementation for the given data type
@@ -256,7 +256,7 @@ Monoid = MonoidVis Public
 export
 ShowVis : Visibility -> DeriveUtil -> InterfaceImpl
 ShowVis vis g = MkInterfaceImpl "Show" vis []
-                  `(mkShowPrec genShow)
+                  `(mkShowPrec genShowPrec)
                   (implementationType `(Show) g)
 
 ||| Alias for `ShowVis Public`.
