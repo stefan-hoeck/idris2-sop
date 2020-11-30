@@ -64,7 +64,7 @@ Since a type's constructors are wrapped in an `NP` parameterized
 by the same type level list as its generic representation,
 we can use the usual SOP combinators to generate an
 encoding for a `SOP` value. Given the type of `encodeCon`
-we use `hcliftA2` followed by `hconcat`:
+we can use `hcliftA2` followed by `hconcat`:
 
 ```idris
 genEncode : Meta t code => (all : POP Encode code) => t -> List String
@@ -74,7 +74,7 @@ genEncode {all = MkPOP _} = encodeSOP (metaFor t) . from
           hconcat . hcliftA2 (Encode . NP I) encodeCon cons . unSOP
 ```
 
-The functions used in `derive` are a verbatim copy of the
+The functions to be used in `derive` are verbatim copies of the
 ones used in the last post:
 
 ```idris
@@ -91,30 +91,40 @@ Encode' = EncodeVis Public
 ### Decoding Sum Types: A Use Case for `injections`
 
 We will need a new SOP technique for decoding sum types.
-But first, decoding a single constructor is straight
+But first, decoding a single constructor seems to be straight
 forward: We read the expected constructor name before
-decoding the arguments:
+decoding the arguments.
+However, as can be seen in the implementation of `decodeCon`
+we somehow need to convert the decoded n-ary sum to a `SOP`
+value by applying the correct sequence of `S` and `Z` constructors:
 
 ```idris
-decodeCon : Decode a => ConInfo ks -> (f : a -> b) -> Parser b
-decodeCon ci f = string ci.conName *> map f decode
+decodeCon :  forall ks . Decode (NP f ks)
+          => ConInfo ks -> (fun : NP f ks -> SOP f kss) -> Parser (SOP f kss)
+decodeCon ci fun = string ci.conName *> map fun decode
 ```
 
+Function `fun` is called an *injection* into the n-ary sums. Module *Data.SOP*
+provides function `injectionsSOP`, returning an n-ary product of
+injections from n-ary products into a sum of products parameterized over
+the given typelevel list of lists. In order to combine the resulting
+n-ary product of parsers, we use function `hchoice` making use of
+the `Alternative` instance of `Parser`:
+
 ```idris
--- Tries to decode a sum type by first reading
--- a constructor's name before decoding the corresponding
--- n-ary product.
-decodeSOP :  {kss : _} -> (all : POP (Decode . f) kss)
-          => TypeInfo' k kss -> Parser (SOP f kss)
-decodeSOP {all = MkPOP _} (MkTypeInfo _ _ cons) =
-  let is      = injections {f = NP' k f} {ks = kss}
-      parsers = hcliftA2 (Decode . NP f) decodeCon cons is
-   in MkSOP <$> hchoice parsers
-
 -- Generic decoding function
-genDecode : {code : _} -> Meta t code => POP Decode code => Parser t
-genDecode = to <$> decodeSOP (metaFor t)
+genDecode : {code : _} -> Meta t code => (all : POP Decode code) => Parser t
+genDecode {all = MkPOP _} = to <$> decodeSOP (metaFor t)
+  where decodeSOP : TypeInfo code -> Parser (SOP I code)
+        decodeSOP (MkTypeInfo _ _ cons) =
+          hchoice $ hcliftA2 (Decode . NP I) decodeCon cons injectionsSOP
+```
 
+Again, the functions to be used in `derive` are verbatim copies of the
+ones used in the last post:
+
+
+```idris
 DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 DecodeVis vis g = MkInterfaceImpl "Decode" vis []
                        `(mkDecode genDecode)
@@ -122,18 +132,19 @@ DecodeVis vis g = MkInterfaceImpl "Decode" vis []
 
 Decode' : DeriveUtil -> InterfaceImpl
 Decode' = DecodeVis Public
+```
 
+We can now derive encoders and decoders for `Monster`s and
+test them at the REPL:
+
+```idris
 %runElab derive "Doc.Metadata.Spell" [Encode', Decode']
 
 %runElab derive "Doc.Metadata.Monster" [Encode', Decode']
 
 export
-goblin : Monster
-goblin = Goblin 87 "Garguzz"
-
-export
 demon : Monster
-demon = Demon 530 120 [MkSpell 20 "Disintegrate"]
+demon = Demon 530 120 [MkSpell 40 "Disintegrate", MkSpell 10 "Utterdark"]
 
 export
 encDemon : List String
@@ -147,3 +158,10 @@ export
 printDecDemon : IO ()
 printDecDemon = printLn decDemon
 ```
+
+### Conclusion
+
+Again, the SOP approach provides powerful abstraction to implement
+generic interface implementations. This post completes the part
+about deriving interface implementations. I'll add new content if new techniques
+and possibilities become available in this library.
