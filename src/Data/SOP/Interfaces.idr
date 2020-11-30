@@ -444,37 +444,55 @@ interface HSequence k l (p : HCont k l) | p where
 
 ||| Traverses a heterogeneous container by applying effectful
 ||| function `fun`.
+|||
+||| ```idris example
+||| htraverseEx : NP (Either String) [Int,String] -> Maybe (NP I [Int,String])
+||| htraverseEx = htraverse (either (const Nothing) Just)
+||| ```
 export
-htraverse :  (Applicative g, HFunctor k l p, HSequence k l p)
-          => (fun : forall a . f a -> g (f a))
+htraverse :  {0 f,f' : k -> Type}
+          -> (Applicative g, HFunctor k l p, HSequence k l p)
+          => (fun : forall a . f a -> g (f' a))
           -> p f ks
-          -> g (p f ks)
+          -> g (p f' ks)
 htraverse fun = hsequence . hmap fun
 
 ||| Flipped version of `htraverse`.
 export
-hfor :  (Applicative g, HFunctor k l p, HSequence k l p)
+hfor :  {0 f,f' : k -> Type}
+     -> (Applicative g, HFunctor k l p, HSequence k l p)
      => p f ks
-     -> (forall a . f a -> g (f a))
-     -> g (p f ks)
+     -> (forall a . f a -> g (f' a))
+     -> g (p f' ks)
 hfor = flip htraverse
 
 ||| Constrained version of `htraverse`.
+|||
+||| ```idris example
+||| interface Read a where
+|||   read : String -> Maybe a
+||| 
+||| hctraverseEx : NP Read [Int,String] =>
+|||                NP (K String) [Int,String] -> Maybe (NP I [Int,String])
+||| hctraverseEx = hctraverse Read read
+||| ```
 export
-hctraverse :  (Applicative g, HAp k l q p, HSequence k l p)
+hctraverse :  {0 f,f' : k -> Type}
+           -> (Applicative g, HAp k l q p, HSequence k l p)
            => (0 c : k -> Type)
            -> (cs : q c ks)
-           => (forall a . c a => f a -> g (f a))
+           => (forall a . c a => f a -> g (f' a))
            -> p f ks
-           -> g (p f ks)
+           -> g (p f' ks)
 hctraverse c fun = hsequence . hcmap c fun
 
 ||| Flipped version of `hctraverse`.
 export
-hcfor :  (Applicative g, HAp k l q p, HSequence k l p)
+hcfor :  {0 f,f' : k -> Type}
+      -> (Applicative g, HAp k l q p, HSequence k l p)
       => (0 c : k -> Type)
       -> (cs : q c ks)
       => p f ks
-      -> (forall a . c a => f a -> g (f a))
-      -> g (p f ks)
+      -> (forall a . c a => f a -> g (f' a))
+      -> g (p f' ks)
 hcfor c = flip (hctraverse c)

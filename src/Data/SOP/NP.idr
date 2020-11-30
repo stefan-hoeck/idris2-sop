@@ -334,3 +334,13 @@ updatedPerson = hap updatePerson ["bar",12]
 
 seqMaybe : NP Maybe [Int,String] -> Maybe (NP I [Int,String])
 seqMaybe = hsequence
+
+htraverseEx : NP (Either String) [Int,String] -> Maybe (NP I [Int,String])
+htraverseEx = htraverse (either (const Nothing) Just)
+
+interface Read a where
+  read : String -> Maybe a
+
+hctraverseEx : NP Read [Int,String] => NP (K String) [Int,String] -> Maybe (NP I [Int,String])
+hctraverseEx = hctraverse Read read
+  
