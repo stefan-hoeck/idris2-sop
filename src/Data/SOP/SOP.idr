@@ -68,6 +68,22 @@ sequenceSOP : Applicative g => SOP (\a => g (f a)) kss -> g (SOP f kss)
 sequenceSOP = map MkSOP . sequenceNS . mapNS (\p => sequenceNP p) . unSOP
 
 --------------------------------------------------------------------------------
+--          Injections
+--------------------------------------------------------------------------------
+
+||| An injection into an n-ary sum of products takes an n-ary product of
+||| the correct type and wraps it in one of the sum's possible choices.
+public export
+InjectionSOP : (f : k -> Type) -> (kss : List $ List k) -> (vs : List k) -> Type
+InjectionSOP f kss vs = NP f vs -> K (SOP f kss) vs
+
+||| The set of injections into an n-ary sum `NS f ks` can
+||| be wrapped in a corresponding n-ary product.
+public export
+injectionsSOP : {kss : _} -> NP' (List k) (InjectionSOP f kss) kss
+injectionsSOP = hmap (MkSOP .) $ injections {ks = kss}
+
+--------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
 
