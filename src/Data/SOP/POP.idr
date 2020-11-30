@@ -10,8 +10,6 @@ import Decidable.Equality
 
 ||| A product of products.
 |||
-||| Unlike in the Haskell version, not using a Newtype here allows us
-||| to overload the constructor names of `NP'`.
 ||| The elements of the inner products are
 ||| applications of the parameter f. The type POP is indexed by the list of lists
 ||| that determines the lengths of both the outer and all the inner products, as
@@ -88,6 +86,15 @@ public export %hint
 monoidToSemigroupPOP : POP (Monoid . f) kss -> POP (Semigroup . f) kss
 monoidToSemigroupPOP = mapPOP (\_ => materialize Semigroup)
 
+||| Converts a POP of constraints to an n-ary sum
+||| holding constrains about the inner n-ary sum.
+|||
+||| Example : POP Eq typess -> NP (Eq . NP I) typess
+|||
+||| In the example above, we convert a POP of `Eq` instances
+||| into an n-ary sum of Eq instances of the inner products.
+||| This allows us to for instance implent `Eq (POP f kss) ` below
+||| via a direct call to (==) specialized to Eq (NP (NP f) kss).
 public export %hint
 popToNP :  POP' k (c . f) kss
         -> {auto prf : forall ks . NP' k (c . f) ks => c (NP' k f ks)}

@@ -343,62 +343,78 @@ interface HFold k l (p : HCont k l) | p where
          -> (elem -> Lazy acc -> acc) -> Lazy acc -> p (K elem) ks -> acc
 
 
+||| Alias for `hfoldl (<+>) neutral`.
 public export
 hconcat : (Monoid m, HFold k l p) => p (K m) ks -> m
 hconcat = hfoldl (<+>) neutral
 
+||| Alias for `hconcat . hmap fun`
 public export
 hconcatMap :  (Monoid m, HFunctor k l p, HFold k l p)
-           => (forall a . f a -> m) -> p f ks -> m
+           => (fun : forall a . f a -> m) -> p f ks -> m
 hconcatMap fun = hconcat . hmap fun
 
+||| Alias for `hconcat . hcmap c fun`
 public export
 hcconcatMap :  (Monoid m, HAp k l q p, HFold k l p)
             => (0 c : k -> Type)
             -> q c ks
-            => (forall a . c a => f a -> m)
+            => (fun : forall a . c a => f a -> m)
             -> p f ks
             -> m
 hcconcatMap c fun = hconcat . hcmap c fun
 
+||| Generalization of `sequence_` to heterogeneous containers.
+||| 
+||| Alias for `hfoldl (*>) (pure ())`.
 public export
 hsequence_ : (Applicative g, HFold k l p) => p (K (g ())) ks -> g ()
 hsequence_ = hfoldl (*>) (pure ())
 
+||| Generalization of `traverse_` to heterogeneous containers.
+||| 
+||| Alias for `hsequence_ . hmap fun`.
 public export
 htraverse_ :  (Applicative g, HFold k l p, HFunctor k l p)
            => (forall a . f a -> g ()) -> p f ks -> g ()
 htraverse_ fun = hsequence_ . hmap fun
 
+||| Generalization of `for_` to heterogeneous containers.
 public export
 hfor_ :  (Applicative g, HFold k l p, HFunctor k l p)
       => p f ks -> (forall a . f a -> g ()) -> g ()
 hfor_ = flip htraverse_
 
+||| Generalization of `and` to heterogeneous containers.
 public export
 hand : HFold k l p => p (K Bool) ks -> Bool
 hand = hfoldr (\a,b => a && b) True
 
+||| Generalization of `toList` to heterogeneous containers.
 export
 htoList : (HFunctor k l p, HFold k l p) => p (K a) ks -> List a
 htoList = hconcatMap pure
 
+||| Generalization of `or` to heterogeneous containers.
 export
 hor : HFold k l p => p (K Bool) ks -> Bool
 hor = hfoldr (\a,b => a || b) False
 
+||| Generalization of `all` to heterogeneous containers.
 export
 hall :   (HFunctor k l p, HFold k l p)
       => (forall a . f a -> Bool)
       -> p f ks -> Bool
 hall fun = hand . hmap fun
 
+||| Generalization of `any` to heterogeneous containers.
 export
 hany :  (HFunctor k l p, HFold k l p)
      => (forall a . f a -> Bool)
      -> p f ks -> Bool
 hany fun = hor . hmap fun
 
+||| Generalization of `choice` to heterogeneous containers.
 export
 hchoice : HFold k l p => Alternative f =>  p (K $ f a) ks -> f a
 hchoice = hfoldr (\a,b => a <|> b) empty
@@ -407,21 +423,35 @@ hchoice = hfoldr (\a,b => a <|> b) empty
 --          HSequence
 --------------------------------------------------------------------------------
 
+||| Sequencing of applicative effects over a heterogeneous
+||| container.
 public export
 interface HSequence k l (p : HCont k l) | p where
+
+  ||| Given a heterogeneous containers holding values
+  ||| wrapped in effect `g`, sequences applications of
+  ||| `g` to the outside of the heterogeneous container.
+  |||
+  ||| ```idris example
+  ||| seqMaybe : NP Maybe [Int,String] -> Maybe (NP I [Int,String])
+  ||| seqMaybe = hsequence
+  ||| ```
   hsequence :  {0 ks : l}
             -> {0 f : k -> Type}
             -> Applicative g
             => p (\a => g (f a)) ks
             -> g (p f ks)
 
+||| Traverses a heterogeneous container by applying effectful
+||| function `fun`.
 export
 htraverse :  (Applicative g, HFunctor k l p, HSequence k l p)
-          => (forall a . f a -> g (f a))
+          => (fun : forall a . f a -> g (f a))
           -> p f ks
           -> g (p f ks)
 htraverse fun = hsequence . hmap fun
 
+||| Flipped version of `htraverse`.
 export
 hfor :  (Applicative g, HFunctor k l p, HSequence k l p)
      => p f ks
@@ -429,6 +459,7 @@ hfor :  (Applicative g, HFunctor k l p, HSequence k l p)
      -> g (p f ks)
 hfor = flip htraverse
 
+||| Constrained version of `htraverse`.
 export
 hctraverse :  (Applicative g, HAp k l q p, HSequence k l p)
            => (0 c : k -> Type)
@@ -438,6 +469,7 @@ hctraverse :  (Applicative g, HAp k l q p, HSequence k l p)
            -> g (p f ks)
 hctraverse c fun = hsequence . hcmap c fun
 
+||| Flipped version of `hctraverse`.
 export
 hcfor :  (Applicative g, HAp k l q p, HSequence k l p)
       => (0 c : k -> Type)

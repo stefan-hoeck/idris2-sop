@@ -331,3 +331,6 @@ updatePerson = hmap update [Just "foo", Nothing]
 
 updatedPerson : Person I
 updatedPerson = hap updatePerson ["bar",12]
+
+seqMaybe : NP Maybe [Int,String] -> Maybe (NP I [Int,String])
+seqMaybe = hsequence
