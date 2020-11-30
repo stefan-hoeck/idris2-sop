@@ -278,7 +278,7 @@ NP (Encode . f) ks => Encode (NP f ks) where
 
 The same goes for n-ary sums. Here, as a precodition, we only
 accept single constructor sums, otherwise we'd had
-to some encode the constructor as a prefix to the remainer
+to somehow encode the constructor as a prefix to the remainer
 of the list. This can be done by using the `SingletonList`
 predicate from `Data.SOP.Utils`.
 Otherwise, the implementation uses exactly the same combinators
@@ -493,3 +493,8 @@ For a much more thorough introduction to the concepts and code
 behind `derive`, see the tutorials on *Generics* at
 the [idris2-elab-util](https://github.com/stefan-hoeck/idris2-elab-util)
 package.
+
+In the [next part](Metadata.md), we are going to enhance our
+encoders and decoders to properly support sum types. For this,
+we will need access to a data type's metadata like
+constructor and argument names.
