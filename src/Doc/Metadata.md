@@ -1,6 +1,6 @@
 ## Metadata
 
-In the [last part](Deriving.md) of the tutorial, we experienced with
+In the [last part](Deriving.md) of the tutorial, we experimented with
 automatically deriving different interface implementations. Those
 examples could be derived directly from a data type's type-level
 code without the need for additional information.
@@ -23,16 +23,18 @@ import Doc.Deriving
 
 ### `Meta`: An Interface for Metadata
 
-Getting access to a data types metadata is as simple as deriving
+Getting access to a data type's metadata is as simple as deriving
 its `Meta` interface (from module `Generics.Meta`). This gives us access
 to functions `meta` and `metaFor`, both of which return a `TypeInfo`
 record, wrapping a product of `ConInfo` values. 
 Like `SOP`, `TypeInfo` is indexed over a list of lists of values to
-match the structure of the genetic code of a data type.
+match the structure of the generic code of a data type.
 
 Before we learn how to use meta data to write our own interface
 implementations, here are two data types with automatically
-derived `Meta` and `Show` implementations:
+derived `Meta` and `Show` implementations (we have to use fully
+qualified names, because module `Doc.Deriving` contains private data types
+with identital names, which seems to confuse Idris):
 
 ```idris
 export
@@ -52,8 +54,8 @@ data Monster : Type where
 ### An `Encoder` for Sum Types
 
 So far, we only supported the deriving of decoders for product
-types. We'd like to also support sum types, by using a constructor's
-name as part of the list of strings encoding:
+types. We'd like to also support sum types, by prefixing encodings
+with the corresponding constructor's name:
 
 ```idris
 encodeCon : Encode (NP f ks) => ConInfo ks -> NP f ks -> List String
@@ -63,7 +65,7 @@ encodeCon ci np = ci.conName :: encode np
 Since a type's constructors are wrapped in an `NP` parameterized
 by the same type level list as its generic representation,
 we can use the usual SOP combinators to generate an
-encoding for a `SOP` value. Given the type of `encodeCon`
+encoding for a `SOP` value. As can be guessed from the type of `encodeCon`
 we can use `hcliftA2` followed by `hconcat`:
 
 ```idris
@@ -75,7 +77,8 @@ genEncode {all = MkPOP _} = encodeSOP (metaFor t) . from
 ```
 
 The functions to be used in `derive` are verbatim copies of the
-ones used in the last post:
+ones used in the last post, but they call a different version
+of `genEncode`, therefore we have to include them here:
 
 ```idris
 
@@ -100,12 +103,12 @@ value by applying the correct sequence of `S` and `Z` constructors:
 
 ```idris
 decodeCon :  forall ks . Decode (NP f ks)
-          => ConInfo ks -> (fun : NP f ks -> SOP f kss) -> Parser (SOP f kss)
-decodeCon ci fun = string ci.conName *> map fun decode
+          => ConInfo ks -> (toSOP : NP f ks -> SOP f kss) -> Parser (SOP f kss)
+decodeCon ci toSOP = string ci.conName *> map toSOP decode
 ```
 
-Function `fun` is called an *injection* into the n-ary sums. Module *Data.SOP*
-provides function `injectionsSOP`, returning an n-ary product of
+Function `toSOP` is called an *injection* into the n-ary sum. Module *Data.SOP*
+provides function `injectionsSOP`, returning an n-ary product of all
 injections from n-ary products into a sum of products parameterized over
 the given typelevel list of lists. In order to combine the resulting
 n-ary product of parsers, we use function `hchoice` making use of
@@ -161,7 +164,9 @@ printDecDemon = printLn decDemon
 
 ### Conclusion
 
-Again, the SOP approach provides powerful abstraction to implement
+Again, the SOP approach provides powerful abstraction to write
 generic interface implementations. This post completes the part
-about deriving interface implementations. I'll add new content if new techniques
-and possibilities become available in this library.
+about deriving interface implementations. Still, there are other
+possibilities and techniques of this library to explore, for
+instance the ability to provide automatically
+generated lenses.
