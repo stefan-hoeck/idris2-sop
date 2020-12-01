@@ -18,6 +18,8 @@ module Doc.Barbies
 
 import Data.SOP
 import Data.Maybe
+
+%default total
 ```
 
 Consider a database application with some user data being stored
