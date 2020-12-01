@@ -51,3 +51,27 @@ behind the SOP approach to generic programming.
 In order to automatically derive interface implementations,
 this library makes use of functionality provided by the
 [idris2-elab-util](https://github.com/stefan-hoeck/idris2-elab-util) package.
+
+## Limitations
+
+Below is a non-comprehensive list of limitations and caveats of this library.
+
+### Totality
+
+The totality checker does not consider derived interface implementations
+for inductive types to be total, since from the conversion to
+the generic representation it seems not to be able to figure out
+that the values to be processed are actually getting any smaller.
+
+### Performance
+
+This library has not yet been optimized in terms of performance.
+For instance, there have so far been no investigations into
+the amount of laziness we should support when converting values
+from and to their generic representations. In contrast do the
+Haskell version, `NP` and `NS` are both strict heterogeneous
+containers.
+
+Also, generic `Eq` and `Ord` implementations might carry out more
+comparisons than stricly necessary in cases where the
+result can be decided early on.
