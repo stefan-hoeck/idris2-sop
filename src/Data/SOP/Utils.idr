@@ -46,7 +46,7 @@ public export
 Uninhabited (SingletonList $ a :: b :: t) where
   uninhabited v impossible
 
-||| Generation function for singleton lists.
+||| Covering function for singleton lists.
 public export
 singletonList : (vs : List a) -> Dec (SingletonList vs)
 singletonList []              = No absurd
