@@ -31,7 +31,7 @@ data ArgName : Type where
 ||| parameterized by the constant functor, to make them
 ||| accessible to the SOP combinators.
 public export
-record ConInfo' (k : Type) (ks : List k) where
+record ConInfo_ (k : Type) (ks : List k) where
   constructor MkConInfo
 
   ||| Namespace of the constructor
@@ -41,12 +41,12 @@ record ConInfo' (k : Type) (ks : List k) where
   conName : String
 
   ||| Constructor arguments
-  args    : NP' k (K ArgName) ks
+  args    : NP_ k (K ArgName) ks
 
-||| Alias for `ConInfo'` with the `k` parameter being implicit.
+||| Alias for `ConInfo_` with the `k` parameter being implicit.
 public export
 ConInfo : {k : Type} -> (ks : List k) -> Type
-ConInfo = ConInfo' k
+ConInfo = ConInfo_ k
 
 ||| Returns `True` if a constructor's `conName` consists
 ||| only of non-alphanumeric characters.
@@ -75,7 +75,7 @@ record TypeInfo' (k : Type) (kss : List $ List k) where
   typeName     : String
 
   ||| n-ary product of the data type's constructors
-  constructors : NP' (List k) (ConInfo' k) kss
+  constructors : NP_ (List k) (ConInfo_ k) kss
 
 ||| Alias for `TypeInfo'` with the `k` parameter being implicit.
 public export

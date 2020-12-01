@@ -270,7 +270,7 @@ we need.
 
 ### Conclusion
 
-`NP'` and its relatives are highly versatile data types, the
+`NP_` and its relatives are highly versatile data types, the
 usability of which we have only started to appreciate in this
 post. In the [next post](Deriving.md), I'll have a look at automatically
 deriving interface implementations using `Generic`.

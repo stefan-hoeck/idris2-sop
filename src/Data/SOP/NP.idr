@@ -24,7 +24,7 @@ import Decidable.Equality
 ||| In the context of the SOP approach to generic programming, an n-ary product
 ||| describes the structure of the arguments of a single data constructor.
 |||
-||| Note: `NP'` takes an additional type parameter `k` to simulate
+||| Note: `NP_` takes an additional type parameter `k` to simulate
 |||       Haskell's kind polymorphism. In theory, this could be left
 |||       as an implicit argument. However, type-inference when calling
 |||       interface functions like `hpure` was rather poor with `k`
@@ -46,16 +46,16 @@ import Decidable.Equality
 ||| ex3 = [Just 'x', Nothing, Just 1]
 ||| ```
 public export
-data NP' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
-  Nil  : NP' k f []
-  (::) : (v : f t) -> (vs : NP' k f ks) -> NP' k f (t :: ks)
+data NP_ : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
+  Nil  : NP_ k f []
+  (::) : (v : f t) -> (vs : NP_ k f ks) -> NP_ k f (t :: ks)
 
-||| Type alias for `NP'` with type parameter `k` being
+||| Type alias for `NP_` with type parameter `k` being
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
 NP : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
-NP = NP' k
+NP = NP_ k
 
 --------------------------------------------------------------------------------
 --          Specialized Interface Functions
@@ -131,7 +131,7 @@ projections {ks = (_ :: _)} = hd :: mapNP (. tl) projections
 ||| Access the first element of the given type in
 ||| an n-ary product
 public export
-get : (t : k) -> {auto prf : Elem t ks} -> NP' k f ks -> f t
+get : (t : k) -> {auto prf : Elem t ks} -> NP_ k f ks -> f t
 get t {prf = Here}    (v :: _) = v
 get t {prf = There _} (_ :: vs) = get t vs
 
@@ -154,8 +154,8 @@ data UpdateElem :  (t : k)
 public export
 modify :  (fun : f t -> f t')
        -> {auto prf : UpdateElem t t' ks ks'}
-       -> NP' k f ks
-       -> NP' k f ks'
+       -> NP_ k f ks
+       -> NP_ k f ks'
 modify fun {prf = UpdateHere}    (v :: vs) = fun v :: vs
 modify fun {prf = UpdateThere _} (v :: vs) = v :: modify fun vs
 
@@ -166,8 +166,8 @@ public export
 setAt :  (0 t : k)
       -> (v' : f t')
       -> {auto prf : UpdateElem t t' ks ks'}
-      -> NP' k f ks
-      -> NP' k f ks'
+      -> NP_ k f ks
+      -> NP_ k f ks'
 setAt _ v' {prf = UpdateHere}    (_ :: vs) = v' :: vs
 setAt t v' {prf = UpdateThere y} (v :: vs) = v :: setAt t v' vs
 
@@ -178,8 +178,8 @@ setAt' :  (0 t  : k)
        -> (0 t' : k)
        -> (v' : f t')
        -> {auto prf : UpdateElem t t' ks ks'}
-       -> NP' k f ks
-       -> NP' k f ks'
+       -> NP_ k f ks
+       -> NP_ k f ks'
 setAt' t _ v' np = setAt t v' np
 
 --------------------------------------------------------------------------------
@@ -201,39 +201,39 @@ monoidToSemigroupNP = mapNP (\_ => materialize Semigroup)
 --------------------------------------------------------------------------------
 
 public export %inline
-HPure k (List k) (NP' k) where hpure  = pureNP
+HPure k (List k) (NP_ k) where hpure  = pureNP
 
 public export %inline
-HFunctor k (List k) (NP' k) where hmap  = mapNP
+HFunctor k (List k) (NP_ k) where hmap  = mapNP
 
 public export %inline
-HAp k (List k) (NP' k) (NP' k) where hap = hapNP
+HAp k (List k) (NP_ k) (NP_ k) where hap = hapNP
 
 public export %inline
-HFold k (List k) (NP' k) where
+HFold k (List k) (NP_ k) where
   hfoldl = foldlNP
   hfoldr = foldrNP
 
 public export %inline
-HSequence k (List k) (NP' k) where hsequence = sequenceNP
+HSequence k (List k) (NP_ k) where hsequence = sequenceNP
 
 public export
-(all : NP (Eq . f) ks) => Eq (NP' k f ks) where
+(all : NP (Eq . f) ks) => Eq (NP_ k f ks) where
   (==) {all = []}     [] []               = True
   (==) {all = _ :: _} (v :: vs) (w :: ws) = v == w && vs == ws
 
 public export
-(all : NP (Ord . f) ks) => Ord (NP' k f ks) where
+(all : NP (Ord . f) ks) => Ord (NP_ k f ks) where
   compare {all = []}     [] []               = EQ
   compare {all = _ :: _} (v :: vs) (w :: ws) = compare v w <+> compare vs ws
 
 public export
-(all : NP (Semigroup . f) ks) => Semigroup (NP' k f ks) where
+(all : NP (Semigroup . f) ks) => Semigroup (NP_ k f ks) where
   (<+>) {all = []}     [] []               = []
   (<+>) {all = _ :: _} (v :: vs) (w :: ws) = (v <+> w) :: (vs <+> ws)
 
 public export
-(all : NP (Monoid . f) ks) => Monoid (NP' k f ks) where
+(all : NP (Monoid . f) ks) => Monoid (NP_ k f ks) where
   neutral {all = []}     = []
   neutral {all = _ :: _} = neutral :: neutral
 
@@ -242,7 +242,7 @@ consInjective : Data.SOP.NP.(::) a b = Data.SOP.NP.(::) c d -> (a = c, b = d)
 consInjective Refl = (Refl, Refl)
 
 public export
-(all : NP (DecEq . f) ks) => DecEq (NP' k f ks) where
+(all : NP (DecEq . f) ks) => DecEq (NP_ k f ks) where
   decEq {all = []}     []        []        = Yes Refl
   decEq {all = _::_} (v::vs) (w::ws) with (decEq v w)
     decEq {all = _::_} (v::vs) (w::ws) | (No contra) =

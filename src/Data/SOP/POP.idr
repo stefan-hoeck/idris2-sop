@@ -20,18 +20,18 @@ import Decidable.Equality
 ||| generic programming, a POP is useful to represent information
 ||| that is available for all arguments of all constructors of a datatype.
 public export
-data POP' : (k : Type) -> (f : k -> Type) -> (kss : List (List k)) -> Type where
-  MkPOP : NP' (List k) (NP' k f) kss -> POP' k f kss
+data POP_ : (k : Type) -> (f : k -> Type) -> (kss : List (List k)) -> Type where
+  MkPOP : NP_ (List k) (NP_ k f) kss -> POP_ k f kss
 
-||| Type alias for `POP'` with type parameter `k` being
+||| Type alias for `POP_` with type parameter `k` being
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
 POP : {k : Type} -> (f : k -> Type) -> (kss : List (List k)) -> Type
-POP = POP' k
+POP = POP_ k
 
 public export %inline
-unPOP : POP' k f kss -> NP' (List k) (NP' k f) kss
+unPOP : POP_ k f kss -> NP_ (List k) (NP_ k f) kss
 unPOP (MkPOP np) = np
 
 --------------------------------------------------------------------------------
@@ -96,9 +96,9 @@ monoidToSemigroupPOP = mapPOP (\_ => materialize Semigroup)
 ||| This allows us to for instance implent `Eq (POP f kss) ` below
 ||| via a direct call to (==) specialized to Eq (NP (NP f) kss).
 public export %hint
-popToNP :  POP' k (c . f) kss
-        -> {auto prf : forall ks . NP' k (c . f) ks => c (NP' k f ks)}
-        -> NP' (List k) (c . NP' k f) kss
+popToNP :  POP_ k (c . f) kss
+        -> {auto prf : forall ks . NP_ k (c . f) ks => c (NP_ k f ks)}
+        -> NP_ (List k) (c . NP_ k f) kss
 popToNP (MkPOP nps) = hmap (\_ => prf) nps
 
 --------------------------------------------------------------------------------
@@ -106,36 +106,36 @@ popToNP (MkPOP nps) = hmap (\_ => prf) nps
 --------------------------------------------------------------------------------
 
 public export %inline
-HPure k (List $ List k) (POP' k) where hpure  = purePOP
+HPure k (List $ List k) (POP_ k) where hpure  = purePOP
 
 public export %inline
-HFunctor k (List $ List k) (POP' k) where hmap  = mapPOP
+HFunctor k (List $ List k) (POP_ k) where hmap  = mapPOP
 
 public export %inline
-HAp k (List $ List k) (POP' k) (POP' k) where hap = hapPOP
+HAp k (List $ List k) (POP_ k) (POP_ k) where hap = hapPOP
 
 public export %inline
-HFold k (List $ List k) (POP' k) where
+HFold k (List $ List k) (POP_ k) where
   hfoldl = foldlPOP
   hfoldr = foldrPOP
 
 public export %inline
-HSequence k (List $ List k) (POP' k) where hsequence = sequencePOP
+HSequence k (List $ List k) (POP_ k) where hsequence = sequencePOP
 
 public export
-POP (Eq . f) kss => Eq (POP' k f kss) where
+POP (Eq . f) kss => Eq (POP_ k f kss) where
   MkPOP a == MkPOP b = a == b
 
 public export
-POP (Ord . f) kss => Ord (POP' k f kss) where
+POP (Ord . f) kss => Ord (POP_ k f kss) where
   compare (MkPOP a) (MkPOP b) = compare a b
 
 public export
-POP (Semigroup . f) kss => Semigroup (POP' k f kss) where
+POP (Semigroup . f) kss => Semigroup (POP_ k f kss) where
   MkPOP a <+> MkPOP b = MkPOP $ a <+> b
 
 public export
-POP (Monoid . f) kss => Monoid (POP' k f kss) where
+POP (Monoid . f) kss => Monoid (POP_ k f kss) where
   neutral = MkPOP neutral
 
 private
@@ -143,7 +143,7 @@ mkPOPInjective : MkPOP a = MkPOP b -> a = b
 mkPOPInjective Refl = Refl
 
 public export
-POP (DecEq . f) kss => DecEq (POP' k f kss) where
+POP (DecEq . f) kss => DecEq (POP_ k f kss) where
   decEq (MkPOP a) (MkPOP b) with (decEq a b)
     decEq (MkPOP a) (MkPOP a) | Yes Refl   = Yes $ cong MkPOP Refl
     decEq (MkPOP a) (MkPOP b) | No  contra = No (contra . mkPOPInjective)

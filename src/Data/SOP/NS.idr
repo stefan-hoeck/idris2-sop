@@ -35,20 +35,20 @@ import Decidable.Equality
 ||| Examples:
 |||
 ||| ```idris example
-||| the (NS' Type I [Char,Bool]) (Z 'x')
-||| the (NS' Type I [Char,Bool]) (S $ Z False)
+||| the (NS_ Type I [Char,Bool]) (Z 'x')
+||| the (NS_ Type I [Char,Bool]) (S $ Z False)
 ||| ```
 public export
-data NS' : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
-  Z : (v : f t)  -> NS' k f (t :: ks)
-  S : NS' k f ks -> NS' k f (t :: ks)
+data NS_ : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
+  Z : (v : f t)  -> NS_ k f (t :: ks)
+  S : NS_ k f ks -> NS_ k f (t :: ks)
 
-||| Type alias for `NS'` with type parameter `k` being
+||| Type alias for `NS_` with type parameter `k` being
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
 NS : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
-NS = NS' k
+NS = NS_ k
 
 --------------------------------------------------------------------------------
 --          Specialized Interface Functions
@@ -106,27 +106,27 @@ injections {ks = _::_} = Z :: mapNP (S .) injections
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List k) (NS' k) where hmap = mapNS
+HFunctor k (List k) (NS_ k) where hmap = mapNS
 
 public export %inline
-HAp k (List k) (NP' k) (NS' k) where hap = hapNS
+HAp k (List k) (NP_ k) (NS_ k) where hap = hapNS
 
 public export %inline
-HFold k (List k) (NS' k) where
+HFold k (List k) (NS_ k) where
   hfoldl = foldlNS
   hfoldr = foldrNS
 
 public export
-HSequence k (List k) (NS' k) where hsequence = sequenceNS
+HSequence k (List k) (NS_ k) where hsequence = sequenceNS
 
 public export
-(all : NP (Eq . f) ks) => Eq (NS' k f ks) where
+(all : NP (Eq . f) ks) => Eq (NS_ k f ks) where
   (==) {all = _::_} (Z v) (Z w) = v == w
   (==) {all = _::_} (S x) (S y) = x == y
   (==) {all = _::_} _     _     = False
 
 public export
-(all : NP (Ord . f) ks) => Ord (NS' k f ks) where
+(all : NP (Ord . f) ks) => Ord (NS_ k f ks) where
   compare {all = _::_} (Z v) (Z w) = compare v w
   compare {all = _::_} (S x) (S y) = compare x y
   compare {all = _::_} (Z _) (S _) = LT
@@ -137,7 +137,7 @@ public export
 ||| a `Semigroup` or `Monoid`.
 public export
 (all : NP (Semigroup . f) ks) =>
-(prf : SingletonList ks) => Semigroup (NS' k f ks) where
+(prf : SingletonList ks) => Semigroup (NS_ k f ks) where
   (<+>) {all = _ :: _} {prf = IsSingletonList _} (Z l) (Z r) = Z $ l <+> r
   (<+>) {all = _ :: _} {prf = IsSingletonList _} (S _) _    impossible
   (<+>) {all = _ :: _} {prf = IsSingletonList _} _    (S _) impossible
@@ -147,7 +147,7 @@ public export
 ||| a `Semigroup` or `Monoid`.
 public export
 (all : NP (Monoid . f) ks) =>
-(prf : SingletonList ks) => Monoid (NS' k f ks) where
+(prf : SingletonList ks) => Monoid (NS_ k f ks) where
   neutral {all = _ :: _} {prf = IsSingletonList _} = Z neutral
 
 public export
@@ -167,7 +167,7 @@ sInjective : Data.SOP.NS.S x = Data.SOP.NS.S y -> x = y
 sInjective Refl = Refl
 
 public export
-(all : NP (DecEq . f) ks) => DecEq (NS' k f ks) where
+(all : NP (DecEq . f) ks) => DecEq (NS_ k f ks) where
   decEq {all = _::_} (Z x) (Z y) with (decEq x y)
     decEq {all = _::_} (Z x) (Z x) | Yes Refl = Yes Refl
     decEq {all = _::_} (Z x) (Z y) | No contra = No (contra . zInjective)
