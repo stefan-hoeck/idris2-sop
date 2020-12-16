@@ -223,7 +223,7 @@ setAtMany' t _ v' np = setAtMany t v' np
 ||| The values must appear in the same order in both lists.
 public export
 subproduct : NP f ks -> {auto prf: Sublist ks' ks} -> NP f ks'
-subproduct x {prf = SLNil}    = []
+subproduct x         {prf = SLNil}    = []
 subproduct (v :: vs) {prf = SLSame y} = v :: subproduct vs
 subproduct (_ :: vs) {prf = SLDiff y} = subproduct vs
 
