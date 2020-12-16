@@ -57,6 +57,33 @@ singletonList (v :: [])       = Yes (IsSingletonList v)
 singletonList (_ :: (_ :: _)) = No absurd
 
 --------------------------------------------------------------------------------
+--          Updating Lists
+--------------------------------------------------------------------------------
+
+||| View for updating a single occurence of a value
+||| in a list
+public export
+data UpdateOnce :  (t   : k)
+                -> (t'  : k)
+                -> (ks  : List k)
+                -> (ks' : List k)
+                -> Type where
+  UpdateHere  : UpdateOnce t t' (t :: ks) (t' :: ks)
+  UpdateThere : UpdateOnce t t' ks ks' -> UpdateOnce t t' (k :: ks) (k :: ks')
+
+||| View for updating several occurences of a value
+||| in a list
+public export
+data UpdateMany :  (t   : k)
+                -> (t'  : k)
+                -> (ks  : List k)
+                -> (ks' : List k)
+                -> Type where
+  UpdateNil      : UpdateMany t t' [] []
+  UpdateConsSame : UpdateMany t t' ks ks' -> UpdateMany t t' (t::ks) (t'::ks')
+  UpdateConsDiff : UpdateMany t t' ks ks' -> UpdateMany t t' (k::ks) (k::ks')
+
+--------------------------------------------------------------------------------
 --          Show Utilities
 --------------------------------------------------------------------------------
 
