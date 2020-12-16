@@ -169,6 +169,11 @@ public export
   (<+>) {all = _ :: _} {prf = IsSingletonList _} (S _) _    impossible
   (<+>) {all = _ :: _} {prf = IsSingletonList _} _    (S _) impossible
 
+public export
+(all : NP (Show . f) ks) => Show (NS_ k f ks) where
+  showPrec {all = _::_} p (Z v) = showCon p "Z" (showArg v)
+  showPrec {all = _::_} p (S x) = showCon p "S" (showPrec App x)
+
 ||| Sums have instances of `Semigroup` and `Monoid`
 ||| only when they consist of a single choice, which must itself be
 ||| a `Semigroup` or `Monoid`.

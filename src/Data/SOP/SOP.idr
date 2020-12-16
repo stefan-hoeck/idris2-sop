@@ -134,6 +134,10 @@ public export
 POP (Ord . f) kss => Ord (SOP_ k f kss) where
   compare (MkSOP a) (MkSOP b) = compare a b
 
+public export
+POP (Show . f) kss => Show (SOP_ k f kss) where
+  showPrec p (MkSOP ns) = showCon p "MkSOP" (showArg ns)
+
 ||| Sums of products have instances of `Semigroup` and `Monoid`
 ||| only when they consist of a single choice, which must itself be
 ||| a `Semigroup` or `Monoid`.

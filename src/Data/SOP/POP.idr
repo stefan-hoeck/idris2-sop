@@ -147,6 +147,10 @@ public export
 POP (Monoid . f) kss => Monoid (POP_ k f kss) where
   neutral = MkPOP neutral
 
+public export
+POP (Show . f) kss => Show (POP_ k f kss) where
+  showPrec p (MkPOP np) = showCon p "MkPOP" (show np)
+
 private
 mkPOPInjective : MkPOP a = MkPOP b -> a = b
 mkPOPInjective Refl = Refl

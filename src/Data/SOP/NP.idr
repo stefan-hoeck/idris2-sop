@@ -246,6 +246,10 @@ public export
   neutral {all = []}     = []
   neutral {all = _ :: _} = neutral :: neutral
 
+public export
+(all : NP (Show . f) ks) => Show (NP_ k f ks) where
+  show =  dispStringList . hcollapse . hcmap (Show . f) show
+
 private
 consInjective : Data.SOP.NP.(::) a b = Data.SOP.NP.(::) c d -> (a = c, b = d)
 consInjective Refl = (Refl, Refl)

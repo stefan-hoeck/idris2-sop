@@ -1,5 +1,8 @@
 module Data.SOP.Utils
 
+import Data.List
+import Data.Strings
+
 %default total
 
 ||| Type-level identity function.
@@ -52,3 +55,11 @@ singletonList : (vs : List a) -> Dec (SingletonList vs)
 singletonList []              = No absurd
 singletonList (v :: [])       = Yes (IsSingletonList v)
 singletonList (_ :: (_ :: _)) = No absurd
+
+--------------------------------------------------------------------------------
+--          Show Utilities
+--------------------------------------------------------------------------------
+
+export
+dispStringList : List String -> String
+dispStringList ss = "[" ++ fastConcat (intersperse "," ss) ++ "]"
