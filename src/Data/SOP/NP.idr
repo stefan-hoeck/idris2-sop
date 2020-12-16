@@ -145,7 +145,7 @@ get t {prf = There _} (_ :: vs) = get t vs
 --          Modifying Values
 --------------------------------------------------------------------------------
 
-||| Modify the first element of the given type
+||| Modify a single element of the given type
 ||| in an n-ary product, thereby possibly changing the
 ||| types of stored values.
 public export
@@ -155,6 +155,20 @@ modify :  (fun : f t -> f t')
        -> NP_ k f ks'
 modify fun {prf = UpdateHere}    (v :: vs) = fun v :: vs
 modify fun {prf = UpdateThere _} (v :: vs) = v :: modify fun vs
+
+||| Modify a single element of the given type
+||| in an n-ary product by applying an effectful
+||| function.
+|||
+||| This is the effectful version of `modify`.
+public export
+modifyF :  Functor g
+        => (fun : f t -> g (f t'))
+        -> {auto prf : UpdateOnce t t' ks ks'}
+        -> NP_ k f ks
+        -> g (NP_ k f ks')
+modifyF fun {prf = UpdateHere}    (v :: vs) = (:: vs) <$> fun v
+modifyF fun {prf = UpdateThere _} (v :: vs) = (v ::)  <$> modifyF fun vs
 
 ||| Modify several elements of the given type
 ||| in an n-ary product, thereby possibly changing the
@@ -168,34 +182,45 @@ modifyMany f {prf = UMNil}        []      = []
 modifyMany f {prf = UMConsSame x} (v::vs) = f v :: modifyMany f vs
 modifyMany f {prf = UMConsDiff x} (v::vs) = v   :: modifyMany f vs
 
+||| Modify several elements of the given type
+||| in an n-ary product by applying an effectful function.
+|||
+||| This is the effectful version of `modifyMany`.
+public export
+modifyManyF :  Applicative g
+            => (fun : f t -> g (f t'))
+            -> {auto prf : UpdateMany t t' ks ks'}
+            -> NP_ k f ks
+            -> g (NP_ k f ks')
+modifyManyF f {prf = UMNil}        []      = pure []
+modifyManyF f {prf = UMConsSame x} (v::vs) = [| f v :: modifyManyF f vs |]
+modifyManyF f {prf = UMConsDiff x} (v::vs) = (v ::) <$> modifyManyF f vs
+
 ||| Replaces the first element of the given type
 ||| in an n-ary product, thereby possibly changing the
 ||| types of stored values.
-public export
+public export %inline
 setAt :  (0 t : k)
       -> (v' : f t')
       -> {auto prf : UpdateOnce t t' ks ks'}
       -> NP_ k f ks
       -> NP_ k f ks'
-setAt _ v' {prf = UpdateHere}    (_ :: vs) = v' :: vs
-setAt t v' {prf = UpdateThere y} (v :: vs) = v :: setAt t v' vs
+setAt t v' = modify {t = t} (const v')
 
 ||| Replaces several elements of the given type
 ||| in an n-ary product, thereby possibly changing the
 ||| types of stored values.
-public export
+public export %inline
 setAtMany :  (0 t : k)
           -> (v' : f t')
           -> {auto prf : UpdateMany t t' ks ks'}
           -> NP_ k f ks
           -> NP_ k f ks'
-setAtMany _ v' {prf = UMNil}     []         = []
-setAtMany t v' {prf = UMConsSame x} (_::vs) = v' :: setAtMany t v' vs
-setAtMany t v' {prf = UMConsDiff x} (v::vs) = v  :: setAtMany t v' vs
+setAtMany t v' = modifyMany {t = t} (const v')
 
 ||| Alias for `setAt` for those occasions when
 ||| Idris cannot infer the type of the new value.
-public export
+public export %inline
 setAt' :  (0 t  : k)
        -> (0 t' : k)
        -> (v' : f t')
@@ -206,7 +231,7 @@ setAt' t _ v' np = setAt t v' np
 
 ||| Alias for `setAtMany` for those occasions when
 ||| Idris cannot infer the type of the new value.
-public export
+public export %inline
 setAtMany' :  (0 t  : k)
            -> (0 t' : k)
            -> (v' : f t')
@@ -216,7 +241,7 @@ setAtMany' :  (0 t  : k)
 setAtMany' t _ v' np = setAtMany t v' np
 
 --------------------------------------------------------------------------------
---          Narrowing products
+--          Narrowing and expanding products
 --------------------------------------------------------------------------------
 
 ||| Extracts a subset of values from an n-ary product.
@@ -226,6 +251,11 @@ narrow : NP f ks -> {auto 1 prf: Sublist ks' ks} -> NP f ks'
 narrow x         {prf = SLNil}    = []
 narrow (v :: vs) {prf = SLSame y} = v :: narrow vs
 narrow (_ :: vs) {prf = SLDiff y} = narrow vs
+
+public export
+append : NP f ks -> NP f ks' -> NP f (ks ++ ks')
+append []        y = y
+append (v :: vs) y = v :: append vs y
 
 --------------------------------------------------------------------------------
 --          Interface Conversions
