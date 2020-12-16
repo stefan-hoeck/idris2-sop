@@ -164,9 +164,9 @@ modifyMany :  (fun : f t -> f t')
            -> {auto prf : UpdateMany t t' ks ks'}
            -> NP_ k f ks
            -> NP_ k f ks'
-modifyMany f {prf = UpdateNil}        []      = []
-modifyMany f {prf = UpdateConsSame x} (v::vs) = f v :: modifyMany f vs
-modifyMany f {prf = UpdateConsDiff x} (v::vs) = v   :: modifyMany f vs
+modifyMany f {prf = UMNil}        []      = []
+modifyMany f {prf = UMConsSame x} (v::vs) = f v :: modifyMany f vs
+modifyMany f {prf = UMConsDiff x} (v::vs) = v   :: modifyMany f vs
 
 ||| Replaces the first element of the given type
 ||| in an n-ary product, thereby possibly changing the
@@ -189,9 +189,9 @@ setAtMany :  (0 t : k)
           -> {auto prf : UpdateMany t t' ks ks'}
           -> NP_ k f ks
           -> NP_ k f ks'
-setAtMany _ v' {prf = UpdateNil}     []         = []
-setAtMany t v' {prf = UpdateConsSame x} (_::vs) = v' :: setAtMany t v' vs
-setAtMany t v' {prf = UpdateConsDiff x} (v::vs) = v  :: setAtMany t v' vs
+setAtMany _ v' {prf = UMNil}     []         = []
+setAtMany t v' {prf = UMConsSame x} (_::vs) = v' :: setAtMany t v' vs
+setAtMany t v' {prf = UMConsDiff x} (v::vs) = v  :: setAtMany t v' vs
 
 ||| Alias for `setAt` for those occasions when
 ||| Idris cannot infer the type of the new value.
@@ -214,6 +214,18 @@ setAtMany' :  (0 t  : k)
            -> NP_ k f ks
            -> NP_ k f ks'
 setAtMany' t _ v' np = setAtMany t v' np
+
+--------------------------------------------------------------------------------
+--          Subproducts
+--------------------------------------------------------------------------------
+
+||| Extracts a subset of values from an n-ary product.
+||| The values must appear in the same order in both lists.
+public export
+subproduct : NP f ks -> {auto prf: Sublist ks' ks} -> NP f ks'
+subproduct x {prf = SLNil}    = []
+subproduct (v :: vs) {prf = SLSame y} = v :: subproduct vs
+subproduct (_ :: vs) {prf = SLDiff y} = subproduct vs
 
 --------------------------------------------------------------------------------
 --          Interface Conversions
@@ -384,3 +396,5 @@ interface Read a where
 hctraverseEx : NP Read [Int,String] => NP (K String) [Int,String] -> Maybe (NP I [Int,String])
 hctraverseEx = hctraverse Read read
   
+subproductEx : NP I [Int,String,Bool,Maybe Bool] -> NP I [Int,Bool]
+subproductEx np = subproduct np

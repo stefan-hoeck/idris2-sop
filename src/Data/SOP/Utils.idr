@@ -79,9 +79,21 @@ data UpdateMany :  (t   : k)
                 -> (ks  : List k)
                 -> (ks' : List k)
                 -> Type where
-  UpdateNil      : UpdateMany t t' [] []
-  UpdateConsSame : UpdateMany t t' ks ks' -> UpdateMany t t' (t::ks) (t'::ks')
-  UpdateConsDiff : UpdateMany t t' ks ks' -> UpdateMany t t' (k::ks) (k::ks')
+  UMNil      : UpdateMany t t' [] []
+  UMConsSame : UpdateMany t t' ks ks' -> UpdateMany t t' (t::ks) (t'::ks')
+  UMConsDiff : UpdateMany t t' ks ks' -> UpdateMany t t' (k::ks) (k::ks')
+
+--------------------------------------------------------------------------------
+--          Sublists
+--------------------------------------------------------------------------------
+
+||| View of the second List containing all values (in the same order)
+||| of the first List interleaved with arbitrary additional values.
+public export
+data Sublist : (ks : List k) -> (ks' : List k) -> Type where
+  SLNil  : Sublist [] ks'
+  SLSame : Sublist ks ks' -> Sublist (k::ks) (k::ks')
+  SLDiff : Sublist ks ks' -> Sublist ks (k::ks')
 
 --------------------------------------------------------------------------------
 --          Show Utilities
