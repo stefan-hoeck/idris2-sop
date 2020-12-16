@@ -72,6 +72,11 @@ public export
 sequencePOP : Applicative g => POP (\a => g (f a)) kss -> g (POP f kss)
 sequencePOP = map MkPOP . sequenceNP . mapNP (\p => sequenceNP p) . unPOP
 
+||| Specialization of `hcollapse`
+public export
+collapsePOP : POP (K a) kss -> (List $ List a)
+collapsePOP = collapseNP . mapNP (\v => collapseNP v) . unPOP
+
 --------------------------------------------------------------------------------
 --          Interface Conversions
 --------------------------------------------------------------------------------
@@ -121,6 +126,10 @@ HFold k (List $ List k) (POP_ k) where
 
 public export %inline
 HSequence k (List $ List k) (POP_ k) where hsequence = sequencePOP
+
+public export %inline
+HCollapse k (List $ List k) (POP_ k) (List . List) where
+  hcollapse = collapsePOP
 
 public export
 POP (Eq . f) kss => Eq (POP_ k f kss) where

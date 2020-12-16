@@ -496,3 +496,18 @@ hcfor :  {0 f,f' : k -> Type}
       -> (forall a . c a => f a -> g (f' a))
       -> g (p f' ks)
 hcfor c = flip (hctraverse c)
+
+--------------------------------------------------------------------------------
+--          HCollapse
+--------------------------------------------------------------------------------
+
+||| Collapsing a heterogeneous container to a homogeneous one
+||| of the same shape.
+public export
+interface HCollapse k l (p : HCont k l) (collapseTo : Type -> Type) | p where
+
+  ||| A heterogeneous container over constant functor `K a` is
+  ||| actually a homogeneous one holding only values of type `a`.
+  ||| This function extracts the wrapped values into a homogeneous
+  ||| one of the same size and shape.
+  hcollapse : {0 a : Type} -> {0 ks : l} -> p (K a) ks -> collapseTo a

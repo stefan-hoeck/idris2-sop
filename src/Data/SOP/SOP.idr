@@ -67,6 +67,11 @@ public export
 sequenceSOP : Applicative g => SOP (\a => g (f a)) kss -> g (SOP f kss)
 sequenceSOP = map MkSOP . sequenceNS . mapNS (\p => sequenceNP p) . unSOP
 
+||| Specialization of `hcollapse`
+public export
+collapseSOP : SOP (K a) kss -> List a
+collapseSOP = collapseNS . mapNS (\v => collapseNP v) . unSOP
+
 --------------------------------------------------------------------------------
 --          Injections
 --------------------------------------------------------------------------------
@@ -100,6 +105,9 @@ HFold k (List $ List k) (SOP_ k) where
 
 public export
 HSequence k (List $ List k) (SOP_ k) where hsequence = sequenceSOP
+
+public export %inline
+HCollapse k (List $ List k) (SOP_ k) List where hcollapse = collapseSOP
 
 public export
 POP (Eq . f) kss => Eq (SOP_ k f kss) where

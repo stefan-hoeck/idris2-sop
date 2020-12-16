@@ -97,6 +97,12 @@ sequenceNP : Applicative g => NP (\a => g (f a)) ks -> g (NP f ks)
 sequenceNP []        = pure []
 sequenceNP (v :: vs) = [| v :: sequenceNP vs |]
 
+||| Specialization of `hcollapse`
+public export
+collapseNP : NP (K a) ks -> List a
+collapseNP []        = []
+collapseNP (v :: vs) = v :: collapseNP vs
+
 --------------------------------------------------------------------------------
 --          Core Functions
 --------------------------------------------------------------------------------
@@ -213,6 +219,9 @@ public export %inline
 HFold k (List k) (NP_ k) where
   hfoldl = foldlNP
   hfoldr = foldrNP
+
+public export %inline
+HCollapse k (List k) (NP_ k) List where hcollapse = collapseNP
 
 public export %inline
 HSequence k (List k) (NP_ k) where hsequence = sequenceNP

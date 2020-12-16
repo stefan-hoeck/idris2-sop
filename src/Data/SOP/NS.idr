@@ -84,6 +84,12 @@ hapNS : NP (\a => f a -> g a) ks -> NS f ks -> NS g ks
 hapNS (fun :: _)    (Z v) = Z $ fun v
 hapNS (_   :: funs) (S y) = S $ hapNS funs y
 
+||| Specialization of `hcollapse`
+public export
+collapseNS : NS (K a) ks -> a
+collapseNS (Z v) = v
+collapseNS (S x) = collapseNS x
+
 --------------------------------------------------------------------------------
 --          Injections
 --------------------------------------------------------------------------------
@@ -118,6 +124,9 @@ HFold k (List k) (NS_ k) where
 
 public export
 HSequence k (List k) (NS_ k) where hsequence = sequenceNS
+
+public export
+HCollapse k (List k) (NS_ k) I where hcollapse = collapseNS
 
 public export
 (all : NP (Eq . f) ks) => Eq (NS_ k f ks) where
