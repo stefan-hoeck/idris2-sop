@@ -216,16 +216,16 @@ setAtMany' :  (0 t  : k)
 setAtMany' t _ v' np = setAtMany t v' np
 
 --------------------------------------------------------------------------------
---          Subproducts
+--          Narrowing products
 --------------------------------------------------------------------------------
 
 ||| Extracts a subset of values from an n-ary product.
 ||| The values must appear in the same order in both lists.
 public export
-subproduct : NP f ks -> {auto prf: Sublist ks' ks} -> NP f ks'
-subproduct x         {prf = SLNil}    = []
-subproduct (v :: vs) {prf = SLSame y} = v :: subproduct vs
-subproduct (_ :: vs) {prf = SLDiff y} = subproduct vs
+narrow : NP f ks -> {auto 1 prf: Sublist ks' ks} -> NP f ks'
+narrow x         {prf = SLNil}    = []
+narrow (v :: vs) {prf = SLSame y} = v :: narrow vs
+narrow (_ :: vs) {prf = SLDiff y} = narrow vs
 
 --------------------------------------------------------------------------------
 --          Interface Conversions
@@ -397,4 +397,4 @@ hctraverseEx : NP Read [Int,String] => NP (K String) [Int,String] -> Maybe (NP I
 hctraverseEx = hctraverse Read read
   
 subproductEx : NP I [Int,String,Bool,Maybe Bool] -> NP I [Int,Bool]
-subproductEx np = subproduct np
+subproductEx np = narrow np

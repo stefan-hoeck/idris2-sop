@@ -1,5 +1,6 @@
 module Data.SOP.NS
 
+import Data.List.Elem
 import Data.SOP.Interfaces
 import Data.SOP.NP
 import Data.SOP.Utils
@@ -124,6 +125,30 @@ apInjsNP_ (v :: vs) = Z v :: mapNP S (apInjsNP_ vs)
 public export
 apInjsNP : NP f ks -> List (NS f ks)
 apInjsNP = collapseNP . apInjsNP_
+
+--------------------------------------------------------------------------------
+--          Extracting values
+--------------------------------------------------------------------------------
+
+||| Tries to extract a value of the given type from an n-ary sum.
+public export
+extract : (0 t : k) -> NS f ks -> {auto 1 prf : Elem k ks} -> Maybe (f k) 
+extract _ (Z v) {prf = Here}    = Just v
+extract _ (S _) {prf = Here}    = Nothing
+extract _ (Z _) {prf = There y} = Nothing
+extract t (S x) {prf = There y} = extract t x
+
+--------------------------------------------------------------------------------
+--          Expanding sums
+--------------------------------------------------------------------------------
+
+||| Injects an n-ary sum into a larger n-ary sum.
+public export
+expand : NS f ks -> {auto 1 prf: Sublist ks ks'} -> NS f ks'
+expand (Z v) {prf = SLSame y} = Z v
+expand (S x) {prf = SLSame y} = S $ expand x
+expand v     {prf = SLDiff y} = S $ expand v
+expand _     {prf = SLNil} impossible
 
 --------------------------------------------------------------------------------
 --          Implementations
