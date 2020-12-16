@@ -127,8 +127,14 @@ apInjsNP : NP f ks -> List (NS f ks)
 apInjsNP = collapseNP . apInjsNP_
 
 --------------------------------------------------------------------------------
---          Extracting values
+--          Extracting and injecting values
 --------------------------------------------------------------------------------
+
+||| Injects a value into an n-ary sum.
+public export
+inject : {0 k : Type} -> (v : f k) -> {auto 1 prf : Elem k ks} -> NS f ks
+inject v {prf = Here}    = Z v
+inject v {prf = There _} = S $ inject v
 
 ||| Tries to extract a value of the given type from an n-ary sum.
 public export
