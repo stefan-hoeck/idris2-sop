@@ -107,6 +107,24 @@ injections : {ks : _} -> NP (Injection f ks) ks
 injections {ks = []}   = []
 injections {ks = _::_} = Z :: mapNP (S .) injections
 
+||| Applies all injections to an n-ary product of values.
+|||
+||| This is not implemented in terms of injections for the
+||| following reason: Since we have access to the structure
+||| of the n-ary product and thus `ks`, we do not need a
+||| runtime reference of `ks`. Therefore, when applying
+||| injections to an n-ary product, prefer this function
+||| over a combination involving `injections`.
+public export
+apInjsNP_ : NP f ks -> NP (K $ NS f ks) ks
+apInjsNP_ []        = []
+apInjsNP_ (v :: vs) = Z v :: mapNP S (apInjsNP_ vs)
+
+||| Alias for `collapseNP . apInjsNP_`
+public export
+apInjsNP : NP f ks -> List (NS f ks)
+apInjsNP = collapseNP . apInjsNP_
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------

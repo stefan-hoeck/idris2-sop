@@ -88,6 +88,23 @@ public export
 injectionsSOP : {kss : _} -> NP_ (List k) (InjectionSOP f kss) kss
 injectionsSOP = hmap (MkSOP .) $ injections {ks = kss}
 
+||| Applies all injections to a product of products of values.
+|||
+||| This is not implemented in terms of `injectionsSOP` for the
+||| following reason: Since we have access to the structure
+||| of the product of products and thus `kss`, we do not need a
+||| runtime reference of `kss`. Therefore, when applying
+||| injections to a product of products, prefer this function
+||| over a combination involving `injectionsSOP`.
+public export
+apInjsPOP_ : POP f kss -> NP (K $ SOP f kss) kss
+apInjsPOP_  = mapNP (\ns => MkSOP ns) . apInjsNP_ . unPOP
+
+||| Alias for `collapseNP . apInjsPOP_`
+public export
+apInjsPOP : POP f kss -> List (SOP f kss)
+apInjsPOP = collapseNP . apInjsPOP_
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
