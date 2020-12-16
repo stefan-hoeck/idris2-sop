@@ -156,6 +156,15 @@ expand (S x) {prf = SLSame y} = S $ expand x
 expand v     {prf = SLDiff y} = S $ expand v
 expand _     {prf = SLNil} impossible
 
+||| Injects an n-ary sum into a larger n-ary sum.
+public export
+narrow : NS f ks -> {auto 1 prf: Sublist ks' ks} -> Maybe (NS f ks')
+narrow _     {prf = SLNil} = Nothing
+narrow (Z v) {prf = SLSame x} = Just $ Z v
+narrow (Z v) {prf = SLDiff x} = Nothing
+narrow (S x) {prf = SLSame y} = S <$> narrow x
+narrow (S x) {prf = SLDiff y} = narrow x
+
 --------------------------------------------------------------------------------
 --          Implementations
 --------------------------------------------------------------------------------
