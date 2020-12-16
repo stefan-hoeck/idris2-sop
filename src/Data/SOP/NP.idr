@@ -252,10 +252,39 @@ narrow x         {prf = SLNil}    = []
 narrow (v :: vs) {prf = SLSame y} = v :: narrow vs
 narrow (_ :: vs) {prf = SLDiff y} = narrow vs
 
+||| Appends two n-ary products.
 public export
 append : NP f ks -> NP f ks' -> NP f (ks ++ ks')
 append []        y = y
 append (v :: vs) y = v :: append vs y
+
+||| Expands an n-ary product by filling missing
+||| values with the given default-generating function.
+public export
+expand :  {ks' : List k}
+       -> (forall k . f k)
+       -> NP f ks
+       -> {auto prf : Sublist ks ks'}
+       -> NP f ks'
+expand f []                         = pureNP f
+expand f (v :: vs) {prf = SLSame x} = v :: expand f vs
+expand f vs        {prf = SLDiff x} = f :: expand f vs
+
+||| Expands an n-ary product by filling missing
+||| values with the given default-generating function.
+|||
+||| This is the constrained version of `expand`.
+public export
+cexpand :  (0 c : k -> Type)
+        -> (1 cs : NP c ks')
+        => (forall k . c k => f k)
+        -> {auto prf : Sublist ks ks'}
+        -> NP_ k f ks
+        -> NP_ k f ks'
+cexpand c {cs = []}   f []                         = []
+cexpand c {cs = _::_} f []                         = f :: cexpand c f []
+cexpand c {cs = _::_} f (v :: vs) {prf = SLSame x} = v :: cexpand c f vs
+cexpand c {cs = _::_} f vs        {prf = SLDiff x} = f :: cexpand c f vs
 
 --------------------------------------------------------------------------------
 --          Interface Conversions
