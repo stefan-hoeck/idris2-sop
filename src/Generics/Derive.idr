@@ -137,13 +137,8 @@ tiTTImp (MkParamTypeInfo n _ cons) =
 
 ||| Creates a `Meta` value from the passed `TypeInfo`
 public export %inline
-mkMeta' : (1 _ : Generic t code) -> TypeInfo code -> Meta t code
-mkMeta' = %runElab check (var $ singleCon "Meta")
-
-||| Creates a `Meta` value from the passed `TypeInfo`
-public export %inline
-mkMeta : (1 prf : Generic t code) => TypeInfo code -> Meta t code
-mkMeta = mkMeta' prf
+mkMeta : Generic t code => TypeInfo code -> Meta t code
+mkMeta = %runElab check (var $ singleCon "Meta")
 
 ||| Derives a `Meta` implementation for the given data type
 ||| and visibility.

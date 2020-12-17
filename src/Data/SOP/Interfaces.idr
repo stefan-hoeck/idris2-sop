@@ -67,7 +67,7 @@ HCont k l = (k -> Type) -> l -> Type
 |||
 ||| @ p the heterogeneous sum or product
 public export
-interface HPure k l (p : HCont k l) | p where
+interface HPure k l (0 p : HCont k l) | p where
 
   ||| Creates a heterogeneous product by using the given functio
   ||| to produce values.
@@ -124,7 +124,7 @@ hconst v = hpure v
 |||
 ||| @ p the actual heterogeneous container
 public export
-interface HFunctor k l (p : HCont k l) | p where
+interface HFunctor k l (0 p : HCont k l) | p where
 
   ||| Maps the given function over all values in a
   ||| heterogeneous container, thus changing the context
@@ -329,7 +329,7 @@ hcliftA3 _ {cs} fun = hliftA4 (\_ => fun) cs
 --------------------------------------------------------------------------------
 
 public export
-interface HFold k l (p : HCont k l) | p where
+interface HFold k l (0 p : HCont k l) | p where
 
   ||| Strict fold over a heterogeneous sum or product
   ||| parameterized by the constant functor (and thus being actually
@@ -426,7 +426,7 @@ hchoice = hfoldr (\a,b => a <|> b) empty
 ||| Sequencing of applicative effects over a heterogeneous
 ||| container.
 public export
-interface HSequence k l (p : HCont k l) | p where
+interface HSequence k l (0 p : HCont k l) | p where
 
   ||| Given a heterogeneous containers holding values
   ||| wrapped in effect `g`, sequences applications of
@@ -504,7 +504,7 @@ hcfor c = flip (hctraverse c)
 ||| Collapsing a heterogeneous container to a homogeneous one
 ||| of the same shape.
 public export
-interface HCollapse k l (p : HCont k l) (collapseTo : Type -> Type) | p where
+interface HCollapse k l (0 p : HCont k l) (0 collapseTo : Type -> Type) | p where
 
   ||| A heterogeneous container over constant functor `K a` is
   ||| actually a homogeneous one holding only values of type `a`.

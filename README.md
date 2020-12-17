@@ -52,6 +52,14 @@ In order to automatically derive interface implementations,
 this library makes use of functionality provided by the
 [idris2-elab-util](https://github.com/stefan-hoeck/idris2-elab-util) package.
 
+### Idris2 Version
+
+Making use of elaborator reflection, this library has to closely
+follow the latest Idris2 builds until things settle down a bit.
+This commit was built against commit
+043faf8baff33d2379cfff1810b14f47a88ab3aa.
+of Idris2.
+
 ## Limitations
 
 Below is a non-comprehensive list of limitations and caveats of this library.

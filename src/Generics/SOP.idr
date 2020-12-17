@@ -13,7 +13,7 @@ import public Data.SOP
 ||| that `from . to = id` and `to . from = id` and
 ||| thus, that `t` and `SOP code` are indeed isomorphic.
 public export
-interface Generic (t : Type) (code : List $ List Type) | t where
+interface Generic (0 t : Type) (0 code : List $ List Type) | t where
   ||| Converts the data type to its generic representation.
   from : (v : t) -> SOP I code
 
