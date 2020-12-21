@@ -1,5 +1,7 @@
 module Data.SOP.SOP
 
+import Data.List.Elem
+
 import Data.SOP.NP
 import Data.SOP.NS
 import Data.SOP.POP
@@ -104,6 +106,20 @@ apInjsPOP_  = mapNP (\ns => MkSOP ns) . apInjsNP_ . unPOP
 public export
 apInjsPOP : POP f kss -> List (SOP f kss)
 apInjsPOP = collapseNP . apInjsPOP_
+
+||| Injects a product into an n-ary sum of products.
+public export
+injectSOP : {0 ks : List k} -> (v : NP f ks) -> {auto prf : Elem ks kss} -> SOP f kss
+injectSOP v = MkSOP $ inject v
+
+||| Tries to extract a product of the given type from an
+||| n-ary sum of products.
+public export
+extractSOP :  (0 ks : List k)
+           -> SOP f kss
+           -> {auto 1 prf : Elem ks kss}
+           -> Maybe (NP f ks) 
+extractSOP ks (MkSOP ns) = extract ks {prf} ns
 
 --------------------------------------------------------------------------------
 --          Implementations

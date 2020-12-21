@@ -132,7 +132,7 @@ apInjsNP = collapseNP . apInjsNP_
 
 ||| Injects a value into an n-ary sum.
 public export
-inject : {0 k : Type} -> (v : f k) -> {auto 1 prf : Elem k ks} -> NS f ks
+inject : {0 t : k} -> (v : f t) -> {auto 1 prf : Elem t ks} -> NS f ks
 inject v {prf = Here}    = Z v
 inject v {prf = There _} = S $ inject v
 

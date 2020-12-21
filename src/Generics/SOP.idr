@@ -2,6 +2,7 @@ module Generics.SOP
 
 import Decidable.Equality
 
+import public Data.List.Elem
 import public Data.SOP
 
 %default total
@@ -36,6 +37,30 @@ fromInjective x y prf = rewrite sym $ fromToId y in lemma2
 
         lemma2 : x = to {t = t} (from y)
         lemma2 = rewrite sym $ fromToId x in lemma1
+
+public export
+0 Code : (t : Type) -> Generic t code => List $ List Type
+Code _ = code
+
+||| Tries to extract the arguments of a single constructor
+||| from a value's generic representation.
+public export
+genExtract :  (0 ts : List Type)
+           -> (v : t)
+           -> Generic t code
+           => {auto prf : Elem ts code}
+           -> Maybe (NP I ts)
+genExtract ts v = extractSOP ts $ from v
+
+||| Tries to extract the value of a single one argument
+||| constructor from a value's generic representation.
+public export
+genExtract1 :  (0 t' : Type)
+            -> (v : t)
+            -> Generic t code
+            => {auto prf : Elem [t'] code}
+            -> Maybe t'
+genExtract1 t' v = hd <$> genExtract [t'] v
 
 --------------------------------------------------------------------------------
 --          Generic Implementation Functions
