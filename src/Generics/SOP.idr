@@ -90,16 +90,15 @@ genDecEq x y = case decEq (from x) (from y) of
 ||| Default `(<+>)` implementation for data types with a `Generic`
 ||| instance.
 public export
-genAppend :  Generic t code
-          => POP Semigroup code
-          => SingletonList code
+genAppend :  Generic t [ts]
+          => POP Semigroup [ts]
           => t -> t -> t
 genAppend x y = to $ from x <+> from y
 
 ||| Default `neutral` implementation for data types with a `Generic`
 ||| instance.
 public export
-genNeutral :  Generic t code => POP Monoid code => SingletonList code => t
+genNeutral :  Generic t [ts] => POP Monoid [ts] => t
 genNeutral = to neutral
 
 --------------------------------------------------------------------------------

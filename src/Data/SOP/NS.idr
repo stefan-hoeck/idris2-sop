@@ -204,11 +204,11 @@ public export
 ||| only when they consist of a single choice, which must itself be
 ||| a `Semigroup` or `Monoid`.
 public export
-(all : NP (Semigroup . f) ks) =>
-(prf : SingletonList ks) => Semigroup (NS_ k f ks) where
-  (<+>) {all = _ :: _} {prf = IsSingletonList _} (Z l) (Z r) = Z $ l <+> r
-  (<+>) {all = _ :: _} {prf = IsSingletonList _} (S _) _    impossible
-  (<+>) {all = _ :: _} {prf = IsSingletonList _} _    (S _) impossible
+(all : NP (Semigroup . f) [k']) =>
+Semigroup (NS_ k f [k']) where
+  (<+>) {all = _ :: _} (Z l) (Z r) = Z $ l <+> r
+  (<+>) {all = _ :: _} (S _) _    impossible
+  (<+>) {all = _ :: _} _    (S _) impossible
 
 public export
 (all : NP (Show . f) ks) => Show (NS_ k f ks) where
@@ -219,9 +219,8 @@ public export
 ||| only when they consist of a single choice, which must itself be
 ||| a `Semigroup` or `Monoid`.
 public export
-(all : NP (Monoid . f) ks) =>
-(prf : SingletonList ks) => Monoid (NS_ k f ks) where
-  neutral {all = _ :: _} {prf = IsSingletonList _} = Z neutral
+(all : NP (Monoid . f) [k']) => Monoid (NS_ k f [k']) where
+  neutral {all = _ :: _} = Z neutral
 
 public export
 Uninhabited (Data.SOP.NS.Z x = Data.SOP.NS.S y) where

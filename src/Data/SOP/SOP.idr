@@ -158,16 +158,14 @@ POP (Show . f) kss => Show (SOP_ k f kss) where
 ||| only when they consist of a single choice, which must itself be
 ||| a `Semigroup` or `Monoid`.
 public export
-POP (Semigroup . f) kss =>
-SingletonList kss       => Semigroup (SOP_ k f kss) where
+POP (Semigroup . f) [ks] => Semigroup (SOP_ k f [ks]) where
   MkSOP a <+> MkSOP b = MkSOP $ a <+> b
 
 ||| Sums of products have instances of `Semigroup` and `Monoid`
 ||| only when they consist of a single choice, which must itself be
 ||| a `Semigroup` or `Monoid`.
 public export
-POP (Monoid . f) kss =>
-SingletonList kss    => Monoid (SOP_ k f kss) where
+POP (Monoid . f) [ks] => Monoid (SOP_ k f [ks]) where
   neutral = MkSOP neutral
 
 private
