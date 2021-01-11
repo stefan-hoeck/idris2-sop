@@ -8,7 +8,8 @@ license    = "BSD-2 Clause"
 sourcedir  = "src"
 depends    = base, contrib, elab-util
 
-modules = Data.SOP
+modules = Data.Lazy
+        , Data.SOP
         , Data.SOP.Interfaces
         , Data.SOP.NP
         , Data.SOP.NS
