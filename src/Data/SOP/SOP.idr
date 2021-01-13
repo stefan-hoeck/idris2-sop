@@ -117,7 +117,7 @@ injectSOP v = MkSOP $ inject v
 public export
 extractSOP :  (0 ks : List k)
            -> SOP f kss
-           -> {auto 1 prf : Elem ks kss}
+           -> {auto prf : Elem ks kss}
            -> Maybe (NP f ks) 
 extractSOP ks (MkSOP ns) = extract ks {prf} ns
 

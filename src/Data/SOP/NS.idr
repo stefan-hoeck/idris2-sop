@@ -132,13 +132,13 @@ apInjsNP = collapseNP . apInjsNP_
 
 ||| Injects a value into an n-ary sum.
 public export
-inject : {0 t : k} -> (v : f t) -> {auto 1 prf : Elem t ks} -> NS f ks
+inject : {0 t : k} -> (v : f t) -> {auto prf : Elem t ks} -> NS f ks
 inject v {prf = Here}    = Z v
 inject v {prf = There _} = S $ inject v
 
 ||| Tries to extract a value of the given type from an n-ary sum.
 public export
-extract : (0 t : k) -> NS f ks -> {auto 1 prf : Elem t ks} -> Maybe (f t) 
+extract : (0 t : k) -> NS f ks -> {auto prf : Elem t ks} -> Maybe (f t) 
 extract _ (Z v) {prf = Here}    = Just v
 extract _ (S _) {prf = Here}    = Nothing
 extract _ (Z _) {prf = There y} = Nothing
@@ -150,7 +150,7 @@ extract t (S x) {prf = There y} = extract t x
 
 ||| Injects an n-ary sum into a larger n-ary sum.
 public export
-expand : NS f ks -> {auto 1 prf: Sublist ks ks'} -> NS f ks'
+expand : NS f ks -> {auto prf: Sublist ks ks'} -> NS f ks'
 expand (Z v) {prf = SLSame y} = Z v
 expand (S x) {prf = SLSame y} = S $ expand x
 expand v     {prf = SLDiff y} = S $ expand v
@@ -159,7 +159,7 @@ expand _     {prf = SLNil} impossible
 ||| Tries to narrow down an n-ary sum to a subset of
 ||| choices. `ks'` must be a sublist (values in the same order) of `ks`.
 public export
-narrow : NS f ks -> {auto 1 prf: Sublist ks' ks} -> Maybe (NS f ks')
+narrow : NS f ks -> {auto prf: Sublist ks' ks} -> Maybe (NS f ks')
 narrow _     {prf = SLNil}    = Nothing
 narrow (Z v) {prf = SLSame x} = Just $ Z v
 narrow (Z v) {prf = SLDiff x} = Nothing

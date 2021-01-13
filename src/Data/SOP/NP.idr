@@ -247,7 +247,7 @@ setAtMany' t _ v' np = setAtMany t v' np
 ||| Extracts a subset of values from an n-ary product.
 ||| The values must appear in the same order in both lists.
 public export
-narrow : NP f ks -> {auto 1 prf: Sublist ks' ks} -> NP f ks'
+narrow : NP f ks -> {auto prf: Sublist ks' ks} -> NP f ks'
 narrow x         {prf = SLNil}    = []
 narrow (v :: vs) {prf = SLSame y} = v :: narrow vs
 narrow (_ :: vs) {prf = SLDiff y} = narrow vs
@@ -276,7 +276,7 @@ expand f vs        {prf = SLDiff x} = f :: expand f vs
 ||| This is the constrained version of `expand`.
 public export
 cexpand :  (0 c : k -> Type)
-        -> (1 cs : NP c ks')
+        -> (cs : NP c ks')
         => (forall k . c k => f k)
         -> {auto prf : Sublist ks ks'}
         -> NP_ k f ks
