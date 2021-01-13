@@ -1,3 +1,7 @@
+||| Interface implementations for lazy values.
+||| This module should be imported when automatically
+||| deriving interface implementations of data types
+||| containing `Lazy` fields.
 module Data.Lazy
 
 public export
