@@ -11,7 +11,7 @@
 ||| the types of values at each position in the
 ||| heterogeneous product or sum, while the shape of container
 ||| indices mirror the shape of the corresponding product types.
-||| 
+|||
 ||| The interfaces in this module allow us to create
 ||| hetereogeneous containers from sufficiently general functions
 ||| (`HPure`), use unary functions to change the context of
@@ -289,7 +289,7 @@ hcmap :  HAp k l q p
       => (fun : forall a . c a => f a -> g a)
       -> p f ks
       -> p g ks
-hcmap _ {cs} fun = hliftA2 (\_ => fun) cs 
+hcmap _ {cs} fun = hliftA2 (\_ => fun) cs
 
 ||| Alias for `hcmap`
 public export %inline
@@ -365,14 +365,14 @@ hcconcatMap :  (Monoid m, HAp k l q p, HFold k l p)
 hcconcatMap c fun = hconcat . hcmap c fun
 
 ||| Generalization of `sequence_` to heterogeneous containers.
-||| 
+|||
 ||| Alias for `hfoldl (*>) (pure ())`.
 public export
 hsequence_ : (Applicative g, HFold k l p) => p (K (g ())) ks -> g ()
 hsequence_ = hfoldl (*>) (pure ())
 
 ||| Generalization of `traverse_` to heterogeneous containers.
-||| 
+|||
 ||| Alias for `hsequence_ . hmap fun`.
 public export
 htraverse_ :  (Applicative g, HFold k l p, HFunctor k l p)
@@ -471,7 +471,7 @@ hfor = flip htraverse
 ||| ```idris example
 ||| interface Read a where
 |||   read : String -> Maybe a
-||| 
+|||
 ||| hctraverseEx : NP Read [Int,String] =>
 |||                NP (K String) [Int,String] -> Maybe (NP I [Int,String])
 ||| hctraverseEx = hctraverse Read read

@@ -118,7 +118,7 @@ public export
 extractSOP :  (0 ks : List k)
            -> SOP f kss
            -> {auto prf : Elem ks kss}
-           -> Maybe (NP f ks) 
+           -> Maybe (NP f ks)
 extractSOP ks (MkSOP ns) = extract ks {prf} ns
 
 --------------------------------------------------------------------------------
@@ -182,7 +182,7 @@ POP (DecEq . f) kss => DecEq (SOP_ k f kss) where
 --          Examples and Tests
 --------------------------------------------------------------------------------
 
-neutralTest : SOP I [[String, Maybe Int],[()]] 
+neutralTest : SOP I [[String, Maybe Int],[()]]
 neutralTest = hcpure Monoid neutral
 
 hapTest : SOP Maybe [[String,Int]] -> SOP I [[String,Int]]

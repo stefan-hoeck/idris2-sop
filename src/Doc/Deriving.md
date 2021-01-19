@@ -162,7 +162,7 @@ parser type.
 ||| of the list or the remainder of the list where parsing failed.
 public export
 record Parser (t : Type) where
-  constructor MkParser 
+  constructor MkParser
   run : List String -> Either (List String) (t, List String)
 
 public export
@@ -297,7 +297,7 @@ for products of products and sums of products.
 public export
 POP (Encode . f) kss => Encode (POP f kss) where
   encode (MkPOP nps) = encode nps
-  
+
 POP (Encode . f) kss => SingletonList kss => Encode (SOP f kss) where
   encode (MkSOP v) = encode v
 ```
@@ -422,7 +422,7 @@ Finally, the trivial versions for `POP` and `SOP`:
 public export
 POP (Decode . f) kss => Decode (POP f kss) where
   decode = map MkPOP decode
-  
+
 POP (Decode . f) kss => SingletonList kss => Decode (SOP f kss) where
   decode = map MkSOP decode
 ```
@@ -470,7 +470,7 @@ to a dragon:
 ```idris
 public export
 gorgar : Dragon
-gorgar = MkDragon "GORGAR" 15000 
+gorgar = MkDragon "GORGAR" 15000
            [MkSpell 100 "Fireball", MkSpell 20 "Invisibility"]
            ["Mail of Mithril", "1'000 gold coins"]
 

@@ -26,7 +26,7 @@ import Doc.Deriving
 Getting access to a data type's metadata is as simple as deriving
 its `Meta` interface (from module `Generics.Meta`). This gives us access
 to functions `meta` and `metaFor`, both of which return a `TypeInfo`
-record, wrapping a product of `ConInfo` values. 
+record, wrapping a product of `ConInfo` values.
 Like `SOP`, `TypeInfo` is indexed over a list of lists of values to
 match the structure of the generic code of a data type.
 

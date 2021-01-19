@@ -454,6 +454,6 @@ interface Read a where
 
 hctraverseEx : NP Read [Int,String] => NP (K String) [Int,String] -> Maybe (NP I [Int,String])
 hctraverseEx = hctraverse Read read
-  
+
 subproductEx : NP I [Int,String,Bool,Maybe Bool] -> NP I [Int,Bool]
 subproductEx np = narrow np

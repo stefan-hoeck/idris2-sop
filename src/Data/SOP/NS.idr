@@ -138,7 +138,7 @@ inject v {prf = There _} = S $ inject v
 
 ||| Tries to extract a value of the given type from an n-ary sum.
 public export
-extract : (0 t : k) -> NS f ks -> {auto prf : Elem t ks} -> Maybe (f t) 
+extract : (0 t : k) -> NS f ks -> {auto prf : Elem t ks} -> Maybe (f t)
 extract _ (Z v) {prf = Here}    = Just v
 extract _ (S _) {prf = Here}    = Nothing
 extract _ (Z _) {prf = There y} = Nothing
