@@ -16,7 +16,7 @@ We start with the necessary imports and language extensions:
 ```idris
 module Doc.Deriving
 
-import Data.Strings
+import Data.String
 import Generics.Derive
 
 %language ElabReflection
