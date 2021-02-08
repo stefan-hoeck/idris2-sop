@@ -4,7 +4,7 @@ authors    = "stefan-hoeck"
 version    = "0.1.0"
 
 sourcedir  = "src"
-depends    = base, sop, elab-util
+depends    = base, contrib, sop, elab-util
 
 modules = Doc.Intro
         , Doc.Barbies
