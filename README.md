@@ -40,7 +40,7 @@ record Employee where
 ```
 
 Note: If a data type includes lazy fields, module `Data.Lazy`
-should be importet as well when deriving interface implementations.
+should be imported as well when deriving interface implementations.
 ## Documentation
 
 Most of the exported functions have been properly annotated
