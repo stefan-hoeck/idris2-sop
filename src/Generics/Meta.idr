@@ -25,6 +25,7 @@ data ArgName : Type where
   ||| Index of an unnamed argument
   UnnamedArg : (index : Int) -> ArgName
 
+||| Tries to extract an argument's name.
 public export
 getName : ArgName -> Maybe String
 getName (NamedArg _ name) = Just name
@@ -47,11 +48,14 @@ record ConInfo_ (k : Type) (ks : List k) where
 
   ||| Constructor arguments
   args    : NP_ k (K ArgName) ks
+
 ||| Alias for `ConInfo_` with the `k` parameter being implicit.
 public export
 ConInfo : {k : Type} -> (ks : List k) -> Type
 ConInfo = ConInfo_ k
 
+||| Tries to extract the set of argument names from
+||| a constructor.
 public export
 argNames : ConInfo ks -> Maybe (NP (K String) ks)
 argNames = htraverse getName . args
