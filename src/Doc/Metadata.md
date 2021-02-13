@@ -147,7 +147,10 @@ test them at the REPL:
 
 export
 demon : Monster
-demon = Demon 530 120 [MkSpell 40 "Disintegrate", MkSpell 10 "Utterdark"]
+demon = Demon { hp = 530
+              , sp = 120
+              , spells = [MkSpell 40 "Disintegrate", MkSpell 10 "Utterdark"]
+              }
 
 export
 encDemon : List String

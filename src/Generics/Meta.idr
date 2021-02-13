@@ -10,6 +10,7 @@
 ||| this information available as soon as possible.
 module Generics.Meta
 
+import Data.List
 import Generics.SOP
 
 %default total
@@ -24,6 +25,10 @@ data ArgName : Type where
   ||| Index of an unnamed argument
   UnnamedArg : (index : Int) -> ArgName
 
+public export
+getName : ArgName -> Maybe String
+getName (NamedArg _ name) = Just name
+getName (UnnamedArg _)    = Nothing
 
 ||| Namespace, name and arguments of a single data constructor
 |||
@@ -42,11 +47,14 @@ record ConInfo_ (k : Type) (ks : List k) where
 
   ||| Constructor arguments
   args    : NP_ k (K ArgName) ks
-
 ||| Alias for `ConInfo_` with the `k` parameter being implicit.
 public export
 ConInfo : {k : Type} -> (ks : List k) -> Type
 ConInfo = ConInfo_ k
+
+public export
+argNames : ConInfo ks -> Maybe (NP (K String) ks)
+argNames = htraverse getName . args
 
 ||| Returns `True` if a constructor's `conName` consists
 ||| only of non-alphanumeric characters.
@@ -112,9 +120,23 @@ showC _ info []   = info.conName
 
 -- This uses `showCon` from the Prelude to wrap an applied
 -- constructor in parentheses depending on `p`.
-showC p info args = let con    = wrapOperator info.conName
-                        argStr = hconcat $ hcmap (Show . f) showArg args
-                     in showCon p con argStr
+showC p info args =
+  let con = wrapOperator info.conName
+   in maybe (showOther con) (showRecord con) (argNames info)
+
+  where showNamed : Show a => String -> a -> String
+        showNamed name v = name ++ " = " ++ show v
+
+        showRecord : (con : String) -> NP (K String) ks -> String
+        showRecord con names =
+          let applied = hcliftA2 (Show . f) showNamed names args
+              inner   = intersperse ", " (collapseNP applied)
+           in con ++ " { " ++ concat inner ++ " }"
+
+        showOther : (con : String) -> String
+        showOther con =
+          let argStr = hconcat $ hcmap (Show . f) showArg args
+           in showCon p con argStr
 
 showSOP :  (all : POP (Show . f) kss)
         => Prec -> TypeInfo kss -> SOP f kss -> String
@@ -124,10 +146,11 @@ showSOP {all = MkPOP _} p (MkTypeInfo _ _ cons) =
 ||| Generic show function.
 |||
 ||| This is still quite basic. It uses prefix notation for operators
-||| and treats records the same as other data types, that is,
-||| record field names are not part of the generated string representation.
-||| In addition, data types with List constructors (`Nil` and `(::)`)
+||| and data types with List constructors (`Nil` and `(::)`)
 ||| are not yet displayed using list syntax ("[a,b,c]").
+|||
+||| However, constructors with only named arguments are displayed
+||| in record syntax style.
 public export
 genShowPrec : Meta t code => POP Show code => Prec -> t -> String
 genShowPrec p = showSOP p (metaFor t) . from
