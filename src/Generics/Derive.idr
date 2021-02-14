@@ -1,5 +1,6 @@
 module Generics.Derive
 
+import Data.List1
 import public Generics.SOP
 import public Generics.Meta
 import public Decidable.Equality
@@ -156,6 +157,28 @@ MetaVis vis g =
 export
 Meta : DeriveUtil -> InterfaceImpl
 Meta = MetaVis Public
+
+--------------------------------------------------------------------------------
+--          Prelude and Data Implementations
+--------------------------------------------------------------------------------
+
+%runElab derive "Nat" [Generic,Meta]
+
+%runElab derive "Maybe" [Generic,Meta]
+
+%runElab derive "Either" [Generic,Meta]
+
+%runElab derive "List" [Generic,Meta]
+
+%runElab derive "List1" [Generic,Meta]
+
+%runElab derive "Dec" [Generic,Meta]
+
+%runElab derive "Ordering" [Generic,Meta]
+
+%runElab derive "Bool" [Generic,Meta]
+
+%runElab derive "Prec" [Generic,Meta]
 
 --------------------------------------------------------------------------------
 --          Eq

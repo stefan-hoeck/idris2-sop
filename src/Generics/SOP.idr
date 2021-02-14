@@ -153,34 +153,6 @@ Generic Void [] where
   toFromId (MkSOP v) impossible
 
 public export
-Generic Nat [[],[Nat]] where
-  from Z     = MkSOP $ Z []
-  from (S k) = MkSOP $ S $ Z [k]
-
-  to (MkSOP $ Z [])      = Z
-  to (MkSOP $ S $ Z [k]) = S k
-
-  fromToId 0     = Refl
-  fromToId (S k) = Refl
-
-  toFromId (MkSOP $ Z [])      = Refl
-  toFromId (MkSOP $ S $ Z [k]) = Refl
-
-public export
-Generic (Maybe a) [[],[a]] where
-  from Nothing  = MkSOP $ Z []
-  from (Just v) = MkSOP $ S $ Z [v]
-
-  to (MkSOP $ Z [])      = Nothing
-  to (MkSOP $ S $ Z [v]) = Just v
-
-  fromToId Nothing  = Refl
-  fromToId (Just v) = Refl
-
-  toFromId (MkSOP $ Z [])      = Refl
-  toFromId (MkSOP $ S $ Z [v]) = Refl
-
-public export
 Generic (Dec t) [[t],[t -> Void]] where
   from (Yes t)  = MkSOP $ Z [t]
   from (No f) = MkSOP $ S $ Z [f]
@@ -193,20 +165,6 @@ Generic (Dec t) [[t],[t -> Void]] where
 
   toFromId (MkSOP $ Z [t])     = Refl
   toFromId (MkSOP $ S $ Z [f]) = Refl
-
-public export
-Generic (Either a b ) [[a],[b]] where
-  from (Left a)  = MkSOP $ Z [a]
-  from (Right b) = MkSOP $ S $ Z [b]
-
-  to (MkSOP $ Z [a])     = Left a
-  to (MkSOP $ S $ Z [b]) = Right b
-
-  fromToId (Left a)  = Refl
-  fromToId (Right b) = Refl
-
-  toFromId (MkSOP $ Z [a])     = Refl
-  toFromId (MkSOP $ S $ Z [b]) = Refl
 
 public export
 Generic (List a) [[],[a,List a]] where
