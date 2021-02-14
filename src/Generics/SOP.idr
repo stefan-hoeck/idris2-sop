@@ -153,34 +153,6 @@ Generic Void [] where
   toFromId (MkSOP v) impossible
 
 public export
-Generic (Dec t) [[t],[t -> Void]] where
-  from (Yes t)  = MkSOP $ Z [t]
-  from (No f) = MkSOP $ S $ Z [f]
-
-  to (MkSOP $ Z [t])     = Yes t
-  to (MkSOP $ S $ Z [f]) = No f
-
-  fromToId (Yes t) = Refl
-  fromToId (No f)  = Refl
-
-  toFromId (MkSOP $ Z [t])     = Refl
-  toFromId (MkSOP $ S $ Z [f]) = Refl
-
-public export
-Generic (List a) [[],[a,List a]] where
-  from Nil      = MkSOP $ Z []
-  from (h :: t) = MkSOP $ S $ Z [h,t]
-
-  to (MkSOP $ Z [])        = Nil
-  to (MkSOP $ S $ Z [h,t]) = h :: t
-
-  fromToId Nil      = Refl
-  fromToId (h :: t) = Refl
-
-  toFromId (MkSOP $ Z [])        = Refl
-  toFromId (MkSOP $ S $ Z [h,t]) = Refl
-
-public export
 Generic (Stream a) [[a, Inf (Stream a)]] where
   from (h :: t) = MkSOP $ Z [h,t]
 
