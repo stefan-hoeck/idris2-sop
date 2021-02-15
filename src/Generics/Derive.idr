@@ -7,6 +7,9 @@ import public Decidable.Equality
 
 import public Language.Reflection.Derive
 
+import System.Clock
+import System.File
+
 %language ElabReflection
 
 %default covering
@@ -159,28 +162,6 @@ Meta : DeriveUtil -> InterfaceImpl
 Meta = MetaVis Public
 
 --------------------------------------------------------------------------------
---          Prelude and Data Implementations
---------------------------------------------------------------------------------
-
-%runElab derive "Nat" [Generic,Meta]
-
-%runElab derive "Maybe" [Generic,Meta]
-
-%runElab derive "Either" [Generic,Meta]
-
-%runElab derive "List" [Generic,Meta]
-
-%runElab derive "List1" [Generic,Meta]
-
-%runElab derive "Dec" [Generic,Meta]
-
-%runElab derive "Ordering" [Generic,Meta]
-
-%runElab derive "Bool" [Generic,Meta]
-
-%runElab derive "Prec" [Generic,Meta]
-
---------------------------------------------------------------------------------
 --          Eq
 --------------------------------------------------------------------------------
 
@@ -281,3 +262,83 @@ ShowVis vis g = MkInterfaceImpl "Show" vis []
 export
 Show : DeriveUtil -> InterfaceImpl
 Show = ShowVis Public
+
+--------------------------------------------------------------------------------
+--          Prelude and Data Implementations
+--------------------------------------------------------------------------------
+
+-- Prelude
+
+%runElab derive "Nat" [Generic,Meta]
+
+%runElab derive "Maybe" [Generic,Meta]
+
+%runElab derive "Either" [Generic,Meta]
+
+%runElab derive "List" [Generic,Meta]
+
+%runElab derive "List1" [Generic,Meta]
+
+%runElab derive "Dec" [Generic,Meta]
+
+%runElab derive "Ordering" [Generic,Meta]
+
+%runElab derive "Bool" [Generic,Meta]
+
+%runElab derive "Prec" [Generic,Meta]
+
+-- System
+
+%runElab derive "Mode" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "FileError" [Generic,Meta,Eq,Ord]
+
+%runElab derive "File" [Generic,Meta]
+
+%runElab derive "FileMode" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "Permissions" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "ClockType" [Generic,Meta,Eq,Ord]
+
+-- Reflection
+
+%runElab derive "FC" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "NameType" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "Constant" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "Namespace" [Generic,Meta,Eq,Ord]
+
+%runElab derive "Name" [Generic,Meta,Eq,Ord]
+
+%runElab derive "Count" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "PiInfo" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "LazyReason" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "TotalReq" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "Visibility" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "BindMode" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "UseSide" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "DotReason" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "DataOpt" [Generic,Meta,Show,Eq,Ord]
+
+%runElab deriveMutual [ ("TTImp",        [Generic,Meta,Show,Eq])
+                      , ("IField",       [Generic,Meta,Show,Eq])
+                      , ("IFieldUpdate", [Generic,Meta,Show,Eq])
+                      , ("AltType",      [Generic,Meta,Show,Eq])
+                      , ("FnOpt",        [Generic,Meta,Show,Eq])
+                      , ("ITy",          [Generic,Meta,Show,Eq])
+                      , ("Data",         [Generic,Meta,Show,Eq])
+                      , ("Record",       [Generic,Meta,Show,Eq])
+                      , ("Clause",       [Generic,Meta,Show,Eq])
+                      , ("Decl",         [Generic,Meta,Show,Eq])
+                      ]
