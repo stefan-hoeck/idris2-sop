@@ -98,7 +98,7 @@ collapseNS (S x) = collapseNS x
 ||| An injection into an n-ary sum takes a value of the correct
 ||| type and wraps it in one of the sum's possible choices.
 public export
-Injection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
+0 Injection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
 Injection f ks v = f v -> K (NS f ks) v
 
 ||| The set of injections into an n-ary sum `NS f ks` can

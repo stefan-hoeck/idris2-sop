@@ -81,7 +81,7 @@ collapseSOP = collapseNS . mapNS (\v => collapseNP v) . unSOP
 ||| An injection into an n-ary sum of products takes an n-ary product of
 ||| the correct type and wraps it in one of the sum's possible choices.
 public export
-InjectionSOP : (f : k -> Type) -> (kss : List $ List k) -> (vs : List k) -> Type
+0 InjectionSOP : (f : k -> Type) -> (kss : List $ List k) -> (vs : List k) -> Type
 InjectionSOP f kss vs = NP f vs -> K (SOP f kss) vs
 
 ||| The set of injections into an n-ary sum `NS f ks` can

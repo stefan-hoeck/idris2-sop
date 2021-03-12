@@ -120,7 +120,7 @@ tl (_ :: vs) = vs
 ||| A projection of an n-ary product p extracts the
 ||| value of p at a certain position.
 public export
-Projection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
+0 Projection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
 Projection f ks v = NP f ks -> f v
 
 ||| The set of projections of an n-ary product `NP f ks` can
