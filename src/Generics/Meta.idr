@@ -135,7 +135,7 @@ showC p info args =
         showRecord con names =
           let applied = hcliftA2 (Show . f) showNamed names args
               inner   = intersperse ", " (collapseNP applied)
-           in con ++ " { " ++ concat inner ++ " }"
+           in showCon p con (" { " ++ concat inner ++ " }")
 
         showOther : (con : String) -> String
         showOther con =
