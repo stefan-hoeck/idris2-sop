@@ -144,6 +144,13 @@ extract _ (S _) {prf = Here}    = Nothing
 extract _ (Z _) {prf = There y} = Nothing
 extract t (S x) {prf = There y} = extract t x
 
+||| Converts an n-ary sum into the corresponding n-ary product
+||| of alternatives.
+public export
+toNP : {ks : _} -> Alternative g => NS f ks -> NP (g . f) ks
+toNP {ks = _ :: _} (Z v) = pure v :: hpure empty
+toNP {ks = _ :: _} (S x) = empty  :: toNP x
+
 --------------------------------------------------------------------------------
 --          Expanding sums
 --------------------------------------------------------------------------------
