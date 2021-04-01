@@ -31,11 +31,15 @@ mkGeneric = singleCon "Generic"
 -- of arguments. `k` is the index of the data type's
 -- constructor.
 private
+mkSOP' : (k : Int) -> (arg : TTImp) -> TTImp
+mkSOP' k arg = `(MkSOP) .$ run k
+where run : (n : Int) -> TTImp
+      run n = if n <= 0 then `(Z) .$ arg
+                        else `(S) .$ run (n-1)
+
+private
 mkSOP : (k : Int) -> (args : List TTImp) -> TTImp
-mkSOP k args = `(MkSOP) .$ run k args
-where run : (n : Int) -> (as : List TTImp) -> TTImp
-      run n as     = if n <= 0 then `(Z) .$ listOf as
-                               else `(S) .$ run (n-1) as
+mkSOP k args = mkSOP' k (listOf args)
 
 ||| Creates the syntax tree for the code of the given data type.
 ||| We export this since it might be useful elsewhere.
@@ -54,6 +58,10 @@ fromToIdClause (k,(con,ns,vars)) = bindAll con ns .= `(Refl)
 private
 toClause : (Int,ConNames) -> Clause
 toClause (k,(con,ns,vars)) = mkSOP k (map bindVar ns) .= appAll con vars
+
+private
+impossibleToClause : Int -> Clause
+impossibleToClause k = impossibleClause (mkSOP' k implicitTrue)
 
 private
 toFromIdClause : (Int,ConNames) -> Clause
@@ -78,15 +86,16 @@ export
 GenericVis : Visibility -> DeriveUtil -> InterfaceImpl
 GenericVis vis g =
   let names    = zipWithIndex (map conNames g.typeInfo.cons)
+      len      = cast {to = Int} $ length names
       genType  = `(Generic) .$ g.appliedType .$ mkCode g.typeInfo
       funType  = piAllImplicit  genType g.paramNames
       x        = lambdaArg "x"
       varX     = var "x"
 
       from     = x .=> iCase varX implicitFalse (map fromClause names)
-      to       = x .=> iCase varX implicitFalse (map toClause names)
+      to       = x .=> iCase varX implicitFalse (map toClause names ++ [impossibleToClause len])
       fromToId = x .=> iCase varX implicitFalse (map fromToIdClause names)
-      toFromId = x .=> iCase varX implicitFalse (map toFromIdClause names)
+      toFromId = x .=> iCase varX implicitFalse (map toFromIdClause names ++ [impossibleToClause len])
 
       impl     = appAll mkGeneric [from,to,fromToId,toFromId]
 
