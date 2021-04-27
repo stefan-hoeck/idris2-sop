@@ -343,6 +343,11 @@ interface HFold k l (0 p : HCont k l) | p where
          -> (elem -> Lazy acc -> acc) -> Lazy acc -> p (K elem) ks -> acc
 
 
+||| Calculates the size of a heterogeneous container
+public export
+hsize : (HFunctor k l p, HFold k l p) => p f ks -> Nat
+hsize = hfoldl (+) Z . hmap (const 1)
+
 ||| Alias for `hfoldl (<+>) neutral`.
 public export
 hconcat : (Monoid m, HFold k l p) => p (K m) ks -> m
