@@ -1,8 +1,9 @@
 module Data.SOP.NP
 
-import Data.List.Elem
 import Data.SOP.Utils
 import Data.SOP.Interfaces
+import Data.Vect
+import Data.Vect.Elem
 
 import Decidable.Equality
 
@@ -11,8 +12,8 @@ import Decidable.Equality
 ||| An n-ary product.
 |||
 ||| The product is parameterized by a type constructor f and indexed by a
-||| type-level list ks. The length of the list determines the number of
-||| elements in the product, and if the i-th element of the list is of type k,
+||| type-level vector ks. The length of the vector determines the number of
+||| elements in the product, and if the i-th element of the vector is of type k,
 ||| then the i-th element of the product is of type f k.
 |||
 ||| Two common instantiations of f are the identity functor I and the constant
@@ -46,7 +47,7 @@ import Decidable.Equality
 ||| ex3 = [Just 'x', Nothing, Just 1]
 ||| ```
 public export
-data NP_ : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
+data NP_ :  (k : Type) -> (f : k -> Type) -> (ks : Vect n k) -> Type where
   Nil  : NP_ k f []
   (::) : (v : f t) -> (vs : NP_ k f ks) -> NP_ k f (t :: ks)
 
@@ -54,7 +55,7 @@ data NP_ : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
-NP : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
+NP : {k : Type} -> (f : k -> Type) -> (ks : Vect n k) -> Type
 NP = NP_ k
 
 --------------------------------------------------------------------------------
@@ -69,9 +70,9 @@ mapNP fun (v :: vs) = fun v :: mapNP fun vs
 
 ||| Specialization of `hpure`.
 public export
-pureNP : {ks : _} -> (forall a . f a) -> NP f ks
-pureNP {ks = []}     _ = []
-pureNP {ks = _ :: _} f = f :: pureNP f
+pureNP : {n : Nat} -> {0 ks : Vect n k} -> (forall a . f a) -> NP_ k f ks
+pureNP {n = Z}   {ks = []} _     = []
+pureNP {n = S _} {ks = _ :: _} f = f :: pureNP f
 
 ||| Specialization of `hap`.
 public export
@@ -99,7 +100,7 @@ sequenceNP (v :: vs) = [| v :: sequenceNP vs |]
 
 ||| Specialization of `hcollapse`
 public export
-collapseNP : NP (K a) ks -> List a
+collapseNP : {0 ks : Vect n k} -> NP_ k (K a) ks -> Vect n a
 collapseNP []        = []
 collapseNP (v :: vs) = v :: collapseNP vs
 
@@ -120,15 +121,15 @@ tl (_ :: vs) = vs
 ||| A projection of an n-ary product p extracts the
 ||| value of p at a certain position.
 public export
-0 Projection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
+0 Projection : (f : k -> Type) -> (ks : Vect n k) -> (v : k) -> Type
 Projection f ks v = NP f ks -> f v
 
 ||| The set of projections of an n-ary product `NP f ks` can
 ||| itself be wrapped in an n-ary product of the same shape.
 public export
-projections : {ks : _} -> NP (Projection f ks) ks
-projections {ks = []}       = []
-projections {ks = (_ :: _)} = hd :: mapNP (. tl) projections
+projections : {n : Nat} -> {0 ks : Vect n k} -> NP_ k (Projection f ks) ks
+projections {n = Z}   {ks = []}       = []
+projections {n = S _} {ks = (_ :: _)} = hd :: mapNP (. tl) projections
 
 --------------------------------------------------------------------------------
 --          Accessing Values
@@ -261,11 +262,12 @@ append (v :: vs) y = v :: append vs y
 ||| Expands an n-ary product by filling missing
 ||| values with the given default-generating function.
 public export
-expand :  {ks' : List k}
+expand :  {n' : Nat}
+       -> {0 ks' : Vect n' k}
        -> (forall k . f k)
        -> NP f ks
        -> {auto prf : Sublist ks ks'}
-       -> NP f ks'
+       -> NP_ k f ks'
 expand f []                         = pureNP f
 expand f (v :: vs) {prf = SLSame x} = v :: expand f vs
 expand f vs        {prf = SLDiff x} = f :: expand f vs
@@ -276,7 +278,7 @@ expand f vs        {prf = SLDiff x} = f :: expand f vs
 ||| This is the constrained version of `expand`.
 public export
 cexpand :  (0 c : k -> Type)
-        -> (cs : NP c ks')
+        -> (cs : NP_ k c ks')
         => (forall k . c k => f k)
         -> {auto prf : Sublist ks ks'}
         -> NP_ k f ks
@@ -305,24 +307,24 @@ monoidToSemigroupNP = mapNP (\_ => materialize Semigroup)
 --------------------------------------------------------------------------------
 
 public export %inline
-HPure k (List k) (NP_ k) where hpure  = pureNP
+{n :_ } -> HPure k (Vect n k) (NP_ k) where hpure  = pureNP
 
 public export %inline
-HFunctor k (List k) (NP_ k) where hmap  = mapNP
+HFunctor k (Vect n k) (NP_ k) where hmap  = mapNP
 
 public export %inline
-HAp k (List k) (NP_ k) (NP_ k) where hap = hapNP
+HAp k (Vect n k) (NP_ k) (NP_ k) where hap = hapNP
 
 public export %inline
-HFold k (List k) (NP_ k) where
+HFold k (Vect n k) (NP_ k) where
   hfoldl = foldlNP
   hfoldr = foldrNP
 
 public export %inline
-HCollapse k (List k) (NP_ k) List where hcollapse = collapseNP
+HCollapse k (Vect n k) (NP_ k) (Vect n) where hcollapse = collapseNP
 
 public export %inline
-HSequence k (List k) (NP_ k) where hsequence = sequenceNP
+HSequence k (Vect n k) (NP_ k) where hsequence = sequenceNP
 
 public export
 (all : NP (Eq . f) ks) => Eq (NP_ k f ks) where
@@ -345,8 +347,8 @@ public export
   neutral {all = _ :: _} = neutral :: neutral
 
 public export
-(all : NP (Show . f) ks) => Show (NP_ k f ks) where
-  show =  dispStringList . hcollapse . hcmap (Show . f) show
+(all : NP_ k (Show . f) ks) => Show (NP_ k f ks) where
+  show = dispStringVect . collapseNP . hcmap (Show . f) show
 
 private
 consInjective : Data.SOP.NP.(::) a b = Data.SOP.NP.(::) c d -> (a = c, b = d)

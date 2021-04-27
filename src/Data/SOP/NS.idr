@@ -1,6 +1,7 @@
 module Data.SOP.NS
 
-import Data.List.Elem
+import Data.Vect
+import Data.Vect.Elem
 import Data.SOP.Interfaces
 import Data.SOP.NP
 import Data.SOP.Utils
@@ -12,7 +13,7 @@ import Decidable.Equality
 ||| An n-ary sum.
 |||
 ||| The sum is parameterized by a type constructor f and indexed by a
-||| type-level list xs. The length of the list determines the number of choices
+||| type-level vector ks. The length of the vector determines the number of choices
 ||| in the sum and if the i-th element of the list is of type x, then the i-th
 ||| choice of the sum is of type f x.
 |||
@@ -20,7 +21,7 @@ import Decidable.Equality
 ||| i.e., Z is for "zero", and S is for "successor". Chaining S and Z chooses
 ||| the corresponding component of the sum.
 |||
-||| Note that empty sums (indexed by an empty list) have no non-bottom
+||| Note that empty sums (indexed by an empty vector) have no non-bottom
 ||| elements.
 |||
 ||| Two common instantiations of f are the identity functor I and the constant
@@ -40,7 +41,7 @@ import Decidable.Equality
 ||| the (NS_ Type I [Char,Bool]) (S $ Z False)
 ||| ```
 public export
-data NS_ : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
+data NS_ : (k : Type) -> (f : k -> Type) -> (ks : Vect n k) -> Type where
   Z : (v : f t)  -> NS_ k f (t :: ks)
   S : NS_ k f ks -> NS_ k f (t :: ks)
 
@@ -48,7 +49,7 @@ data NS_ : (k : Type) -> (f : k -> Type) -> (ks : List k) -> Type where
 ||| implicit. This reflects the kind-polymorphic data type
 ||| in Haskell.
 public export
-NS : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
+NS : {k : Type} -> (f : k -> Type) -> (ks : Vect n k) -> Type
 NS = NS_ k
 
 --------------------------------------------------------------------------------
@@ -98,15 +99,15 @@ collapseNS (S x) = collapseNS x
 ||| An injection into an n-ary sum takes a value of the correct
 ||| type and wraps it in one of the sum's possible choices.
 public export
-0 Injection : (f : k -> Type) -> (ks : List k) -> (v : k) -> Type
+0 Injection : (f : k -> Type) -> (ks : Vect n k) -> (v : k) -> Type
 Injection f ks v = f v -> K (NS f ks) v
 
 ||| The set of injections into an n-ary sum `NS f ks` can
 ||| be wrapped in a corresponding n-ary product.
 public export
-injections : {ks : _} -> NP (Injection f ks) ks
-injections {ks = []}   = []
-injections {ks = _::_} = Z :: mapNP (S .) injections
+injections : {n : Nat} -> {0 ks : Vect n k} -> NP (Injection f ks) ks
+injections {n = Z}   {ks = []}   = []
+injections {n = S _} {ks = _::_} = Z :: mapNP (S .) injections
 
 ||| Applies all injections to an n-ary product of values.
 |||
@@ -123,7 +124,7 @@ apInjsNP_ (v :: vs) = Z v :: mapNP S (apInjsNP_ vs)
 
 ||| Alias for `collapseNP . apInjsNP_`
 public export
-apInjsNP : NP f ks -> List (NS f ks)
+apInjsNP : {0 ks : Vect n k} -> NP f ks -> Vect n (NS f ks)
 apInjsNP = collapseNP . apInjsNP_
 
 --------------------------------------------------------------------------------
@@ -147,8 +148,9 @@ extract t (S x) {prf = There y} = extract t x
 ||| Converts an n-ary sum into the corresponding n-ary product
 ||| of alternatives.
 public export
-toNP : {ks : _} -> Alternative g => NS f ks -> NP (g . f) ks
-toNP {ks = _ :: _} (Z v) = pure v :: hpure empty
+toNP : {n : Nat} -> {0 ks : Vect n k} -> Alternative g =>
+       NS f ks -> NP (g . f) ks
+toNP {ks = _ :: _} (Z v) = pure v :: pureNP empty
 toNP {ks = _ :: _} (S x) = empty  :: toNP x
 
 --------------------------------------------------------------------------------
@@ -178,21 +180,21 @@ narrow (S x) {prf = SLDiff y} = narrow x
 --------------------------------------------------------------------------------
 
 public export %inline
-HFunctor k (List k) (NS_ k) where hmap = mapNS
+HFunctor k (Vect n k) (NS_ k) where hmap = mapNS
 
 public export %inline
-HAp k (List k) (NP_ k) (NS_ k) where hap = hapNS
+HAp k (Vect n k) (NP_ k) (NS_ k) where hap = hapNS
 
 public export %inline
-HFold k (List k) (NS_ k) where
+HFold k (Vect n k) (NS_ k) where
   hfoldl = foldlNS
   hfoldr = foldrNS
 
 public export
-HSequence k (List k) (NS_ k) where hsequence = sequenceNS
+HSequence k (Vect n k) (NS_ k) where hsequence = sequenceNS
 
 public export
-HCollapse k (List k) (NS_ k) I where hcollapse = collapseNS
+HCollapse k (Vect n k) (NS_ k) I where hcollapse = collapseNS
 
 public export
 (all : NP (Eq . f) ks) => Eq (NS_ k f ks) where
