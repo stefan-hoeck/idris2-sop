@@ -62,6 +62,21 @@ genExtract1 :  (0 t' : Type)
             -> Maybe t'
 genExtract1 t' v = hd <$> genExtract [t'] v
 
+||| Returns all value from a generic enum type
+||| (all nullary constructors).
+public export
+values : Generic t code => (et : EnumType code) => List t
+values = map (to . MkSOP) $ collapseNP $ run et
+  where run :  EnumType kss -> NP_ (List k) (K (NS_ (List k) (NP f) kss)) kss
+        run EZ     = []
+        run (ES x) = Z [] :: mapNP (\ns => S ns) (run x)
+
+||| Like `values` but takes the erased value type as an
+||| explicit argument to help with type inference.
+public export %inline
+valuesFor : (0 t: Type) -> Generic t code => (et : EnumType code) => List t
+valuesFor _ = values
+
 --------------------------------------------------------------------------------
 --          Generic Implementation Functions
 --------------------------------------------------------------------------------
