@@ -63,18 +63,32 @@ genExtract1 :  (0 t' : Type)
 genExtract1 t' v = hd <$> genExtract [t'] v
 
 ||| Returns all value from a generic enum type
-||| (all nullary constructors).
+||| (all nullary constructors) wrapped in homogeneous n-ary product.
 public export
-values : Generic t code => (et : EnumType code) => List t
-values = map (to . MkSOP) $ collapseNP $ run et
+valuesNP : Generic t code => (et : EnumType code) =>
+           NP_ (List Type) (K t) code
+valuesNP = hmap (to . MkSOP) (run et)
   where run :  EnumType kss -> NP_ (List k) (K (NS_ (List k) (NP f) kss)) kss
         run EZ     = []
         run (ES x) = Z [] :: mapNP (\ns => S ns) (run x)
 
+||| Returns all value from a generic enum type
+||| (all nullary constructors) wrapped in a list.
+public export %inline
+values : Generic t code => (et : EnumType code) => List t 
+values = collapseNP valuesNP
+
+||| Like `valuesNP` but takes the erased value type as an
+||| explicit argument to help with type inference.
+public export %inline
+valuesForNP : (0 t: Type) -> Generic t code => (et : EnumType code) =>
+              NP_ (List Type) (K t) code
+valuesForNP _ = valuesNP
+
 ||| Like `values` but takes the erased value type as an
 ||| explicit argument to help with type inference.
 public export %inline
-valuesFor : (0 t: Type) -> Generic t code => (et : EnumType code) => List t
+valuesFor : (0 t : Type) -> Generic t code => (et : EnumType code) => List t 
 valuesFor _ = values
 
 --------------------------------------------------------------------------------
