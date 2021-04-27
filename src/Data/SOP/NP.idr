@@ -117,6 +117,33 @@ public export
 tl : NP f (k :: ks) -> NP f ks
 tl (_ :: vs) = vs
 
+||| Creates a homogeneous n-ary product of the given
+||| shape by repeatedly applying a function to a seed value.
+public export
+unfoldNP : NP f ks -> (s -> (s,a)) -> s -> NP (K a) ks
+unfoldNP []       _ _ = []
+unfoldNP (_ :: t) g s = let (s2,v) = g s
+                         in v :: unfoldNP t g s
+
+||| Like `unfoldNP` but takes the shape from the implicit
+||| list of types.
+public export
+unfold : {ks : _} -> (s -> (s,a)) -> s -> NP (K a) ks
+unfold = unfoldNP (pureNP ())
+
+||| Creates a homogeneous n-ary product of the given
+||| shape using an initial value and a function for
+||| generating the next value.
+public export
+iterateNP : NP f ks -> (a -> a) -> a -> NP (K a) ks
+iterateNP np f = unfoldNP np (\v => (f v, v))
+
+||| Like `iterate` but takes the shape from the implicit
+||| list of types.
+public export
+iterate : {ks : _} -> (a -> a) -> a -> NP (K a) ks
+iterate = iterateNP (pureNP ())
+
 ||| A projection of an n-ary product p extracts the
 ||| value of p at a certain position.
 public export
