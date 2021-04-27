@@ -96,6 +96,23 @@ data Sublist : (ks : List k) -> (ks' : List k) -> Type where
   SLDiff : Sublist ks ks' -> Sublist ks (k::ks')
 
 --------------------------------------------------------------------------------
+--          Enumerations
+--------------------------------------------------------------------------------
+
+||| Witness that a list of list of types (representing the
+||| constructors and fields of an ADT) represents an enum type, i.e.
+||| that all constructors are nullary.
+public export
+data EnumType : (kss : List $ List k) -> Type where
+  EZ : EnumType Nil
+  ES : EnumType kss -> EnumType ([] :: kss)
+
+||| If `ks :: kss` is an enum type, then so is `kss`
+public export
+0 enumTail : EnumType (ks :: kss) -> EnumType kss
+enumTail (ES x) = x
+
+--------------------------------------------------------------------------------
 --          Show Utilities
 --------------------------------------------------------------------------------
 
