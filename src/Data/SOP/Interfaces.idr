@@ -5,7 +5,7 @@
 ||| represent a choice: A generalization of `Either`.
 |||
 ||| The core data types in this library are indexed over a
-||| container (typically a List or List of Lists) of values
+||| container  of shape `shape` and values
 ||| of type `k` plus a type-level function `f` of type `k -> Type`.
 ||| The values of the container index together with `f` determine
 ||| the types of values at each position in the
@@ -45,12 +45,13 @@ import Data.SOP.Utils
 
 %default total
 
-||| A heterogeneous container indexed over a container type `l`
+||| A heterogeneous container of shape `s`
+||| indexed over a container type `l`
 ||| holding values of type `k`.
 %inline
 public export
-HCont : (k : Type) -> (l : Type) -> Type
-HCont k l = (k -> Type) -> l -> Type
+HCont : (k : Type) -> (s : Type) -> (l : Type) -> Type
+HCont k s l = s -> (k -> Type) -> l -> Type
 
 --------------------------------------------------------------------------------
 --          HPure
@@ -62,12 +63,14 @@ HCont k l = (k -> Type) -> l -> Type
 |||
 ||| @ k kind of Types in a heterogeneous container's  type level code
 |||
+||| @ s shape of the container
+|||
 ||| @ l kind of container used to describe a heterogeneous containr's type
 |||     level code
 |||
 ||| @ p the heterogeneous sum or product
 public export
-interface HPure k l (0 p : HCont k l) | p where
+interface HPure k s l (0 p : HCont k s l) | p where
 
   ||| Creates a heterogeneous product by using the given functio
   ||| to produce values.
@@ -79,8 +82,8 @@ interface HPure k l (0 p : HCont k l) | p where
   ||| emptyPerson : Person Maybe
   ||| emptyPerson = hpure Nothing
   ||| ```
-  hpure :  {0 f : k -> Type} -> {ks : l}
-        -> (forall a . f a) -> p f ks
+  hpure :  {0 f : k -> Type} -> {0 ks : l} -> {sh : s}
+        -> (forall a . f a) -> p sh f ks
 
 ||| Alias for `hpure empty`.
 |||
@@ -92,7 +95,7 @@ interface HPure k l (0 p : HCont k l) | p where
 ||| emptyPerson = empty
 ||| ```
 public export
-hempty : {ks : _} -> Alternative f => HPure Type l p => p f ks
+hempty : {sh : _} -> Alternative f => HPure Type s l p => p sh f ks
 hempty = hpure empty
 
 ||| Fills a heterogeneous structure with a constant value
@@ -106,7 +109,7 @@ hempty = hpure empty
 ||| fooPerson = hconst "foo"
 ||| ```
 public export
-hconst : {ks : _} -> HPure k l p => (v : a) -> p (K a) ks
+hconst : {sh : _} -> HPure k s l p => (v : a) -> p sh (K a) ks
 hconst v = hpure v
 
 
@@ -119,12 +122,14 @@ hconst v = hpure v
 |||
 ||| @ k kind of Types in a heterogeneous container's  type level code
 |||
+||| @ s shape of the container
+|||
 ||| @ l kind of container used to describe a heterogeneous containr's type
 |||     level code
 |||
 ||| @ p the actual heterogeneous container
 public export
-interface HFunctor k l (0 p : HCont k l) | p where
+interface HFunctor k s l (0 p : HCont k s l) | p where
 
   ||| Maps the given function over all values in a
   ||| heterogeneous container, thus changing the context
@@ -142,14 +147,15 @@ interface HFunctor k l (0 p : HCont k l) | p where
   ||| toPersonMaybe = hmap Just
   ||| ```
   hmap :  {0 f,g : k -> Type}
+       -> {0 sh : s}
        -> {0 ks : l}
        -> (fun : forall a . f a -> g a)
-       -> p f ks
-       -> p g ks
+       -> p sh f ks
+       -> p sh g ks
 
 ||| Alias for `hmap`
 public export %inline
-hliftA : HFunctor k l p => (forall a . f a -> g a) -> p f ks -> p g ks
+hliftA : HFunctor k s l p => (forall a . f a -> g a) -> p sh f ks -> p sh g ks
 hliftA = hmap
 
 ||| Like `hpure` but using a constrained function for
@@ -183,11 +189,11 @@ hliftA = hmap
 ||| @ fun generates values depending on the availability of
 |||       a constraint
 public export
-hcpure :  HFunctor k l p
+hcpure :  HFunctor k s l p
        => (0 c : k -> Type)
-       -> (cs : p c ks)
+       -> (cs : p sh c ks)
        => (fund : forall a . c a => f a)
-       -> p f ks
+       -> p sh f ks
 hcpure _ {cs} fun = hmap (\_ => fun) cs
 
 --------------------------------------------------------------------------------
@@ -203,6 +209,8 @@ hcpure _ {cs} fun = hmap (\_ => fun) cs
 |||
 ||| @ k kind of Types in a heterogeneous container's  type level code
 |||
+||| @ s shape of the container
+|||
 ||| @ l kind of container used to describe a heterogeneous containr's type
 |||     level code
 |||
@@ -212,7 +220,7 @@ hcpure _ {cs} fun = hmap (\_ => fun) cs
 |||
 ||| @ p the actual heterogeneous container (sum or product)
 public export
-interface HFunctor k l q => HFunctor k l p => HAp k l q p | p where
+interface HFunctor k s l q => HFunctor k s l p => HAp k s l q p | p where
 
   ||| Higher kinded equivalent to `(<*>)`.
   |||
@@ -230,45 +238,46 @@ interface HFunctor k l q => HFunctor k l p => HAp k l q p | p where
   ||| hapTest = hap (MkPOP $ [[fromMaybe "foo", const 12]])
   ||| ```
   hap :  {0 f,g : k -> Type}
+      -> {0 sh : s}
       -> {0 ks : l}
-      -> q (\a => f a -> g a) ks
-      -> p f ks
-      -> p g ks
+      -> q sh (\a => f a -> g a) ks
+      -> p sh f ks
+      -> p sh g ks
 
 ||| Higher kinded version of `liftA2`.
 ||| This is a generalization of `hliftA` to binary
 ||| functions.
 public export
-hliftA2 :  HAp k l q p
+hliftA2 :  HAp k s l q p
         => (forall a . f a -> g a -> h a)
-        -> q f ks
-        -> p g ks
-        -> p h ks
+        -> q sh f ks
+        -> p sh g ks
+        -> p sh h ks
 hliftA2 fun fs gs  = hliftA fun fs `hap` gs
 
 ||| Higher kinded version of `liftA3`.
 ||| This is a generalization of `hliftA` to ternary
 ||| functions.
 public export
-hliftA3 :  (HAp k l q q, HAp k l q p)
+hliftA3 :  (HAp k s l q q, HAp k s l q p)
         => (forall a . f a -> g a -> h a -> i a)
-        -> q f ks
-        -> q g ks
-        -> p h ks
-        -> p i ks
+        -> q sh f ks
+        -> q sh g ks
+        -> p sh h ks
+        -> p sh i ks
 hliftA3 fun fs gs hs = hliftA2 fun fs gs `hap` hs
 
 ||| Higher kinded version of `liftA4`.
 ||| This is a generalization of `hliftA` to quartenary
 ||| functions.
 public export
-hliftA4 :  (HAp k l q q, HAp k l q p)
+hliftA4 :  (HAp k s l q q, HAp k s l q p)
         => (forall a . f a -> g a -> h a -> i a -> j a)
-        -> q f ks
-        -> q g ks
-        -> q h ks
-        -> p i ks
-        -> p j ks
+        -> q sh f ks
+        -> q sh g ks
+        -> q sh h ks
+        -> p sh i ks
+        -> p sh j ks
 hliftA4 fun fs gs hs is = hliftA3 fun fs gs hs `hap` is
 
 ||| Like `hmap` but uses a constrained function.
@@ -283,45 +292,45 @@ hliftA4 fun fs gs hs is = hliftA3 fun fs gs hs `hap` is
 ||| showValues = hcmap Show show
 ||| ```
 public export
-hcmap :  HAp k l q p
+hcmap :  HAp k s l q p
       => (0 c : k -> Type)
-      -> (cs : q c ks)
+      -> (cs : q sh c ks)
       => (fun : forall a . c a => f a -> g a)
-      -> p f ks
-      -> p g ks
+      -> p sh f ks
+      -> p sh g ks
 hcmap _ {cs} fun = hliftA2 (\_ => fun) cs
 
 ||| Alias for `hcmap`
 public export %inline
-hcliftA :  HAp k l q p
+hcliftA :  HAp k s l q p
         => (0 c : k -> Type)
-        -> q c ks
+        -> q sh c ks
         => (fun : forall a . c a => f a -> g a)
-        -> p f ks
-        -> p g ks
+        -> p sh f ks
+        -> p sh g ks
 hcliftA = hcmap
 
 ||| Like `hliftA2` but with a constrained function.
 public export %inline
-hcliftA2 :  (HAp k l q q, HAp k l q p)
+hcliftA2 :  (HAp k s l q q, HAp k s l q p)
          => (0 c : k -> Type)
-         -> (cs : q c ks)
+         -> (cs : q sh c ks)
          => (fun : forall a . c a => f a -> g a -> h a)
-         -> q f ks
-         -> p g ks
-         -> p h ks
+         -> q sh f ks
+         -> p sh g ks
+         -> p sh h ks
 hcliftA2 _ {cs} fun = hliftA3 (\_ => fun) cs
 
 ||| Like `hliftA3` but with a constrained function.
 public export %inline
-hcliftA3 :  (HAp k l q q, HAp k l q p)
+hcliftA3 :  (HAp k s l q q, HAp k s l q p)
          => (c : k -> Type)
-         -> (cs : q c ks)
+         -> (cs : q sh c ks)
          => (fun : forall a . c a => f a -> g a -> h a -> i a)
-         -> q f ks
-         -> q g ks
-         -> p h ks
-         -> p i ks
+         -> q sh f ks
+         -> q sh g ks
+         -> p sh h ks
+         -> p sh i ks
 hcliftA3 _ {cs} fun = hliftA4 (\_ => fun) cs
 
 --------------------------------------------------------------------------------
@@ -329,38 +338,39 @@ hcliftA3 _ {cs} fun = hliftA4 (\_ => fun) cs
 --------------------------------------------------------------------------------
 
 public export
-interface HFold k l (0 p : HCont k l) | p where
+interface HFold k s l (0 p : HCont k s l) | p where
 
   ||| Strict fold over a heterogeneous sum or product
   ||| parameterized by the constant functor (and thus being actually
   ||| a homogeneous sum or product).
-  hfoldl : {0 ks : l} -> (acc -> elem -> acc) -> acc -> p (K elem) ks -> acc
+  hfoldl : {0 ks : l} -> {0 sh : s} ->
+           (acc -> elem -> acc) -> acc -> p sh (K elem) ks -> acc
 
   ||| Lazy fold over a heterogeneous sum or product
   ||| parameterized by the constant functor (and thus being actually
   ||| a homogeneous sum or product).
-  hfoldr :  {0 ks : l}
-         -> (elem -> Lazy acc -> acc) -> Lazy acc -> p (K elem) ks -> acc
+  hfoldr : {0 ks : l} -> {0 sh : s} ->
+           (elem -> Lazy acc -> acc) -> Lazy acc -> p sh (K elem) ks -> acc
 
 
 ||| Alias for `hfoldl (<+>) neutral`.
 public export
-hconcat : (Monoid m, HFold k l p) => p (K m) ks -> m
+hconcat : (Monoid m, HFold k s l p) => p sh (K m) ks -> m
 hconcat = hfoldl (<+>) neutral
 
 ||| Alias for `hconcat . hmap fun`
 public export
-hconcatMap :  (Monoid m, HFunctor k l p, HFold k l p)
-           => (fun : forall a . f a -> m) -> p f ks -> m
+hconcatMap :  (Monoid m, HFunctor k s l p, HFold k s l p)
+           => (fun : forall a . f a -> m) -> p sh f ks -> m
 hconcatMap fun = hconcat . hmap fun
 
 ||| Alias for `hconcat . hcmap c fun`
 public export
-hcconcatMap :  (Monoid m, HAp k l q p, HFold k l p)
+hcconcatMap :  (Monoid m, HAp k s l q p, HFold k s l p)
             => (0 c : k -> Type)
-            -> q c ks
+            -> q sh c ks
             => (fun : forall a . c a => f a -> m)
-            -> p f ks
+            -> p sh f ks
             -> m
 hcconcatMap c fun = hconcat . hcmap c fun
 
@@ -368,55 +378,53 @@ hcconcatMap c fun = hconcat . hcmap c fun
 |||
 ||| Alias for `hfoldl (*>) (pure ())`.
 public export
-hsequence_ : (Applicative g, HFold k l p) => p (K (g ())) ks -> g ()
+hsequence_ : (Applicative g, HFold k s l p) => p sh (K (g ())) ks -> g ()
 hsequence_ = hfoldl (*>) (pure ())
 
 ||| Generalization of `traverse_` to heterogeneous containers.
 |||
 ||| Alias for `hsequence_ . hmap fun`.
 public export
-htraverse_ :  (Applicative g, HFold k l p, HFunctor k l p)
-           => (forall a . f a -> g ()) -> p f ks -> g ()
+htraverse_ :  (Applicative g, HFold k s l p, HFunctor k s l p)
+           => (forall a . f a -> g ()) -> p sh f ks -> g ()
 htraverse_ fun = hsequence_ . hmap fun
 
 ||| Generalization of `for_` to heterogeneous containers.
 public export
-hfor_ :  (Applicative g, HFold k l p, HFunctor k l p)
-      => p f ks -> (forall a . f a -> g ()) -> g ()
+hfor_ :  (Applicative g, HFold k s l p, HFunctor k s l p)
+      => p sh f ks -> (forall a . f a -> g ()) -> g ()
 hfor_ = flip htraverse_
 
 ||| Generalization of `and` to heterogeneous containers.
 public export
-hand : HFold k l p => p (K Bool) ks -> Bool
+hand : HFold k s l p => p sh (K Bool) ks -> Bool
 hand = hfoldr (\a,b => a && b) True
 
 ||| Generalization of `toList` to heterogeneous containers.
 export
-htoList : (HFunctor k l p, HFold k l p) => p (K a) ks -> List a
+htoList : (HFunctor k s l p, HFold k s l p) => p sh (K a) ks -> List a
 htoList = hconcatMap pure
 
 ||| Generalization of `or` to heterogeneous containers.
 export
-hor : HFold k l p => p (K Bool) ks -> Bool
+hor : HFold k s l p => p sh (K Bool) ks -> Bool
 hor = hfoldr (\a,b => a || b) False
 
 ||| Generalization of `all` to heterogeneous containers.
 export
-hall :   (HFunctor k l p, HFold k l p)
-      => (forall a . f a -> Bool)
-      -> p f ks -> Bool
+hall : (HFunctor k s l p, HFold k s l p) =>
+       (forall a . f a -> Bool) -> p sh f ks -> Bool
 hall fun = hand . hmap fun
 
 ||| Generalization of `any` to heterogeneous containers.
 export
-hany :  (HFunctor k l p, HFold k l p)
-     => (forall a . f a -> Bool)
-     -> p f ks -> Bool
+hany : (HFunctor k s l p, HFold k s l p) =>
+       (forall a . f a -> Bool) -> p sh f ks -> Bool
 hany fun = hor . hmap fun
 
 ||| Generalization of `choice` to heterogeneous containers.
 export
-hchoice : HFold k l p => Alternative f =>  p (K $ f a) ks -> f a
+hchoice : HFold k s l p => Alternative f =>  p sh (K $ f a) ks -> f a
 hchoice = hfoldr (\a,b => a <|> b) empty
 
 --------------------------------------------------------------------------------
@@ -426,7 +434,7 @@ hchoice = hfoldr (\a,b => a <|> b) empty
 ||| Sequencing of applicative effects over a heterogeneous
 ||| container.
 public export
-interface HSequence k l (0 p : HCont k l) | p where
+interface HSequence k s l (0 p : HCont k s l) | p where
 
   ||| Given a heterogeneous containers holding values
   ||| wrapped in effect `g`, sequences applications of
@@ -437,10 +445,11 @@ interface HSequence k l (0 p : HCont k l) | p where
   ||| seqMaybe = hsequence
   ||| ```
   hsequence :  {0 ks : l}
+            -> {0 sh : s}
             -> {0 f : k -> Type}
             -> Applicative g
-            => p (\a => g (f a)) ks
-            -> g (p f ks)
+            => p sh (\a => g (f a)) ks
+            -> g (p sh f ks)
 
 ||| Traverses a heterogeneous container by applying effectful
 ||| function `fun`.
@@ -451,19 +460,19 @@ interface HSequence k l (0 p : HCont k l) | p where
 ||| ```
 export
 htraverse :  {0 f,f' : k -> Type}
-          -> (Applicative g, HFunctor k l p, HSequence k l p)
+          -> (Applicative g, HFunctor k s l p, HSequence k s l p)
           => (fun : forall a . f a -> g (f' a))
-          -> p f ks
-          -> g (p f' ks)
+          -> p sh f ks
+          -> g (p sh f' ks)
 htraverse fun = hsequence . hmap fun
 
 ||| Flipped version of `htraverse`.
 export
 hfor :  {0 f,f' : k -> Type}
-     -> (Applicative g, HFunctor k l p, HSequence k l p)
-     => p f ks
+     -> (Applicative g, HFunctor k s l p, HSequence k s l p)
+     => p sh f ks
      -> (forall a . f a -> g (f' a))
-     -> g (p f' ks)
+     -> g (p sh f' ks)
 hfor = flip htraverse
 
 ||| Constrained version of `htraverse`.
@@ -478,23 +487,23 @@ hfor = flip htraverse
 ||| ```
 export
 hctraverse :  {0 f,f' : k -> Type}
-           -> (Applicative g, HAp k l q p, HSequence k l p)
+           -> (Applicative g, HAp k s l q p, HSequence k s l p)
            => (0 c : k -> Type)
-           -> (cs : q c ks)
+           -> (cs : q sh c ks)
            => (forall a . c a => f a -> g (f' a))
-           -> p f ks
-           -> g (p f' ks)
+           -> p sh f ks
+           -> g (p sh f' ks)
 hctraverse c fun = hsequence . hcmap c fun
 
 ||| Flipped version of `hctraverse`.
 export
 hcfor :  {0 f,f' : k -> Type}
-      -> (Applicative g, HAp k l q p, HSequence k l p)
+      -> (Applicative g, HAp k s l q p, HSequence k s l p)
       => (0 c : k -> Type)
-      -> (cs : q c ks)
-      => p f ks
+      -> (cs : q sh c ks)
+      => p sh f ks
       -> (forall a . c a => f a -> g (f' a))
-      -> g (p f' ks)
+      -> g (p sh f' ks)
 hcfor c = flip (hctraverse c)
 
 --------------------------------------------------------------------------------
@@ -504,10 +513,12 @@ hcfor c = flip (hctraverse c)
 ||| Collapsing a heterogeneous container to a homogeneous one
 ||| of the same shape.
 public export
-interface HCollapse k l (0 p : HCont k l) (0 collapseTo : Type -> Type) | p where
+interface HCollapse k s l (0 p : HCont k s l)
+                          (0 collapseTo : s -> Type -> Type) | p where
 
   ||| A heterogeneous container over constant functor `K a` is
   ||| actually a homogeneous one holding only values of type `a`.
   ||| This function extracts the wrapped values into a homogeneous
   ||| one of the same size and shape.
-  hcollapse : {0 a : Type} -> {0 ks : l} -> p (K a) ks -> collapseTo a
+  hcollapse : {0 a : Type} -> {0 ks : l} -> {0 sh : s} ->
+              p sh (K a) ks -> collapseTo sh a
