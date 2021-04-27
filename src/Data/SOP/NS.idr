@@ -104,9 +104,15 @@ Injection f ks v = f v -> K (NS f ks) v
 ||| The set of injections into an n-ary sum `NS f ks` can
 ||| be wrapped in a corresponding n-ary product.
 public export
+injectionsNP : NP g ks -> NP (Injection f ks) ks
+injectionsNP []       = []
+injectionsNP (_ :: t) = Z :: mapNP (S .) (injectionsNP t)
+
+||| The set of injections into an n-ary sum `NS f ks` can
+||| be wrapped in a corresponding n-ary product.
+public export
 injections : {ks : _} -> NP (Injection f ks) ks
-injections {ks = []}   = []
-injections {ks = _::_} = Z :: mapNP (S .) injections
+injections = injectionsNP (pureNP ())
 
 ||| Applies all injections to an n-ary product of values.
 |||
