@@ -117,6 +117,21 @@ public export
 tl : NP f (k :: ks) -> NP f ks
 tl (_ :: vs) = vs
 
+||| Tries to creates a homogeneous n-ary product of the given
+||| shape from a list of values.
+public export
+fromListNP : NP f ks -> List a -> Maybe (NP (K a) ks)
+fromListNP []       []        = Just []
+fromListNP []       (_ :: _)  = Nothing
+fromListNP (_ :: _) []        = Nothing
+fromListNP (_ :: t) (x :: xs) = (x ::) <$> fromListNP t xs
+
+||| Like `fromListNP` but takes the shape from the implicit
+||| list of types.
+public export
+fromList : {ks : _} -> List a -> Maybe (NP (K a) ks)
+fromList = fromListNP (pureNP ())
+
 ||| Creates a homogeneous n-ary product of the given
 ||| shape by repeatedly applying a function to a seed value.
 public export
