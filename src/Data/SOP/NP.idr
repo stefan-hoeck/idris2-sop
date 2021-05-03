@@ -138,7 +138,7 @@ public export
 unfoldNP : NP f ks -> (s -> (s,a)) -> s -> NP (K a) ks
 unfoldNP []       _ _ = []
 unfoldNP (_ :: t) g s = let (s2,v) = g s
-                         in v :: unfoldNP t g s
+                         in v :: unfoldNP t g s2
 
 ||| Like `unfoldNP` but takes the shape from the implicit
 ||| list of types.
