@@ -54,13 +54,13 @@ hapSOP (MkPOP fs) = MkSOP . hliftA2 (\p => hapNP p) fs . unSOP
 
 ||| Specialization of `hfoldl`
 public export
-foldlSOP : (fun : acc -> elem -> acc) -> acc -> SOP (K elem) kss -> acc
+foldlSOP : (fun : acc -> el -> acc) -> acc -> SOP (K el) kss -> acc
 foldlSOP fun acc (MkSOP $ Z vs) = foldlNP fun acc vs
 foldlSOP fun acc (MkSOP $ S x)  = foldlSOP fun acc (MkSOP x)
 
 ||| Specialization of `hfoldr`
 public export %inline
-foldrSOP : (fun : elem -> Lazy acc -> acc) -> Lazy acc -> SOP (K elem) kss -> acc
+foldrSOP : (fun : el -> Lazy acc -> acc) -> Lazy acc -> SOP (K el) kss -> acc
 foldrSOP fun acc (MkSOP $ Z vs) = foldrNP fun acc vs
 foldrSOP fun acc (MkSOP $ S x)  = foldrSOP fun acc (MkSOP x)
 

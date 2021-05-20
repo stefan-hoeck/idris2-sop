@@ -57,13 +57,13 @@ hapPOP (MkPOP fs) = MkPOP . hliftA2 (\p => hapNP p) fs . unPOP
 
 ||| Specialization of `hfoldl`
 public export
-foldlPOP : (fun : acc -> elem -> acc) -> acc -> POP (K elem) kss -> acc
+foldlPOP : (fun : acc -> el -> acc) -> acc -> POP (K el) kss -> acc
 foldlPOP _   acc (MkPOP [])     = acc
 foldlPOP fun acc (MkPOP (h::t)) = foldlPOP fun (foldlNP fun acc h) (MkPOP t)
 
 ||| Specialization of `hfoldr`
 public export
-foldrPOP : (fun : elem -> Lazy acc -> acc) -> Lazy acc -> POP (K elem) kss -> acc
+foldrPOP : (fun : el -> Lazy acc -> acc) -> Lazy acc -> POP (K el) kss -> acc
 foldrPOP _   acc (MkPOP [])     = acc
 foldrPOP fun acc (MkPOP (h::t)) = foldrNP fun (foldrPOP fun acc (MkPOP t)) h
 

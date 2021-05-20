@@ -334,13 +334,13 @@ interface HFold k l (0 p : HCont k l) | p where
   ||| Strict fold over a heterogeneous sum or product
   ||| parameterized by the constant functor (and thus being actually
   ||| a homogeneous sum or product).
-  hfoldl : {0 ks : l} -> (acc -> elem -> acc) -> acc -> p (K elem) ks -> acc
+  hfoldl : {0 ks : l} -> (acc -> el -> acc) -> acc -> p (K el) ks -> acc
 
   ||| Lazy fold over a heterogeneous sum or product
   ||| parameterized by the constant functor (and thus being actually
   ||| a homogeneous sum or product).
   hfoldr :  {0 ks : l}
-         -> (elem -> Lazy acc -> acc) -> Lazy acc -> p (K elem) ks -> acc
+         -> (el -> Lazy acc -> acc) -> Lazy acc -> p (K el) ks -> acc
 
 
 ||| Calculates the size of a heterogeneous container

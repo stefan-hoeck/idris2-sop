@@ -63,13 +63,13 @@ mapNS fun (S x) = S $ mapNS fun x
 
 ||| Specialization of `hfoldl`
 public export
-foldlNS : (fun : acc -> elem -> acc) -> acc -> NS (K elem) ks -> acc
+foldlNS : (fun : acc -> el -> acc) -> acc -> NS (K el) ks -> acc
 foldlNS fun acc (Z v) = fun acc v
 foldlNS fun acc (S x) = foldlNS fun acc x
 
 ||| Specialization of `hfoldr`
 public export %inline
-foldrNS : (fun : elem -> Lazy acc -> acc) -> Lazy acc -> NS (K elem) ks -> acc
+foldrNS : (fun : el -> Lazy acc -> acc) -> Lazy acc -> NS (K el) ks -> acc
 foldrNS fun acc (Z v) = fun v acc
 foldrNS fun acc (S x) = foldrNS fun acc x
 

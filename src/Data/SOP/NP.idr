@@ -81,13 +81,13 @@ hapNP (f :: fs) (v :: vs) = f v :: hapNP fs vs
 
 ||| Specialization of `hfoldl`
 public export
-foldlNP : (fun : acc -> elem -> acc) -> acc -> NP (K elem) ks -> acc
+foldlNP : (fun : acc -> el -> acc) -> acc -> NP (K el) ks -> acc
 foldlNP _   acc []        = acc
 foldlNP fun acc (v :: vs) = foldlNP fun (fun acc v) vs
 
 ||| Specialization of `hfoldr`
 public export
-foldrNP : (fun : elem -> Lazy acc -> acc) -> Lazy acc -> NP (K elem) ks -> acc
+foldrNP : (fun : el -> Lazy acc -> acc) -> Lazy acc -> NP (K el) ks -> acc
 foldrNP _   acc []        = acc
 foldrNP fun acc (v :: vs) = fun v (foldrNP fun acc vs)
 
