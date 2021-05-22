@@ -236,6 +236,7 @@ lists of string tokens:
 ```idris
 public export
 interface Encode t where
+  constructor MkEncode
   encode : t -> List String
 
 public export
@@ -335,17 +336,11 @@ In order to make the interface available to function `derive`,
 we have to write a minimal amount of reflection code:
 
 ```idris
-||| It is important that this is publicly exported, in case
-||| we later on want to proof the correctnes of implementations.
-public export
-mkEncode : (t -> List String) -> Encode t
-mkEncode = %runElab check (var $ singleCon "Encode")
-
 ||| Derives an `Encode` implementation for the given data type
 ||| and visibility.
 EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 EncodeVis vis g = MkInterfaceImpl "Encode" vis []
-                       `(mkEncode genEncode)
+                       `(MkEncode genEncode)
                        (implementationType `(Encode) g)
 
 ||| Alias for `EncodeVis Public`.
@@ -367,6 +362,7 @@ need again some primitives:
 ```idris
 public export
 interface Decode t where
+  constructor MkDecode
   decode : Parser t
 
 public export
@@ -440,15 +436,11 @@ genDecode = map to decode
 Finally, the necessary reflection code:
 
 ```idris
-public export
-mkDecode : Parser t -> Decode t
-mkDecode = %runElab check (var $ singleCon "Decode")
-
 ||| Derives a `Decode` implementation for the given data type
 ||| and visibility.
 DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 DecodeVis vis g = MkInterfaceImpl "Decode" vis []
-                       `(mkDecode genDecode)
+                       `(MkDecode genDecode)
                        (implementationType `(Decode) g)
 
 ||| Alias for `DecodeVis Public`.

@@ -58,7 +58,7 @@ this library makes use of functionality provided by the
 
 Making use of elaborator reflection, this library has to closely
 follow the latest Idris2 builds until things settle down a bit.
-This commit was built against Idris2, version 0.3.0-daf30ee4f.
+This commit was built against Idris 2, version 0.3.0-50d75cc3a.
 
 ## Limitations
 

@@ -104,6 +104,7 @@ TypeInfo = TypeInfo' k
 ||| to use function `metaFor`.
 public export
 interface Generic t code => Meta t code | t where
+  constructor MkMeta
   meta : TypeInfo' Type code
 
 ||| Return's the `TypeInfo` of a data type. This is

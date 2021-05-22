@@ -25,7 +25,7 @@ ConNames = (Name, List String, List TTImp)
 ||| Name of record `Generic`'s constructor.
 export
 mkGeneric : Name
-mkGeneric = singleCon "Generic"
+mkGeneric = "MkGeneric"
 
 -- Applies the proper n-ary sum constructor to a list
 -- of arguments. `k` is the index of the data type's
@@ -148,11 +148,6 @@ tiTTImp (MkParamTypeInfo n _ cons) =
   let nps     = map conTTImp cons
    in appNSName n `(MkTypeInfo) .$ listOf nps
 
-||| Creates a `Meta` value from the passed `TypeInfo`
-public export %inline
-mkMeta : Generic t code => TypeInfo code -> Meta t code
-mkMeta = %runElab check (var $ singleCon "Meta")
-
 ||| Derives a `Meta` implementation for the given data type
 ||| and visibility.
 export
@@ -161,7 +156,7 @@ MetaVis vis g =
   let genType  = `(Meta) .$ g.appliedType .$ mkCode g.typeInfo
       funType  = piAllImplicit  genType g.paramNames
 
-      impl     = `(mkMeta) .$ tiTTImp g.typeInfo
+      impl     = `(MkMeta) .$ tiTTImp g.typeInfo
 
    in MkInterfaceImpl "Meta" vis [] impl funType
 
@@ -230,7 +225,7 @@ DecEq = DecEqVis Public
 export
 SemigroupVis : Visibility -> DeriveUtil -> InterfaceImpl
 SemigroupVis vis g = MkInterfaceImpl "Semigroup" vis []
-                       `(mkSemigroup genAppend)
+                       `(MkSemigroup genAppend)
                        (implementationType `(Semigroup) g)
 
 ||| Alias for `SemigroupVis Public`.
@@ -247,7 +242,7 @@ Semigroup = SemigroupVis Public
 export
 MonoidVis : Visibility -> DeriveUtil -> InterfaceImpl
 MonoidVis vis g = MkInterfaceImpl "Monoid" vis []
-                       `(mkMonoid genNeutral)
+                       `(MkMonoid genNeutral)
                        (implementationType `(Monoid) g)
 
 ||| Alias for `MonoidVis Public`.

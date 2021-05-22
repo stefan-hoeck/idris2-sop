@@ -84,7 +84,7 @@ of `genEncode`, therefore we have to include them here:
 
 EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 EncodeVis vis g = MkInterfaceImpl "Encode" vis []
-                       `(mkEncode genEncode)
+                       `(MkEncode genEncode)
                        (implementationType `(Encode) g)
 
 Encode' : DeriveUtil -> InterfaceImpl
@@ -130,7 +130,7 @@ ones used in the last post:
 ```idris
 DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
 DecodeVis vis g = MkInterfaceImpl "Decode" vis []
-                       `(mkDecode genDecode)
+                       `(MkDecode genDecode)
                        (implementationType `(Decode) g)
 
 Decode' : DeriveUtil -> InterfaceImpl
