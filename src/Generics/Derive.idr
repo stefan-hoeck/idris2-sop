@@ -307,6 +307,12 @@ Show = ShowVis Public
 
 -- Reflection
 
+%runElab derive "ModuleIdent" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "VirtualIdent" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "OriginDesc" [Generic,Meta,Show,Eq,Ord]
+
 %runElab derive "FC" [Generic,Meta,Show,Eq,Ord]
 
 %runElab derive "NameType" [Generic,Meta,Show,Eq,Ord]
