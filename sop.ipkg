@@ -1,14 +1,14 @@
 package sop
 
 authors    = "stefan-hoeck"
-version    = 0.3.0
+version    = 0.4.0
 readme     = "README.md"
 license    = "BSD-2 Clause"
 
 sourcedir  = "src"
-depends    = base      >= 0.3.0
-           , contrib   >= 0.3.0
-           , elab-util >= 0.2.0
+depends    = base      >= 0.4.0
+           , contrib   >= 0.4.0
+           , elab-util >= 0.3.1
 
 modules = Data.Lazy
         , Data.SOP
