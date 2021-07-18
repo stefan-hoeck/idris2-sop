@@ -341,6 +341,10 @@ Show = ShowVis Public
 
 %runElab derive "DataOpt" [Generic,Meta,Show,Eq,Ord]
 
+%runElab derive "WithFlag" [Generic,Meta,Show,Eq,Ord]
+
+%runElab derive "BuiltinType" [Generic,Meta,Show,Eq,Ord]
+
 %runElab deriveMutual [ ("TTImp",        [Generic,Meta,Show,Eq])
                       , ("IField",       [Generic,Meta,Show,Eq])
                       , ("IFieldUpdate", [Generic,Meta,Show,Eq])
