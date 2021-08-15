@@ -115,7 +115,7 @@ genDecEq :  Generic t code => POP DecEq code
          => (x : t) -> (y : t) -> Dec (x = y)
 genDecEq x y = case decEq (from x) (from y) of
                     (Yes prf)   => Yes $ fromInjective x y prf
-                    (No contra) => No \h => contra (cong from h)
+                    (No contra) => No $ \h => contra (cong from h)
 
 ||| Default `(<+>)` implementation for data types with a `Generic`
 ||| instance.
