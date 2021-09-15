@@ -124,16 +124,16 @@ int = primVal . I
 -- to a function (`con`) wrapped in a `TTImp`.
 private
 appNSName : Name -> (con : TTImp) -> TTImp
-appNSName (NS (MkNS ss) (UN s)) con = let ss' = listOf $ reverse $ map str ss
-                                       in con .$ ss' .$ str s
-appNSName n con                     = let s = str $ nameStr n
-                                       in `(~(con) []) .$ s
+appNSName (NS (MkNS ss) (UN $ Basic s)) con = let ss' = listOf $ reverse $ map str ss
+                                              in con .$ ss' .$ str s
+appNSName n con                             = let s = str $ nameStr n
+                                               in `(~(con) []) .$ s
 
 -- creates an ArgName's TTImp from an argument's index and name
 private
 argNameTTImp : (Int,Name) -> TTImp
-argNameTTImp (k, UN n) = `(NamedArg)   .$ int k .$ str n
-argNameTTImp (k, _)    = `(UnnamedArg) .$ int k
+argNameTTImp (k, UN $ Basic n) = `(NamedArg)   .$ int k .$ str n
+argNameTTImp (k, _)            = `(UnnamedArg) .$ int k
 
 -- creates a ConInfo's TTImp from a `ParamCon`.
 private
@@ -320,6 +320,8 @@ Show = ShowVis Public
 %runElab derive "Constant" [Generic,Meta,Show,Eq,Ord]
 
 %runElab derive "Namespace" [Generic,Meta,Eq,Ord]
+
+%runElab derive "UserName" [Generic,Meta,Eq,Ord]
 
 %runElab derive "Name" [Generic,Meta,Eq,Ord]
 
