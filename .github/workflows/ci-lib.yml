@@ -1,0 +1,71 @@
+name: The library
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  read-ver:
+    name: Aquire compiler version
+    runs-on: ubuntu-latest
+    env:
+      IDRIS_VERSION_FILE: .idris-version
+    outputs:
+      idris-ver: ${{ steps.read-ver.outputs.idris-ver }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Read the version
+        id: read-ver
+        run: sed 's/^/::set-output name=idris-ver::/' < "${IDRIS_VERSION_FILE}"
+
+  dependency-elab-util:
+    name: Install elab-util
+    needs: read-ver
+    runs-on: ubuntu-latest
+    container: snazzybucket/idris2api:${{ needs.read-ver.outputs.idris-ver }}
+    steps:
+      - name: Checkout elab-util
+        uses: actions/checkout@v2
+        with:
+          repository: stefan-hoeck/idris2-elab-util
+      - name: Make elab-util
+        run: make lib
+      - name: Install elab-util
+        run: make install
+      - name: Save installed lib
+        uses: actions/upload-artifact@master
+        with:
+          name: dependencies
+          path: /root/.idris2/idris2-*/elab-util-*
+
+  build:
+    name: Build the lib
+    needs:
+      - read-ver
+      - dependency-elab-util
+    runs-on: ubuntu-latest
+    container: snazzybucket/idris2api:${{ needs.read-ver.outputs.idris-ver }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Download installed dependencies
+        uses: actions/download-artifact@master
+        with:
+          name: dependencies
+          path: /root/.idris2/
+      - name: Build lib
+        run: make lib
+      - name: Build docs
+        run: make docs
