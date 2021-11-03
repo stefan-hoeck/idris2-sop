@@ -76,7 +76,7 @@ valuesNP = hmap (to . MkSOP) (run et)
 ||| Returns all value from a generic enum type
 ||| (all nullary constructors) wrapped in a list.
 public export %inline
-values : Generic t code => (et : EnumType code) => List t 
+values : Generic t code => (et : EnumType code) => List t
 values = collapseNP valuesNP
 
 ||| Like `valuesNP` but takes the erased value type as an
@@ -89,7 +89,7 @@ valuesForNP _ = valuesNP
 ||| Like `values` but takes the erased value type as an
 ||| explicit argument to help with type inference.
 public export %inline
-valuesFor : (0 t : Type) -> Generic t code => (et : EnumType code) => List t 
+valuesFor : (0 t : Type) -> Generic t code => (et : EnumType code) => List t
 valuesFor _ = values
 
 --------------------------------------------------------------------------------
