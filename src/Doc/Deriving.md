@@ -1,4 +1,4 @@
-## Deriving Interface Implementations
+# Deriving Interface Implementations
 
 A lot of ink has already been spilled over how we can use
 generic representations to automatically derive interface
@@ -27,7 +27,7 @@ constructor and argument names such as `Show` is not yet supported.
 However, this is very high on my todo list, so I except it to be
 available very soon.
 
-### Product Types
+## Product Types
 
 Product types consist of a single constructor. Here is
 an example of a spell in a role playing game (casting costs
@@ -117,7 +117,7 @@ tableTest2 : MkEmployees ["a"] [] [1] <+> MkEmployees ["a"] ["b"] [2,3] =
 tableTest2 = Refl
 ```
 
-### Sum Types
+## Sum Types
 
 Sum types have more than one constructor but other than that,
 deriving instances for them is just as easy as for products:
@@ -143,7 +143,7 @@ data Treasure : Type where
 %runElab derive "Treasure" [Generic, Eq, Ord, DecEq]
 ```
 
-### Deriving Implementations for your own Interfaces
+## Deriving Implementations for your own Interfaces
 
 As a fully worked out example, in this part we are going to
 implement basic interfaces
@@ -154,7 +154,7 @@ of a .csv file.
 To keep things simple, we quickly write our own very basic
 parser type.
 
-#### A Simple Parser for Decoding Lists of Strings
+### A Simple Parser for Decoding Lists of Strings
 
 ```idris
 ||| Tries to convert parts of a list of string tokens
@@ -228,7 +228,7 @@ parse p ts = case p.run ts of
                   Left ts      => Left ts
 ```
 
-#### Generically derived Encoders
+### Generically derived Encoders
 
 Next, we provide some primitives for encoding values to
 lists of string tokens:
@@ -354,7 +354,7 @@ Let's encode us some dragons:
 %runElab derive "Dragon" [Encode']
 ```
 
-#### Generically derived Decoders
+### Generically derived Decoders
 
 Deriving decoders is only slightly more involved. First, we
 need again some primitives:
@@ -475,7 +475,7 @@ testDecodingGorgar : IO ()
 testDecodingGorgar = printLn $ Right gorgar == parse decode (encode gorgar)
 ```
 
-### Conclusion
+## Conclusion
 
 This post demonstrated the most important aspects of deriving
 interface implementations automatically from generic representations

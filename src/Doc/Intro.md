@@ -1,4 +1,4 @@
-## Introduction to Generic Representations of Data
+# Introduction to Generic Representations of Data
 
 The goal of his tutorial is to provide a quite thorough
 introduction to the ideas
@@ -18,7 +18,7 @@ module Doc.Intro
 %default total
 ```
 
-### Product Types
+## Product Types
 
 Product types are data types with a single data constructor
 such as records. For instance, here is a very basic definition
@@ -151,7 +151,7 @@ fromTupleId :  (x : (Int,String,String,Double))
 fromTupleId (_,_,_,_) = Refl
 ```
 
-### Sum Types
+## Sum Types
 
 Now that we have articles for our web store, lets define some payment
 methods we accept:
@@ -203,7 +203,7 @@ Eq Payment where (==) = eqVia paymentToEither
 Ord Payment where compare = comparing paymentToEither
 ```
 
-### SOP : Sums of Products
+## SOP : Sums of Products
 
 The approach we take in this library is similar but more
 versatile. Before we plunge into the full complexity of higher-kinded
@@ -331,7 +331,7 @@ the following conversion functions and verify their correctness:
   fromSopId : (x : SOP StoreCommandCode) -> cmdToSop (sopToCmd x) = x
 ```
 
-### Generic : An interface for converting from and to generic representations
+## Generic : An interface for converting from and to generic representations
 
 We are almost done with our introductory overview. This package
 provides one more utility to complete the picture: Interface `Generic`.
@@ -354,7 +354,7 @@ an isomorphism. Plus it comes with elaborator reflection utilities
 to generate implementations of this interface automatically -
 for a limited set of data types at least.
 
-### What's next
+## What's next
 
 This was quite a lengthy introduction. In the [next part](Barbies.md)
 we will put the functionality of this library to use with some
