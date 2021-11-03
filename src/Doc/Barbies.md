@@ -1,4 +1,4 @@
-## Barbies : Data Types that can change their Clothes
+# Barbies : Data Types that can change their Clothes
 
 Before we continue with generic representations of data types,
 I'd like to give a proper introduction to the higher-kinded version
@@ -8,7 +8,7 @@ functionality for arbitrary higher-kinded data types. In theory,
 the same functionality is provided by the *sop* library, through
 the generic representation of data types.
 
-### A Use Case for higher-kinded Products
+## A Use Case for higher-kinded Products
 
 Let's start with a first example, for which we will need a
 proper module declaration and some imports.
@@ -111,7 +111,7 @@ provided with each `User3` value. However, the implementation of
 `updateUser3` is rather boiler-platy. Even more so, if we further
 start to explore the possibilites these higher-kinded data types offer.
 
-### Enter NP
+## Enter NP
 
 All of the functionality above (and quite a bit more) is available
 through data type `NP` from `Data.SOP`. Like `User3`, `NP` is
@@ -172,12 +172,12 @@ We'll have to inspect the result at
 the REPL (the compile time test I first wrote took
 forever to typecheck):
 
-```
+```repl
 Doc.Barbies> testUpd
 [12, "hock", "hock@me.ch", 44, "top secret"]
 ```
 
-### A Use Case for kind-polymorphic higher-kinded Products
+## A Use Case for kind-polymorphic higher-kinded Products
 
 "OK" you say, "but what about the nice record fields we
 had before switching to that higher-kinded n-ary product thing?". There are
@@ -249,7 +249,7 @@ function to implement a `Show` instance or JSON marshallers
 for our `Person` type. We might look into these options
 in another post.
 
-### Comparison with Haskell's *sop-core*
+## Comparison with Haskell's *sop-core*
 
 When we compare the Idris implementation with Haskell's *sop-core*
 library, both of them have their strong moments. Idris
@@ -270,7 +270,7 @@ and `hcpure` can be implemented directly from `hliftA2`
 and `hmap` respectively. This reduces the number of interfaces
 we need.
 
-### Conclusion
+## Conclusion
 
 `NP_` and its relatives are highly versatile data types, the
 usability of which we have only started to appreciate in this

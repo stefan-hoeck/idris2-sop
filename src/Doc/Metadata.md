@@ -1,4 +1,4 @@
-## Metadata
+# Metadata
 
 In the [last part](Deriving.md) of the tutorial, we experimented with
 automatically deriving different interface implementations. Those
@@ -21,7 +21,7 @@ import Doc.Deriving
 %language ElabReflection
 ```
 
-### `Meta`: An Interface for Metadata
+## `Meta`: An Interface for Metadata
 
 Getting access to a data type's metadata is as simple as deriving
 its `Meta` interface (from module `Generics.Meta`). This gives us access
@@ -51,7 +51,7 @@ data Monster : Type where
 %runElab derive "Doc.Metadata.Monster" [Generic, Meta, Eq, Ord, DecEq, Show]
 ```
 
-### An `Encoder` for Sum Types
+## An `Encoder` for Sum Types
 
 So far, we only supported the deriving of decoders for product
 types. We'd like to also support sum types, by prefixing encodings
@@ -91,7 +91,7 @@ Encode' : DeriveUtil -> InterfaceImpl
 Encode' = EncodeVis Public
 ```
 
-### Decoding Sum Types: A Use Case for `injections`
+## Decoding Sum Types: A Use Case for `injections`
 
 We will need a new SOP technique for decoding sum types.
 But first, decoding a single constructor seems to be straight
@@ -165,7 +165,7 @@ printDecDemon : IO ()
 printDecDemon = printLn decDemon
 ```
 
-### Conclusion
+## Conclusion
 
 Again, the SOP approach provides powerful abstraction to write
 generic interface implementations. This post completes the part
