@@ -57,6 +57,13 @@ public export
 NP : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
 NP = NP_ k
 
+||| Changes an n-ary product to the identity context `I`
+||| by adjusting the types of stored values accordingly.
+public export
+toI : NP_ k f ks -> NP I (map f ks)
+toI []       = []
+toI (h :: t) = h :: toI t
+
 --------------------------------------------------------------------------------
 --          Specialized Interface Functions
 --------------------------------------------------------------------------------

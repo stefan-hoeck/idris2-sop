@@ -51,6 +51,13 @@ public export
 NS : {k : Type} -> (f : k -> Type) -> (ks : List k) -> Type
 NS = NS_ k
 
+||| Changes an n-ary sum to the identity context `I`
+||| by adjusting the types of stored values accordingly.
+public export
+toI : NS_ k f ks -> NS I (map f ks)
+toI (Z v) = Z v
+toI (S x) = S $ toI x
+
 --------------------------------------------------------------------------------
 --          Specialized Interface Functions
 --------------------------------------------------------------------------------
