@@ -4,6 +4,8 @@
 ||| containing `Lazy` fields.
 module Data.Lazy
 
+%default total
+
 public export
 Eq a => Eq (Lazy a) where
   x == y = x == y
