@@ -30,11 +30,11 @@ record, wrapping a product of `ConInfo` values.
 Like `SOP`, `TypeInfo` is indexed over a list of lists of values to
 match the structure of the generic code of a data type.
 
-Before we learn how to use meta data to write our own interface
+Before we learn how to use metadata to write our own interface
 implementations, here are two data types with automatically
 derived `Meta` and `Show` implementations (we have to use fully
 qualified names, because module `Doc.Deriving` contains private data types
-with identital names, which seems to confuse Idris):
+with identical names, which seems to confuse Idris):
 
 ```idris
 export

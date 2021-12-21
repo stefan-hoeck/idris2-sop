@@ -84,5 +84,5 @@ Haskell version, `NP` and `NS` are both strict heterogeneous
 containers.
 
 Also, generic `Eq` and `Ord` implementations might carry out more
-comparisons than stricly necessary in cases where the
+comparisons than strictly necessary in cases where the
 result can be decided early on.
