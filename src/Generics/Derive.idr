@@ -12,7 +12,7 @@ import System.File
 
 %language ElabReflection
 
-%default covering
+%default total
 
 --------------------------------------------------------------------------------
 --          Generic
@@ -35,7 +35,7 @@ mkSOP' : (k : Int) -> (arg : TTImp) -> TTImp
 mkSOP' k arg = `(MkSOP) .$ run k
 where run : (n : Int) -> TTImp
       run n = if n <= 0 then `(Z) .$ arg
-                        else `(S) .$ run (n-1)
+                        else `(S) .$ run (assert_smaller n (n-1))
 
 private
 mkSOP : (k : Int) -> (args : List TTImp) -> TTImp
@@ -323,8 +323,6 @@ Show = ShowVis Public
 
 %runElab derive "UserName" [Generic,Meta,Eq,Ord]
 
-%runElab derive "Name" [Generic,Meta,Eq,Ord]
-
 %runElab derive "NoMangleDirective" [Generic,Meta,Show,Eq,Ord]
 
 %runElab derive "Count" [Generic,Meta,Show,Eq,Ord]
@@ -343,11 +341,15 @@ Show = ShowVis Public
 
 %runElab derive "DotReason" [Generic,Meta,Show,Eq,Ord]
 
-%runElab derive "DataOpt" [Generic,Meta,Show,Eq,Ord]
-
 %runElab derive "WithFlag" [Generic,Meta,Show,Eq,Ord]
 
 %runElab derive "BuiltinType" [Generic,Meta,Show,Eq,Ord]
+
+%default covering
+
+%runElab derive "Name" [Generic,Meta,Eq,Ord]
+
+%runElab derive "DataOpt" [Generic,Meta,Show,Eq,Ord]
 
 %runElab deriveMutual [ ("TTImp",        [Generic,Meta,Show,Eq])
                       , ("IField",       [Generic,Meta,Show,Eq])
