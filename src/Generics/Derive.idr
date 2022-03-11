@@ -317,6 +317,8 @@ Show = ShowVis Public
 
 %runElab derive "NameType" [Generic,Meta,Show,Eq,Ord]
 
+%runElab derive "PrimType" [Generic,Meta,Show,Eq,Ord]
+
 %runElab derive "Constant" [Generic,Meta,Show,Eq,Ord]
 
 %runElab derive "Namespace" [Generic,Meta,Eq,Ord]
