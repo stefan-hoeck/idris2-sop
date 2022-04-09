@@ -7,7 +7,6 @@ license    = "BSD-2 Clause"
 
 sourcedir  = "src"
 depends    = base      >= 0.5.1
-           , contrib   >= 0.5.1
            , elab-util >= 0.5.0
 
 modules = Data.Lazy
