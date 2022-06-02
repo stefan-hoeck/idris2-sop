@@ -41,7 +41,7 @@ Eq Article where
     i1 == i2 && n1 == n2 && d1 == d2 && p1 == p2
 ```
 
-OK, that was rather boring, and - even worse - error prone. Sure, Idris helps
+OK, that was rather boring, and - even worse - error-prone. Sure, Idris helps
 us writing these kind of definitions by case splitting values for us,
 but it usually can't find the desired implementation for us: The types
 are not specific enough.
@@ -138,7 +138,7 @@ This approach of going via some isomorphic structure (that is, a structure
 of the same shape) seems to be highly useful. The only boring
 parts we still have to write are the minimalistic interface implementations
 and the conversion functions from and to the utility data types.
-This last part can be error prone, escpecially when our product
+This last part can be error-prone, especially when our product
 types have many fields of the same type. Luckily, we can use
 Idris to prove that we made no mistake:
 
@@ -349,7 +349,7 @@ provides one more utility to complete the picture: Interface `Generic`.
 
 It provides conversion functions for a data type from and to its
 generic representation as a sum of product plus the
-correpsonding proofs that these functions actually represent
+corresponding proofs that these functions actually represent
 an isomorphism. Plus it comes with elaborator reflection utilities
 to generate implementations of this interface automatically -
 for a limited set of data types at least.

@@ -45,7 +45,7 @@ and enable `%language ElabReflection`):
 %runElab derive "Spell" [Generic, Eq, Ord, DecEq]
 ```
 
-We can quicky write down some tests:
+We can quickly write down some tests:
 
 ```idris
 spellEq1 : MkSpell 12 "foo" == MkSpell 12 "foo" = True
@@ -277,9 +277,9 @@ NP (Encode . f) ks => Encode (NP f ks) where
 
 ```
 
-The same goes for n-ary sums. Here, as a precodition, we only
+The same goes for n-ary sums. Here, as a precondition, we only
 accept single constructor sums, otherwise we'd had
-to somehow encode the constructor as a prefix to the remainer
+to somehow encode the constructor as a prefix to the remainder
 of the list. This can be done by using the `SingletonList`
 predicate from `Data.SOP.Utils`.
 Otherwise, the implementation uses exactly the same combinators
@@ -480,7 +480,7 @@ testDecodingGorgar = printLn $ Right gorgar == parse decode (encode gorgar)
 This post demonstrated the most important aspects of deriving
 interface implementations automatically from generic representations
 of data types as well as the most basic pieces of reflection
-code necessary to make intefaces available to `derive`.
+code necessary to make interfaces available to `derive`.
 For a much more thorough introduction to the concepts and code
 behind `derive`, see the tutorials on *Generics* at
 the [idris2-elab-util](https://github.com/stefan-hoeck/idris2-elab-util)

@@ -109,7 +109,7 @@ updateUser3 (MkUser3 _ mn me ma mp) (MkUser3 i n e a p) =
 Great! We can specify, at the type level, exactly the amount of information
 provided with each `User3` value. However, the implementation of
 `updateUser3` is rather boiler-platy. Even more so, if we further
-start to explore the possibilites these higher-kinded data types offer.
+start to explore the possibilities these higher-kinded data types offer.
 
 ## Enter NP
 
@@ -149,7 +149,7 @@ updateUser4 upd old = let upd' = setAt' () Int Nothing upd
 ```
 
 Let's break this down a bit: Function `setAt` replaces the
-first occurence of the given type with a value of
+first occurrence of the given type with a value of
 a new type wrapped in the desired effect (`Maybe` in this case).
 Since Idris cannot always infer the type of the new value
 (as is the case here), function `setAt'` allows us to give
