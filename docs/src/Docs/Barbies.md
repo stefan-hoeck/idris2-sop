@@ -173,7 +173,7 @@ the REPL (the compile time test I first wrote took
 forever to typecheck):
 
 ```repl
-Doc.Barbies> testUpd
+Docs.Barbies> testUpd
 [12, "hock", "hock@me.ch", 44, "top secret"]
 ```
 
