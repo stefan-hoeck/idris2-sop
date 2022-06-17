@@ -13,7 +13,7 @@ no imports from the sop library are required.
 This is a literate Idris source, hence:
 
 ```idris
-module Doc.Intro
+module Docs.Intro
 
 %default total
 ```
