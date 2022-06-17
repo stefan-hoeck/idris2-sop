@@ -13,10 +13,10 @@ to enhance our own `Encoder` and `Decoder` interfaces from the
 last part.
 
 ```idris
-module Doc.Metadata
+module Docs.Metadata
 
 import Generics.Derive
-import Doc.Deriving
+import Docs.Deriving
 
 %language ElabReflection
 ```
@@ -33,14 +33,14 @@ match the structure of the generic code of a data type.
 Before we learn how to use metadata to write our own interface
 implementations, here are two data types with automatically
 derived `Meta` and `Show` implementations (we have to use fully
-qualified names, because module `Doc.Deriving` contains private data types
+qualified names, because module `Docs.Deriving` contains private data types
 with identical names, which seems to confuse Idris):
 
 ```idris
 export
 data Spell = MkSpell Nat String
 
-%runElab derive "Doc.Metadata.Spell" [Generic, Meta, Eq, Ord, DecEq, Show]
+%runElab derive "Docs.Metadata.Spell" [Generic, Meta, Eq, Ord, DecEq, Show]
 
 export
 data Monster : Type where
@@ -48,7 +48,7 @@ data Monster : Type where
   Demon    : (hp : Int) -> (sp : Int) -> (spells : List Spell) -> Monster
   Skeleton : (hp : Int) -> (armor : Int) -> Monster
 
-%runElab derive "Doc.Metadata.Monster" [Generic, Meta, Eq, Ord, DecEq, Show]
+%runElab derive "Docs.Metadata.Monster" [Generic, Meta, Eq, Ord, DecEq, Show]
 ```
 
 ## An `Encoder` for Sum Types
@@ -141,9 +141,9 @@ We can now derive encoders and decoders for `Monster`s and
 test them at the REPL:
 
 ```idris
-%runElab derive "Doc.Metadata.Spell" [Encode', Decode']
+%runElab derive "Docs.Metadata.Spell" [Encode', Decode']
 
-%runElab derive "Doc.Metadata.Monster" [Encode', Decode']
+%runElab derive "Docs.Metadata.Monster" [Encode', Decode']
 
 export
 demon : Monster

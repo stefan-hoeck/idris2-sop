@@ -14,7 +14,7 @@ Let's start with a first example, for which we will need a
 proper module declaration and some imports.
 
 ```idris
-module Doc.Barbies
+module Docs.Barbies
 
 import Data.SOP
 import Data.Maybe

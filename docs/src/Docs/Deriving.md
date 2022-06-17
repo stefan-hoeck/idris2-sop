@@ -14,7 +14,7 @@ machinery.
 We start with the necessary imports and language extensions:
 
 ```idris
-module Doc.Deriving
+module Docs.Deriving
 
 import Data.String
 import Generics.Derive
