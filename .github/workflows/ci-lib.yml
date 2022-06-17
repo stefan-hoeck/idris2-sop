@@ -32,4 +32,4 @@ jobs:
       - name: Build lib
         run: pack install sop
       - name: Typecheck docs
-        run: pack typecheck sop-docs
+        run: pack typecheck docs/docs.ipkg
