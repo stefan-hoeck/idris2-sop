@@ -45,7 +45,7 @@ should be imported as well when deriving interface implementations.
 
 Most of the exported functions have been properly annotated
 with doc strings. In addition, there is an extensive - and still growing -
-[tutorial](docs/src/Docs/Index.md) about the core ideas and techniques
+[tutorial](index.md) about the core ideas and techniques
 behind the SOP approach to generic programming.
 
 ## Prerequisites
