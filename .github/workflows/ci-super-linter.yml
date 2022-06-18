@@ -31,4 +31,4 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IGNORE_GENERATED_FILES: true
-          FILTER_REGEX_EXCLUDE: .*/docs/md/.md
+          FILTER_REGEX_EXCLUDE: .*/docs/md/*.md
