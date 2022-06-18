@@ -6,4 +6,4 @@ relative_links:
 include:
   - index.md
 
-theme: jekyll-theme-midnight
+theme: jekyll-theme-slate
