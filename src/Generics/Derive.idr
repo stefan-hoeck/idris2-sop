@@ -293,7 +293,7 @@ Show = ShowVis Public
 
 -- System
 
-%runElab derive "Mode" [Generic,Meta,Show,Eq,Ord]
+%runElab derive "System.File.Mode.Mode" [Generic,Meta,Show,Eq,Ord]
 
 %runElab derive "FileError" [Generic,Meta,Eq,Ord]
 
