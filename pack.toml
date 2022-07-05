@@ -1,9 +1,0 @@
-[custom.all.sop]
-type   = "local"
-path   = "."
-ipkg   = "sop.ipkg"
-
-[custom.all.sop-docs]
-type   = "local"
-path   = "docs"
-ipkg   = "docs.ipkg"
