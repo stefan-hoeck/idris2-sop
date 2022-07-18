@@ -338,13 +338,13 @@ we have to write a minimal amount of reflection code:
 ```idris
 ||| Derives an `Encode` implementation for the given data type
 ||| and visibility.
-EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
-EncodeVis vis g = MkInterfaceImpl "Encode" vis []
-                       `(MkEncode genEncode)
-                       (implementationType `(Encode) g)
+EncodeVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+EncodeVis vis g = pure $ MkInterfaceImpl "Encode" vis []
+                           `(MkEncode genEncode)
+                           (implementationType `(Encode) g)
 
 ||| Alias for `EncodeVis Public`.
-Encode' : DeriveUtil -> InterfaceImpl
+Encode' : DeriveUtil -> Elab InterfaceImpl
 Encode' = EncodeVis Public
 ```
 
@@ -438,13 +438,13 @@ Finally, the necessary reflection code:
 ```idris
 ||| Derives a `Decode` implementation for the given data type
 ||| and visibility.
-DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecodeVis vis g = MkInterfaceImpl "Decode" vis []
-                       `(MkDecode genDecode)
-                       (implementationType `(Decode) g)
+DecodeVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+DecodeVis vis g = pure $ MkInterfaceImpl "Decode" vis []
+                           `(MkDecode genDecode)
+                           (implementationType `(Decode) g)
 
 ||| Alias for `DecodeVis Public`.
-Decode' : DeriveUtil -> InterfaceImpl
+Decode' : DeriveUtil -> Elab InterfaceImpl
 Decode' = DecodeVis Public
 ```
 

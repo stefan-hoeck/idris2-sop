@@ -82,12 +82,12 @@ of `genEncode`, therefore we have to include them here:
 
 ```idris
 
-EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
-EncodeVis vis g = MkInterfaceImpl "Encode" vis []
-                       `(MkEncode genEncode)
-                       (implementationType `(Encode) g)
+EncodeVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+EncodeVis vis g = pure $ MkInterfaceImpl "Encode" vis []
+                           `(MkEncode genEncode)
+                           (implementationType `(Encode) g)
 
-Encode' : DeriveUtil -> InterfaceImpl
+Encode' : DeriveUtil -> Elab InterfaceImpl
 Encode' = EncodeVis Public
 ```
 
@@ -128,12 +128,12 @@ ones used in the last post:
 
 
 ```idris
-DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecodeVis vis g = MkInterfaceImpl "Decode" vis []
-                       `(MkDecode genDecode)
-                       (implementationType `(Decode) g)
+DecodeVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+DecodeVis vis g = pure $ MkInterfaceImpl "Decode" vis []
+                           `(MkDecode genDecode)
+                           (implementationType `(Decode) g)
 
-Decode' : DeriveUtil -> InterfaceImpl
+Decode' : DeriveUtil -> Elab InterfaceImpl
 Decode' = DecodeVis Public
 ```
 

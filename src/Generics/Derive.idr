@@ -83,8 +83,8 @@ conNames (MkParamCon con args) = let ns   = map (nameStr . name) args
 ||| Derives a `Generic` implementation for the given data type
 ||| and visibility.
 export
-GenericVis : Visibility -> DeriveUtil -> InterfaceImpl
-GenericVis vis g =
+GenericVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+GenericVis vis g = pure $
   let names    = zipWithIndex (map conNames g.typeInfo.cons)
       len      = cast {to = Int} $ length names
       genType  = `(Generic) .$ g.appliedType .$ mkCode g.typeInfo
@@ -103,7 +103,7 @@ GenericVis vis g =
 
 ||| Alias for `GenericVis Public`.
 export
-Generic : DeriveUtil -> InterfaceImpl
+Generic : DeriveUtil -> Elab InterfaceImpl
 Generic = GenericVis Public
 
 --------------------------------------------------------------------------------
@@ -151,8 +151,8 @@ tiTTImp (MkParamTypeInfo n _ cons) =
 ||| Derives a `Meta` implementation for the given data type
 ||| and visibility.
 export
-MetaVis : Visibility -> DeriveUtil -> InterfaceImpl
-MetaVis vis g =
+MetaVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+MetaVis vis g = pure $
   let genType  = `(Meta) .$ g.appliedType .$ mkCode g.typeInfo
       funType  = piAllImplicit  genType g.paramNames
 
@@ -162,7 +162,7 @@ MetaVis vis g =
 
 ||| Alias for `EqVis Public`.
 export
-Meta : DeriveUtil -> InterfaceImpl
+Meta : DeriveUtil -> Elab InterfaceImpl
 Meta = MetaVis Public
 
 --------------------------------------------------------------------------------
@@ -172,14 +172,14 @@ Meta = MetaVis Public
 ||| Derives an `Eq` implementation for the given data type
 ||| and visibility.
 export
-EqVis : Visibility -> DeriveUtil -> InterfaceImpl
-EqVis vis g = MkInterfaceImpl "Eq" vis []
-                `(mkEq genEq)
-                (implementationType `(Eq) g)
+EqVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+EqVis vis g = pure $ MkInterfaceImpl "Eq" vis []
+                       `(mkEq genEq)
+                       (implementationType `(Eq) g)
 
 ||| Alias for `EqVis Public`.
 export
-Eq : DeriveUtil -> InterfaceImpl
+Eq : DeriveUtil -> Elab InterfaceImpl
 Eq = EqVis Public
 
 --------------------------------------------------------------------------------
@@ -189,14 +189,14 @@ Eq = EqVis Public
 ||| Derives an `Ord` implementation for the given data type
 ||| and visibility.
 export
-OrdVis : Visibility -> DeriveUtil -> InterfaceImpl
-OrdVis vis g = MkInterfaceImpl "Ord" vis []
-                 `(mkOrd genCompare)
-                 (implementationType `(Ord) g)
+OrdVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+OrdVis vis g = pure $ MkInterfaceImpl "Ord" vis []
+                        `(mkOrd genCompare)
+                        (implementationType `(Ord) g)
 
 ||| Alias for `OrdVis Public`
 export
-Ord : DeriveUtil -> InterfaceImpl
+Ord : DeriveUtil -> Elab InterfaceImpl
 Ord = OrdVis Public
 
 --------------------------------------------------------------------------------
@@ -206,14 +206,14 @@ Ord = OrdVis Public
 ||| Derives a `DecEq` implementation for the given data type
 ||| and visibility.
 export
-DecEqVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecEqVis vis g = MkInterfaceImpl "DecEq" vis []
-                   `(mkDecEq genDecEq)
-                   (implementationType `(DecEq) g)
+DecEqVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+DecEqVis vis g = pure $ MkInterfaceImpl "DecEq" vis []
+                          `(mkDecEq genDecEq)
+                          (implementationType `(DecEq) g)
 
 ||| Alias for `EqVis Public`.
 export
-DecEq : DeriveUtil -> InterfaceImpl
+DecEq : DeriveUtil -> Elab InterfaceImpl
 DecEq = DecEqVis Public
 
 --------------------------------------------------------------------------------
@@ -223,14 +223,14 @@ DecEq = DecEqVis Public
 ||| Derives a `Semigroup` implementation for the given data type
 ||| and visibility.
 export
-SemigroupVis : Visibility -> DeriveUtil -> InterfaceImpl
-SemigroupVis vis g = MkInterfaceImpl "Semigroup" vis []
-                       `(MkSemigroup genAppend)
-                       (implementationType `(Semigroup) g)
+SemigroupVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+SemigroupVis vis g = pure $ MkInterfaceImpl "Semigroup" vis []
+                              `(MkSemigroup genAppend)
+                              (implementationType `(Semigroup) g)
 
 ||| Alias for `SemigroupVis Public`.
 export
-Semigroup : DeriveUtil -> InterfaceImpl
+Semigroup : DeriveUtil -> Elab InterfaceImpl
 Semigroup = SemigroupVis Public
 
 --------------------------------------------------------------------------------
@@ -240,14 +240,14 @@ Semigroup = SemigroupVis Public
 ||| Derives a `Monoid` implementation for the given data type
 ||| and visibility.
 export
-MonoidVis : Visibility -> DeriveUtil -> InterfaceImpl
-MonoidVis vis g = MkInterfaceImpl "Monoid" vis []
-                       `(MkMonoid genNeutral)
-                       (implementationType `(Monoid) g)
+MonoidVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+MonoidVis vis g = pure $ MkInterfaceImpl "Monoid" vis []
+                           `(MkMonoid genNeutral)
+                           (implementationType `(Monoid) g)
 
 ||| Alias for `MonoidVis Public`.
 export
-Monoid : DeriveUtil -> InterfaceImpl
+Monoid : DeriveUtil -> Elab InterfaceImpl
 Monoid = MonoidVis Public
 
 --------------------------------------------------------------------------------
@@ -257,14 +257,14 @@ Monoid = MonoidVis Public
 ||| Derives a `Show` implementation for the given data type
 ||| and visibility.
 export
-ShowVis : Visibility -> DeriveUtil -> InterfaceImpl
-ShowVis vis g = MkInterfaceImpl "Show" vis []
-                  `(mkShowPrec genShowPrec)
-                  (implementationType `(Show) g)
+ShowVis : Visibility -> DeriveUtil -> Elab InterfaceImpl
+ShowVis vis g = pure $ MkInterfaceImpl "Show" vis []
+                         `(mkShowPrec genShowPrec)
+                         (implementationType `(Show) g)
 
 ||| Alias for `ShowVis Public`.
 export
-Show : DeriveUtil -> InterfaceImpl
+Show : DeriveUtil -> Elab InterfaceImpl
 Show = ShowVis Public
 
 --------------------------------------------------------------------------------
