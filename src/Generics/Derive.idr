@@ -325,8 +325,6 @@ Show = ShowVis Public
 
 %runElab derive "UserName" [Generic,Meta,Eq,Ord]
 
-%runElab derive "NoMangleDirective" [Generic,Meta,Show,Eq,Ord]
-
 %runElab derive "Count" [Generic,Meta,Show,Eq,Ord]
 
 %runElab derive "PiInfo" [Generic,Meta,Show,Eq,Ord]
