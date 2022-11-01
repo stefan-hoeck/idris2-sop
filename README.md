@@ -41,6 +41,7 @@ record Employee where
 
 Note: If a data type includes lazy fields, module `Data.Lazy`
 should be imported as well when deriving interface implementations.
+
 ## Documentation
 
 Most of the exported functions have been properly annotated
@@ -60,8 +61,7 @@ Starting from Idris2 version 0.5.1, tagged releases of the same
 minor version number (e.g. 0.5.x) will be made available, while the main
 branch keeps following the Idris2 main branch.
 
-The latest commit is daily tested to build against the current
-HEAD of the Idris compiler. Since Idris2 releases are happening
+Since Idris2 releases are happening
 rather infrequently at the moment, it is suggested to use
 a package manager like [pack](https://github.com/stefan-hoeck/idris2-pack)
 to install and maintain matching versions of the Idris compiler

@@ -10,8 +10,6 @@ on:
   pull_request:
     branches:
       - main
-  schedule:
-    - cron: '0 1 * * *'
 
 defaults:
   run:
@@ -30,6 +28,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build lib
-        run: pack install sop
+        run: pack typecheck sop
       - name: Typecheck docs
-        run: pack typecheck docs/docs.ipkg
+        run: pack typecheck sop-docs
