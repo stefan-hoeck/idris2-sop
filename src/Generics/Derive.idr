@@ -46,10 +46,10 @@ mkSOP k args = mkSOP' k (listOf args)
 export
 mkCode : (p : ParamTypeInfo) -> TTImp
 mkCode p = listOf $ map (\c => listOf $ explicits c.args) p.cons
-  where explicits : Vect n (ConArg p.info.arty) -> List TTImp
+  where explicits : Vect n (ConArg p.numParams) -> List TTImp
         explicits [] = []
         explicits (CArg _ _ ExplicitArg t :: as) =
-          ttimp p.defltNames t :: explicits as
+          ttimp p.paramNames t :: explicits as
         explicits (_ :: as) = explicits as
 
 private
@@ -89,7 +89,7 @@ conNames c =
 ||| Derives a `Generic` implementation for the given data type
 ||| and visibility.
 export
-GenericVis : Visibility -> List Name -> ParamTypeInfo -> List TopLevel
+GenericVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
 GenericVis vis _ p =
   let names    = zipWithIndex (map conNames p.cons)
       fun      = UN . Basic $ "implGeneric" ++ camelCase p.info.name
@@ -107,11 +107,11 @@ GenericVis vis _ p =
 
       impl     = appAll mkGeneric [from,to,fromToId,toFromId]
 
-   in [ TL (interfaceHint vis fun funType) (def fun [var fun .= impl])]
+   in Right [ TL (interfaceHint vis fun funType) (def fun [var fun .= impl])]
 
 ||| Alias for `GenericVis Public`.
 export
-Generic : List Name -> ParamTypeInfo -> List TopLevel
+Generic : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Generic = GenericVis Public
 
 --------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ tiTTImp p =
 ||| Derives a `Meta` implementation for the given data type
 ||| and visibility.
 export
-MetaVis : Visibility -> List Name -> ParamTypeInfo -> List TopLevel
+MetaVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
 MetaVis vis _ p =
   let genType  = `(Meta) .$ p.applied .$ mkCode p
       funType  = piAll genType p.implicits
@@ -173,11 +173,11 @@ MetaVis vis _ p =
 
       impl     = `(MkMeta) .$ tiTTImp p
 
-   in [ TL (interfaceHint vis fun funType) (def fun [var fun .= impl])]
+   in Right [ TL (interfaceHint vis fun funType) (def fun [var fun .= impl])]
 
 ||| Alias for `EqVis Public`.
 export
-Meta : List Name -> ParamTypeInfo -> List TopLevel
+Meta : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Meta = MetaVis Public
 
 --------------------------------------------------------------------------------
@@ -188,11 +188,11 @@ Meta = MetaVis Public
 |||
 ||| @deprecated : This is deprecated. Use `Derive.Eq.Eq` from elab-util.
 export %deprecate
-Eq : List Name -> ParamTypeInfo -> List TopLevel
+Eq : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Eq _ p =
   let nm := implName p "Eq"
       cl := var nm .= `(mkEq genEq)
-   in [TL (interfaceHint Public nm (implType "Eq" p)) (def nm [cl])]
+   in Right [TL (interfaceHint Public nm (implType "Eq" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
 --          Ord
@@ -202,11 +202,11 @@ Eq _ p =
 |||
 ||| @deprecated : This is deprecated. Use `Derive.Ord.Ord` from elab-util.
 export %deprecate
-Ord : List Name -> ParamTypeInfo -> List TopLevel
+Ord : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Ord _ p =
   let nm := implName p "Ord"
       cl := var nm .= `(mkOrd genCompare)
-   in [TL (interfaceHint Public nm (implType "Ord" p)) (def nm [cl])]
+   in Right [TL (interfaceHint Public nm (implType "Ord" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
 --          DecEq
@@ -214,11 +214,11 @@ Ord _ p =
 
 ||| Derives `DecEq` for the given data type.
 export
-DecEq : List Name -> ParamTypeInfo -> List TopLevel
+DecEq : List Name -> ParamTypeInfo -> Res (List TopLevel)
 DecEq _ p =
   let nm := implName p "DecEq"
       cl := var nm .= `(mkDecEq genDecEq)
-   in [TL (interfaceHint Public nm (implType "DecEq" p)) (def nm [cl])]
+   in Right [TL (interfaceHint Public nm (implType "DecEq" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
 --          Show
@@ -228,11 +228,11 @@ DecEq _ p =
 |||
 ||| @deprecated : This is deprecated. Use `Derive.Show.Show` from elab-util.
 export %deprecate
-Show : List Name -> ParamTypeInfo -> List TopLevel
+Show : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Show _ p =
   let nm := implName p "Show"
       cl := var nm .= `(mkShowPrec genShowPrec)
-   in [TL (interfaceHint Public nm (implType "Show" p)) (def nm [cl])]
+   in Right [TL (interfaceHint Public nm (implType "Show" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
 --          Prelude and Data Implementations

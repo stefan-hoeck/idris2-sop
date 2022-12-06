@@ -318,11 +318,11 @@ we have to write a minimal amount of reflection code:
 ```idris
 ||| Derives an `Encode` implementation for the given data type
 ||| and visibility.
-Encode' : List Name -> ParamTypeInfo -> List TopLevel
+Encode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Encode' _ p =
   let nm := implName p "Encode"
       cl := var nm .= `(MkEncode genEncode)
-   in [TL (interfaceHint Public nm (implType "Encode" p)) (def nm [cl])]
+   in Right [TL (interfaceHint Public nm (implType "Encode" p)) (def nm [cl])]
 ```
 
 Let's encode us some dragons:
@@ -415,11 +415,11 @@ Finally, the necessary reflection code:
 ```idris
 ||| Derives a `Decode` implementation for the given data type
 ||| and visibility.
-Decode' : List Name -> ParamTypeInfo -> List TopLevel
+Decode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Decode' _ p =
   let nm := implName p "Decode"
       cl := var nm .= `(MkDecode genDecode)
-   in [TL (interfaceHint Public nm (implType "Decode" p)) (def nm [cl])]
+   in Right [TL (interfaceHint Public nm (implType "Decode" p)) (def nm [cl])]
 ```
 
 Let's decode us some dragons:

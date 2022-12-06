@@ -81,11 +81,11 @@ ones used in the last post, but they call a different version
 of `genEncode`, therefore we have to include them here:
 
 ```idris
-Encode' : List Name -> ParamTypeInfo -> List TopLevel
+Encode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Encode' _ p =
   let nm := implName p "Encode"
       cl := var nm .= `(MkEncode genEncode)
-   in [TL (interfaceHint Public nm (implType "Encode" p)) (def nm [cl])]
+   in Right [TL (interfaceHint Public nm (implType "Encode" p)) (def nm [cl])]
 ```
 
 ## Decoding Sum Types: A Use Case for `injections`
@@ -125,11 +125,11 @@ ones used in the last post:
 
 
 ```idris
-Decode' : List Name -> ParamTypeInfo -> List TopLevel
+Decode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Decode' _ p =
   let nm := implName p "Decode"
       cl := var nm .= `(MkDecode genDecode)
-   in [TL (interfaceHint Public nm (implType "Decode" p)) (def nm [cl])]
+   in Right [TL (interfaceHint Public nm (implType "Decode" p)) (def nm [cl])]
 ```
 
 We can now derive encoders and decoders for `Monster`s and
