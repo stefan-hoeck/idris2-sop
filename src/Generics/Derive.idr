@@ -31,79 +31,87 @@ mkGeneric = "MkGeneric"
 -- of arguments. `k` is the index of the data type's
 -- constructor.
 private
-mkSOP' : (k : Int) -> (arg : TTImp) -> TTImp
+mkSOP' : (k : Nat) -> (arg : TTImp) -> TTImp
 mkSOP' k arg = `(MkSOP) .$ run k
-where run : (n : Int) -> TTImp
-      run n = if n <= 0 then `(Z) .$ arg
-                        else `(S) .$ run (assert_smaller n (n-1))
+where run : (n : Nat) -> TTImp
+      run 0     = `(Z) .$ arg
+      run (S n) = `(S) .$ run n
 
 private
-mkSOP : (k : Int) -> (args : List TTImp) -> TTImp
+mkSOP : (k : Nat) -> (args : List TTImp) -> TTImp
 mkSOP k args = mkSOP' k (listOf args)
 
 ||| Creates the syntax tree for the code of the given data type.
 ||| We export this since it might be useful elsewhere.
 export
-mkCode : ParamTypeInfo -> TTImp
-mkCode = listOf . map (listOf . map tpe . explicitArgs) . cons
+mkCode : (p : ParamTypeInfo) -> TTImp
+mkCode p = listOf $ map (\c => listOf $ explicits c.args) p.cons
+  where explicits : Vect n (ConArg p.numParams) -> List TTImp
+        explicits [] = []
+        explicits (CArg _ _ ExplicitArg t :: as) =
+          ttimp p.paramNames t :: explicits as
+        explicits (_ :: as) = explicits as
 
 private
-fromClause : (Int,ConNames) -> Clause
+fromClause : (Nat,ConNames) -> Clause
 fromClause (k,(con,ns,vars)) = bindAll con ns .= mkSOP k vars
 
 private
-fromToIdClause : (Int,ConNames) -> Clause
+fromToIdClause : (Nat,ConNames) -> Clause
 fromToIdClause (k,(con,ns,vars)) = bindAll con ns .= `(Refl)
 
 private
-toClause : (Int,ConNames) -> Clause
+toClause : (Nat,ConNames) -> Clause
 toClause (k,(con,ns,vars)) = mkSOP k (map bindVar ns) .= appAll con vars
 
 private
-impossibleToClause : Int -> Clause
+impossibleToClause : Nat -> Clause
 impossibleToClause k = impossibleClause (mkSOP' k implicitTrue)
 
 private
-toFromIdClause : (Int,ConNames) -> Clause
+toFromIdClause : (Nat,ConNames) -> Clause
 toFromIdClause (k,(con,ns,vars)) = mkSOP k (map bindVar ns) .= `(Refl)
 
 private
-zipWithIndex : List a -> List (Int,a)
+zipWithIndex : List a -> List (Nat,a)
 zipWithIndex as = run 0 as
-  where run : Int -> List a -> List (Int,a)
+  where run : Nat -> List a -> List (Nat,a)
         run _ []     = []
-        run k (h::t) = (k,h) :: run (k+1) t
+        run k (h::t) = (k,h) :: run (S k) t
 
 private
-conNames : ParamCon -> ConNames
-conNames (MkParamCon con args) = let ns   = map (nameStr . name) args
-                                     vars = map varStr ns
-                                  in (con, ns, vars)
+conNames : ParamCon n -> ConNames
+conNames c =
+  let ns   := toList $ freshNames "x" (count isExplicit c.args)
+      vars := map varStr ns
+   in (c.name, ns, vars)
 
 ||| Derives a `Generic` implementation for the given data type
 ||| and visibility.
 export
-GenericVis : Visibility -> DeriveUtil -> InterfaceImpl
-GenericVis vis g =
-  let names    = zipWithIndex (map conNames g.typeInfo.cons)
-      len      = cast {to = Int} $ length names
-      genType  = `(Generic) .$ g.appliedType .$ mkCode g.typeInfo
-      funType  = piAllImplicit  genType g.paramNames
-      x        = lambdaArg "x"
-      varX     = var "x"
+GenericVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
+GenericVis vis _ p =
+  let names    = zipWithIndex (map conNames p.cons)
+      fun      = UN . Basic $ "implGeneric" ++ camelCase p.info.name
 
+      appType  = p.applied
+      genType  = `(Generic) .$ appType .$ mkCode p
+      funType  = piAll genType p.implicits
+
+      x        = lambdaArg {a = Name} "x"
+      varX     = var "x"
       from     = x .=> iCase varX implicitFalse (map fromClause names)
-      to       = x .=> iCase varX implicitFalse (map toClause names ++ [impossibleToClause len])
+      to       = x .=> iCase varX implicitFalse (map toClause names)
       fromToId = x .=> iCase varX implicitFalse (map fromToIdClause names)
-      toFromId = x .=> iCase varX implicitFalse (map toFromIdClause names ++ [impossibleToClause len])
+      toFromId = x .=> iCase varX implicitFalse (map toFromIdClause names)
 
       impl     = appAll mkGeneric [from,to,fromToId,toFromId]
 
-   in MkInterfaceImpl "Generic" vis [] impl funType
+   in Right [ TL (interfaceHint vis fun funType) (def fun [var fun .= impl])]
 
 ||| Alias for `GenericVis Public`.
 export
-Generic : DeriveUtil -> InterfaceImpl
+Generic : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Generic = GenericVis Public
 
 --------------------------------------------------------------------------------
@@ -117,155 +125,114 @@ str = primVal . Str
 
 -- an int constant
 private
-int : Int -> TTImp
-int = primVal . I
+int : Nat -> TTImp
+int n = `(fromInteger ~(primVal $ BI (cast n)))
 
 -- applies a name's namespace (List String) and name value
 -- to a function (`con`) wrapped in a `TTImp`.
 private
 appNSName : Name -> (con : TTImp) -> TTImp
-appNSName (NS (MkNS ss) (UN $ Basic s)) con = let ss' = listOf $ reverse $ map str ss
-                                              in con .$ ss' .$ str s
-appNSName n con                             = let s = str $ nameStr n
-                                               in `(~(con) []) .$ s
+appNSName (NS (MkNS ss) (UN $ Basic s)) con =
+  let ss' = listOf $ reverse $ map str ss
+   in con .$ ss' .$ str s
+appNSName n con                             =
+  let s = str $ nameStr n
+   in `(~(con) []) .$ s
 
 -- creates an ArgName's TTImp from an argument's index and name
 private
-argNameTTImp : (Int,Name) -> TTImp
-argNameTTImp (k, UN $ Basic n) = `(NamedArg)   .$ int k .$ str n
-argNameTTImp (k, _)            = `(UnnamedArg) .$ int k
+argNameTTImp : (Nat,Maybe Name) -> TTImp
+argNameTTImp (k, Just $ UN $ Basic n) = `(NamedArg)   .$ int k .$ str n
+argNameTTImp (k, _)                   = `(UnnamedArg) .$ int k
 
 -- creates a ConInfo's TTImp from a `ParamCon`.
 private
-conTTImp : ParamCon -> TTImp
-conTTImp (MkParamCon n args) =
-  let np = listOf $ map argNameTTImp (zipWithIndex $ map name args)
-   in appNSName n `(MkConInfo) .$ np
+conTTImp : ParamCon n -> TTImp
+conTTImp c =
+  let np = listOf $ map argNameTTImp (names 0 c.args)
+   in appNSName c.name `(MkConInfo) .$ np
+  where names : (k : Nat) -> Vect m (ConArg n) -> List (Nat, Maybe Name)
+        names k []                             = []
+        names k (CArg n _ ExplicitArg t :: as) = (k,n) :: names (S k) as
+        names k (_ :: as)                      = names k as
 
 private
 tiTTImp : ParamTypeInfo -> TTImp
-tiTTImp (MkParamTypeInfo n _ cons) =
-  let nps     = map conTTImp cons
-   in appNSName n `(MkTypeInfo) .$ listOf nps
+tiTTImp p =
+  let nps     = map conTTImp p.cons
+   in appNSName p.info.name `(MkTypeInfo) .$ listOf nps
 
 ||| Derives a `Meta` implementation for the given data type
 ||| and visibility.
 export
-MetaVis : Visibility -> DeriveUtil -> InterfaceImpl
-MetaVis vis g =
-  let genType  = `(Meta) .$ g.appliedType .$ mkCode g.typeInfo
-      funType  = piAllImplicit  genType g.paramNames
+MetaVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
+MetaVis vis _ p =
+  let genType  = `(Meta) .$ p.applied .$ mkCode p
+      funType  = piAll genType p.implicits
+      fun      = UN . Basic $ "implMeta" ++ camelCase p.info.name
 
-      impl     = `(MkMeta) .$ tiTTImp g.typeInfo
+      impl     = `(MkMeta) .$ tiTTImp p
 
-   in MkInterfaceImpl "Meta" vis [] impl funType
+   in Right [ TL (interfaceHint vis fun funType) (def fun [var fun .= impl])]
 
 ||| Alias for `EqVis Public`.
 export
-Meta : DeriveUtil -> InterfaceImpl
+Meta : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Meta = MetaVis Public
 
 --------------------------------------------------------------------------------
 --          Eq
 --------------------------------------------------------------------------------
 
-||| Derives an `Eq` implementation for the given data type
-||| and visibility.
-export
-EqVis : Visibility -> DeriveUtil -> InterfaceImpl
-EqVis vis g = MkInterfaceImpl "Eq" vis []
-                `(mkEq genEq)
-                (implementationType `(Eq) g)
-
-||| Alias for `EqVis Public`.
-export
-Eq : DeriveUtil -> InterfaceImpl
-Eq = EqVis Public
+||| Derives `Eq` for the given data type.
+|||
+||| @deprecated : This is deprecated. Use `Derive.Eq.Eq` from elab-util.
+export %deprecate
+Eq : List Name -> ParamTypeInfo -> Res (List TopLevel)
+Eq _ p =
+  let nm := implName p "Eq"
+      cl := var nm .= `(mkEq genEq)
+   in Right [TL (interfaceHint Public nm (implType "Eq" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
 --          Ord
 --------------------------------------------------------------------------------
 
-||| Derives an `Ord` implementation for the given data type
-||| and visibility.
-export
-OrdVis : Visibility -> DeriveUtil -> InterfaceImpl
-OrdVis vis g = MkInterfaceImpl "Ord" vis []
-                 `(mkOrd genCompare)
-                 (implementationType `(Ord) g)
-
-||| Alias for `OrdVis Public`
-export
-Ord : DeriveUtil -> InterfaceImpl
-Ord = OrdVis Public
+||| Derives `Ord` for the given data type.
+|||
+||| @deprecated : This is deprecated. Use `Derive.Ord.Ord` from elab-util.
+export %deprecate
+Ord : List Name -> ParamTypeInfo -> Res (List TopLevel)
+Ord _ p =
+  let nm := implName p "Ord"
+      cl := var nm .= `(mkOrd genCompare)
+   in Right [TL (interfaceHint Public nm (implType "Ord" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
 --          DecEq
 --------------------------------------------------------------------------------
 
-||| Derives a `DecEq` implementation for the given data type
-||| and visibility.
+||| Derives `DecEq` for the given data type.
 export
-DecEqVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecEqVis vis g = MkInterfaceImpl "DecEq" vis []
-                   `(mkDecEq genDecEq)
-                   (implementationType `(DecEq) g)
-
-||| Alias for `EqVis Public`.
-export
-DecEq : DeriveUtil -> InterfaceImpl
-DecEq = DecEqVis Public
-
---------------------------------------------------------------------------------
---          Semigroup
---------------------------------------------------------------------------------
-
-||| Derives a `Semigroup` implementation for the given data type
-||| and visibility.
-export
-SemigroupVis : Visibility -> DeriveUtil -> InterfaceImpl
-SemigroupVis vis g = MkInterfaceImpl "Semigroup" vis []
-                       `(MkSemigroup genAppend)
-                       (implementationType `(Semigroup) g)
-
-||| Alias for `SemigroupVis Public`.
-export
-Semigroup : DeriveUtil -> InterfaceImpl
-Semigroup = SemigroupVis Public
-
---------------------------------------------------------------------------------
---          Monoid
---------------------------------------------------------------------------------
-
-||| Derives a `Monoid` implementation for the given data type
-||| and visibility.
-export
-MonoidVis : Visibility -> DeriveUtil -> InterfaceImpl
-MonoidVis vis g = MkInterfaceImpl "Monoid" vis []
-                       `(MkMonoid genNeutral)
-                       (implementationType `(Monoid) g)
-
-||| Alias for `MonoidVis Public`.
-export
-Monoid : DeriveUtil -> InterfaceImpl
-Monoid = MonoidVis Public
+DecEq : List Name -> ParamTypeInfo -> Res (List TopLevel)
+DecEq _ p =
+  let nm := implName p "DecEq"
+      cl := var nm .= `(mkDecEq genDecEq)
+   in Right [TL (interfaceHint Public nm (implType "DecEq" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
 --          Show
 --------------------------------------------------------------------------------
 
-||| Derives a `Show` implementation for the given data type
-||| and visibility.
-export
-ShowVis : Visibility -> DeriveUtil -> InterfaceImpl
-ShowVis vis g = MkInterfaceImpl "Show" vis []
-                  `(mkShowPrec genShowPrec)
-                  (implementationType `(Show) g)
-
-||| Alias for `ShowVis Public`.
-export
-Show : DeriveUtil -> InterfaceImpl
-Show = ShowVis Public
+||| Derives `Show` for the given data type.
+|||
+||| @deprecated : This is deprecated. Use `Derive.Show.Show` from elab-util.
+export %deprecate
+Show : List Name -> ParamTypeInfo -> Res (List TopLevel)
+Show _ p =
+  let nm := implName p "Show"
+      cl := var nm .= `(mkShowPrec genShowPrec)
+   in Right [TL (interfaceHint Public nm (implType "Show" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
 --          Prelude and Data Implementations
@@ -276,6 +243,7 @@ Show = ShowVis Public
 %runElab derive "Nat" [Generic,Meta]
 
 %runElab derive "Maybe" [Generic,Meta]
+
 
 %runElab derive "Either" [Generic,Meta]
 
@@ -293,72 +261,14 @@ Show = ShowVis Public
 
 -- System
 
-%runElab derive "System.File.Mode.Mode" [Generic,Meta,Show,Eq,Ord]
+%runElab derive "System.File.Mode.Mode" [Generic,Meta]
 
-%runElab derive "FileError" [Generic,Meta,Eq,Ord]
+%runElab derive "FileError" [Generic,Meta]
 
 %runElab derive "File" [Generic,Meta]
 
-%runElab derive "FileMode" [Generic,Meta,Show,Eq,Ord]
+%runElab derive "FileMode" [Generic,Meta]
 
-%runElab derive "Permissions" [Generic,Meta,Show,Eq,Ord]
+%runElab derive "Permissions" [Generic,Meta]
 
-%runElab derive "ClockType" [Generic,Meta,Eq,Ord]
-
--- Reflection
-
-%runElab derive "ModuleIdent" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "VirtualIdent" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "OriginDesc" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "FC" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "NameType" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "PrimType" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "Constant" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "Namespace" [Generic,Meta,Eq,Ord]
-
-%runElab derive "UserName" [Generic,Meta,Eq,Ord]
-
-%runElab derive "Count" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "PiInfo" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "LazyReason" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "TotalReq" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "Visibility" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "BindMode" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "UseSide" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "DotReason" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "WithFlag" [Generic,Meta,Show,Eq,Ord]
-
-%runElab derive "BuiltinType" [Generic,Meta,Show,Eq,Ord]
-
-%default covering
-
-%runElab derive "Name" [Generic,Meta,Eq,Ord]
-
-%runElab derive "DataOpt" [Generic,Meta,Show,Eq,Ord]
-
-%runElab deriveMutual [ ("TTImp",        [Generic,Meta,Show,Eq])
-                      , ("IField",       [Generic,Meta,Show,Eq])
-                      , ("IFieldUpdate", [Generic,Meta,Show,Eq])
-                      , ("AltType",      [Generic,Meta,Show,Eq])
-                      , ("FnOpt",        [Generic,Meta,Show,Eq])
-                      , ("ITy",          [Generic,Meta,Show,Eq])
-                      , ("Data",         [Generic,Meta,Show,Eq])
-                      , ("Record",       [Generic,Meta,Show,Eq])
-                      , ("Clause",       [Generic,Meta,Show,Eq])
-                      , ("Decl",         [Generic,Meta,Show,Eq])
-                      ]
+%runElab derive "ClockType" [Generic,Meta]

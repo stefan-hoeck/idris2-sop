@@ -48,7 +48,7 @@ data Monster : Type where
   Demon    : (hp : Int) -> (sp : Int) -> (spells : List Spell) -> Monster
   Skeleton : (hp : Int) -> (armor : Int) -> Monster
 
-%runElab derive "Docs.Metadata.Monster" [Generic, Meta, Eq, Ord, DecEq, Show]
+%runElab derive "Docs.Metadata.Monster" [Generic, Meta, Eq, Ord, Show]
 ```
 
 ## An `Encoder` for Sum Types
@@ -81,14 +81,11 @@ ones used in the last post, but they call a different version
 of `genEncode`, therefore we have to include them here:
 
 ```idris
-
-EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
-EncodeVis vis g = MkInterfaceImpl "Encode" vis []
-                       `(MkEncode genEncode)
-                       (implementationType `(Encode) g)
-
-Encode' : DeriveUtil -> InterfaceImpl
-Encode' = EncodeVis Public
+Encode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
+Encode' _ p =
+  let nm := implName p "Encode"
+      cl := var nm .= `(MkEncode genEncode)
+   in Right [TL (interfaceHint Public nm (implType "Encode" p)) (def nm [cl])]
 ```
 
 ## Decoding Sum Types: A Use Case for `injections`
@@ -128,13 +125,11 @@ ones used in the last post:
 
 
 ```idris
-DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecodeVis vis g = MkInterfaceImpl "Decode" vis []
-                       `(MkDecode genDecode)
-                       (implementationType `(Decode) g)
-
-Decode' : DeriveUtil -> InterfaceImpl
-Decode' = DecodeVis Public
+Decode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
+Decode' _ p =
+  let nm := implName p "Decode"
+      cl := var nm .= `(MkDecode genDecode)
+   in Right [TL (interfaceHint Public nm (implType "Decode" p)) (def nm [cl])]
 ```
 
 We can now derive encoders and decoders for `Monster`s and

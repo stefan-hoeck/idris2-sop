@@ -42,7 +42,7 @@ straight forward (make sure to import `Generics.Derive`
 and enable `%language ElabReflection`):
 
 ```idris
-%runElab derive "Spell" [Generic, Eq, Ord, DecEq]
+%runElab derive "Spell" [Generic, Eq, Ord]
 ```
 
 We can quickly write down some tests:
@@ -68,7 +68,7 @@ record Dragon where
   spells     : List Spell
   treasure   : List String
 
-%runElab derive "Dragon" [Generic, Eq, Ord, DecEq]
+%runElab derive "Dragon" [Generic, Eq, Ord]
 ```
 
 Parameterized types:
@@ -81,7 +81,7 @@ record BarbieDragon (treasureTpe : Type) (f : Type -> Type) where
   spellsBD     : f $ List Spell
   treasureBD   : f $ List treasureTpe
 
-%runElab derive "BarbieDragon" [Generic, Eq, Ord, DecEq]
+%runElab derive "BarbieDragon" [Generic, Eq, Ord]
 ```
 
 Recursive types:
@@ -94,27 +94,7 @@ record Hero where
   equipment : List String
   allies    : List Hero
 
-%runElab derive "Hero" [Generic, Eq, Ord, DecEq]
-```
-
-Some implementations like the ones for `Semigroup` or `Monoid` can
-only be derived for product types:
-
-```idris
-record Employees where
-  constructor MkEmployees
-  names     : List String
-  addresses : List String
-  salaries  : List Double
-
-%runElab derive "Employees" [Generic, Eq, Ord, Semigroup, Monoid]
-
-tableTest : MkEmployees [] [] [] = neutral {ty = Employees}
-tableTest = Refl
-
-tableTest2 : MkEmployees ["a"] [] [1] <+> MkEmployees ["a"] ["b"] [2,3] =
-             MkEmployees ["a","a"] ["b"] [1,2,3]
-tableTest2 = Refl
+%runElab derive "Hero" [Generic, Eq, Ord]
 ```
 
 ## Sum Types
@@ -128,7 +108,7 @@ data Monster : Type where
   Demon    : (hp : Int) -> (sp : Int) -> (spells : List Spell) -> Monster
   Skeleton : (hp : Int) -> (armor : Int) -> Monster
 
-%runElab derive "Monster" [Generic, Eq, Ord, DecEq]
+%runElab derive "Monster" [Generic, Eq, Ord]
 ```
 
 Likewise, parameterized and inductive types are supported
@@ -140,7 +120,7 @@ data Treasure : Type where
   Jewels : (types : List (Nat,String)) -> Treasure
   Chest  : (content : List Treasure) -> Treasure
 
-%runElab derive "Treasure" [Generic, Eq, Ord, DecEq]
+%runElab derive "Treasure" [Generic, Eq, Ord]
 ```
 
 ## Deriving Implementations for your own Interfaces
@@ -338,14 +318,11 @@ we have to write a minimal amount of reflection code:
 ```idris
 ||| Derives an `Encode` implementation for the given data type
 ||| and visibility.
-EncodeVis : Visibility -> DeriveUtil -> InterfaceImpl
-EncodeVis vis g = MkInterfaceImpl "Encode" vis []
-                       `(MkEncode genEncode)
-                       (implementationType `(Encode) g)
-
-||| Alias for `EncodeVis Public`.
-Encode' : DeriveUtil -> InterfaceImpl
-Encode' = EncodeVis Public
+Encode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
+Encode' _ p =
+  let nm := implName p "Encode"
+      cl := var nm .= `(MkEncode genEncode)
+   in Right [TL (interfaceHint Public nm (implType "Encode" p)) (def nm [cl])]
 ```
 
 Let's encode us some dragons:
@@ -438,14 +415,11 @@ Finally, the necessary reflection code:
 ```idris
 ||| Derives a `Decode` implementation for the given data type
 ||| and visibility.
-DecodeVis : Visibility -> DeriveUtil -> InterfaceImpl
-DecodeVis vis g = MkInterfaceImpl "Decode" vis []
-                       `(MkDecode genDecode)
-                       (implementationType `(Decode) g)
-
-||| Alias for `DecodeVis Public`.
-Decode' : DeriveUtil -> InterfaceImpl
-Decode' = DecodeVis Public
+Decode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
+Decode' _ p =
+  let nm := implName p "Decode"
+      cl := var nm .= `(MkDecode genDecode)
+   in Right [TL (interfaceHint Public nm (implType "Decode" p)) (def nm [cl])]
 ```
 
 Let's decode us some dragons:

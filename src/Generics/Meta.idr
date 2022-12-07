@@ -20,10 +20,10 @@ public export
 data ArgName : Type where
 
   ||| Name and index of a named argument
-  NamedArg   : (index : Int) -> (name : String) -> ArgName
+  NamedArg   : (index : Nat) -> (name : String) -> ArgName
 
   ||| Index of an unnamed argument
-  UnnamedArg : (index : Int) -> ArgName
+  UnnamedArg : (index : Nat) -> ArgName
 
 ||| Tries to extract an argument's name.
 public export
