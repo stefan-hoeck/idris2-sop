@@ -84,7 +84,7 @@ of `genEncode`, therefore we have to include them here:
 Encode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Encode' _ p =
   let nm := implName p "Encode"
-      cl := var nm .= `(MkEncode genEncode)
+      cl := patClause (var nm) `(MkEncode genEncode)
    in Right [TL (interfaceHint Public nm (implType "Encode" p)) (def nm [cl])]
 ```
 
@@ -128,7 +128,7 @@ ones used in the last post:
 Decode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Decode' _ p =
   let nm := implName p "Decode"
-      cl := var nm .= `(MkDecode genDecode)
+      cl := patClause (var nm) `(MkDecode genDecode)
    in Right [TL (interfaceHint Public nm (implType "Decode" p)) (def nm [cl])]
 ```
 
@@ -168,3 +168,6 @@ about deriving interface implementations. Still, there are other
 possibilities and techniques of this library to explore, for
 instance the ability to provide automatically
 generated lenses.
+
+<!-- vi: filetype=idris2:syntax=markdown
+-->

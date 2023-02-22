@@ -5,7 +5,7 @@ import public Generics.SOP
 import public Generics.Meta
 import public Decidable.Equality
 
-import public Language.Reflection.Derive
+import public Language.Reflection.Util
 
 import System.Clock
 import System.File
@@ -32,10 +32,10 @@ mkGeneric = "MkGeneric"
 -- constructor.
 private
 mkSOP' : (k : Nat) -> (arg : TTImp) -> TTImp
-mkSOP' k arg = `(MkSOP) .$ run k
+mkSOP' k arg = `(MkSOP ~(run k))
 where run : (n : Nat) -> TTImp
-      run 0     = `(Z) .$ arg
-      run (S n) = `(S) .$ run n
+      run 0     = `(Z ~(arg))
+      run (S n) = `(S ~(run n))
 
 private
 mkSOP : (k : Nat) -> (args : List TTImp) -> TTImp
@@ -54,15 +54,16 @@ mkCode p = listOf $ map (\c => listOf $ explicits c.args) p.cons
 
 private
 fromClause : (Nat,ConNames) -> Clause
-fromClause (k,(con,ns,vars)) = bindAll con ns .= mkSOP k vars
+fromClause (k,(con,ns,vars)) = patClause (bindAll con ns) (mkSOP k vars)
 
 private
 fromToIdClause : (Nat,ConNames) -> Clause
-fromToIdClause (k,(con,ns,vars)) = bindAll con ns .= `(Refl)
+fromToIdClause (k,(con,ns,vars)) = patClause (bindAll con ns) `(Refl)
 
 private
 toClause : (Nat,ConNames) -> Clause
-toClause (k,(con,ns,vars)) = mkSOP k (map bindVar ns) .= appAll con vars
+toClause (k,(con,ns,vars)) =
+  patClause (mkSOP k $ map bindVar ns) (appAll con vars)
 
 private
 impossibleToClause : Nat -> Clause
@@ -70,7 +71,7 @@ impossibleToClause k = impossibleClause (mkSOP' k implicitTrue)
 
 private
 toFromIdClause : (Nat,ConNames) -> Clause
-toFromIdClause (k,(con,ns,vars)) = mkSOP k (map bindVar ns) .= `(Refl)
+toFromIdClause (k,(con,ns,vars)) = patClause (mkSOP k $ map bindVar ns) `(Refl)
 
 private
 zipWithIndex : List a -> List (Nat,a)
@@ -95,7 +96,7 @@ GenericVis vis _ p =
       fun      = UN . Basic $ "implGeneric" ++ camelCase p.info.name
 
       appType  = p.applied
-      genType  = `(Generic) .$ appType .$ mkCode p
+      genType  = `(Generic ~(appType) ~(mkCode p))
       funType  = piAll genType p.implicits
 
       x        = lambdaArg {a = Name} "x"
@@ -107,7 +108,8 @@ GenericVis vis _ p =
 
       impl     = appAll mkGeneric [from,to,fromToId,toFromId]
 
-   in Right [ TL (interfaceHint vis fun funType) (def fun [var fun .= impl])]
+   in Right
+       [ TL (interfaceHint vis fun funType) (def fun [patClause (var fun) impl])]
 
 ||| Alias for `GenericVis Public`.
 export
@@ -131,26 +133,26 @@ int n = `(fromInteger ~(primVal $ BI (cast n)))
 -- applies a name's namespace (List String) and name value
 -- to a function (`con`) wrapped in a `TTImp`.
 private
-appNSName : Name -> (con : TTImp) -> TTImp
-appNSName (NS (MkNS ss) (UN $ Basic s)) con =
+appNSName : Name -> (con,np : TTImp) -> TTImp
+appNSName (NS (MkNS ss) (UN $ Basic s)) con np =
   let ss' = listOf $ reverse $ map str ss
-   in con .$ ss' .$ str s
-appNSName n con                             =
+   in `(~(con) ~(ss') ~(str s) ~(np))
+appNSName n con np                          =
   let s = str $ nameStr n
-   in `(~(con) []) .$ s
+   in `(~(con) [] ~(s) ~(np))
 
 -- creates an ArgName's TTImp from an argument's index and name
 private
 argNameTTImp : (Nat,Maybe Name) -> TTImp
-argNameTTImp (k, Just $ UN $ Basic n) = `(NamedArg)   .$ int k .$ str n
-argNameTTImp (k, _)                   = `(UnnamedArg) .$ int k
+argNameTTImp (k, Just $ UN $ Basic n) = `(NamedArg ~(int k) ~(str n))
+argNameTTImp (k, _)                   = `(UnnamedArg ~(int k))
 
 -- creates a ConInfo's TTImp from a `ParamCon`.
 private
 conTTImp : ParamCon n -> TTImp
 conTTImp c =
   let np = listOf $ map argNameTTImp (names 0 c.args)
-   in appNSName c.name `(MkConInfo) .$ np
+   in appNSName c.name `(MkConInfo) np
   where names : (k : Nat) -> Vect m (ConArg n) -> List (Nat, Maybe Name)
         names k []                             = []
         names k (CArg n _ ExplicitArg t :: as) = (k,n) :: names (S k) as
@@ -160,20 +162,21 @@ private
 tiTTImp : ParamTypeInfo -> TTImp
 tiTTImp p =
   let nps     = map conTTImp p.cons
-   in appNSName p.info.name `(MkTypeInfo) .$ listOf nps
+   in appNSName p.info.name `(MkTypeInfo) (listOf nps)
 
 ||| Derives a `Meta` implementation for the given data type
 ||| and visibility.
 export
 MetaVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
 MetaVis vis _ p =
-  let genType  = `(Meta) .$ p.applied .$ mkCode p
+  let genType  = `(Meta ~(p.applied) ~(mkCode p))
       funType  = piAll genType p.implicits
       fun      = UN . Basic $ "implMeta" ++ camelCase p.info.name
 
-      impl     = `(MkMeta) .$ tiTTImp p
+      impl     = `(MkMeta ~(tiTTImp p))
 
-   in Right [ TL (interfaceHint vis fun funType) (def fun [var fun .= impl])]
+   in Right
+       [TL (interfaceHint vis fun funType) (def fun [patClause (var fun) impl])]
 
 ||| Alias for `EqVis Public`.
 export
@@ -191,7 +194,7 @@ export %deprecate
 Eq : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Eq _ p =
   let nm := implName p "Eq"
-      cl := var nm .= `(mkEq genEq)
+      cl := patClause (var nm) `(mkEq genEq)
    in Right [TL (interfaceHint Public nm (implType "Eq" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
@@ -205,7 +208,7 @@ export %deprecate
 Ord : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Ord _ p =
   let nm := implName p "Ord"
-      cl := var nm .= `(mkOrd genCompare)
+      cl := patClause (var nm) `(mkOrd genCompare)
    in Right [TL (interfaceHint Public nm (implType "Ord" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
@@ -217,7 +220,7 @@ export
 DecEq : List Name -> ParamTypeInfo -> Res (List TopLevel)
 DecEq _ p =
   let nm := implName p "DecEq"
-      cl := var nm .= `(mkDecEq genDecEq)
+      cl := patClause (var nm) `(mkDecEq genDecEq)
    in Right [TL (interfaceHint Public nm (implType "DecEq" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------
@@ -231,7 +234,7 @@ export %deprecate
 Show : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Show _ p =
   let nm := implName p "Show"
-      cl := var nm .= `(mkShowPrec genShowPrec)
+      cl := patClause (var nm) `(mkShowPrec genShowPrec)
    in Right [TL (interfaceHint Public nm (implType "Show" p)) (def nm [cl])]
 
 --------------------------------------------------------------------------------

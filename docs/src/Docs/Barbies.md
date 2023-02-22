@@ -276,3 +276,6 @@ we need.
 usability of which we have only started to appreciate in this
 post. In the [next post](Deriving.md), I'll have a look at automatically
 deriving interface implementations using `Generic`.
+
+<!-- vi: filetype=idris2:syntax=markdown
+-->
