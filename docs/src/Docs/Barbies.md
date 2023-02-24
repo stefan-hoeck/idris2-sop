@@ -41,7 +41,7 @@ While this is certainly a valid representation for a user data type,
 it comes with several drawbacks. Could we, for instance, use the same
 data type to create a new user from our web application? We could, but
 the web application would have to provide a dummy value for the user's
-id, certainly a value the server application should be responsible
+ID, certainly a value the server application should be responsible
 to generate. We'd also rather not send back the password to
 people querying the database through the web application.
 
@@ -276,3 +276,6 @@ we need.
 usability of which we have only started to appreciate in this
 post. In the [next post](Deriving.md), I'll have a look at automatically
 deriving interface implementations using `Generic`.
+
+<!-- vi: filetype=idris2:syntax=markdown
+-->

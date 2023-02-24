@@ -321,7 +321,7 @@ we have to write a minimal amount of reflection code:
 Encode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Encode' _ p =
   let nm := implName p "Encode"
-      cl := var nm .= `(MkEncode genEncode)
+      cl := patClause (var nm) `(MkEncode genEncode)
    in Right [TL (interfaceHint Public nm (implType "Encode" p)) (def nm [cl])]
 ```
 
@@ -418,7 +418,7 @@ Finally, the necessary reflection code:
 Decode' : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Decode' _ p =
   let nm := implName p "Decode"
-      cl := var nm .= `(MkDecode genDecode)
+      cl := patClause (var nm) `(MkDecode genDecode)
    in Right [TL (interfaceHint Public nm (implType "Decode" p)) (def nm [cl])]
 ```
 
@@ -464,3 +464,6 @@ In the [next part](Metadata.md), we are going to enhance our
 encoders and decoders to properly support sum types. For this,
 we will need access to a data type's metadata like
 constructor and argument names.
+
+<!-- vi: filetype=idris2:syntax=markdown
+-->
