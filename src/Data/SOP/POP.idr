@@ -84,12 +84,12 @@ collapsePOP = collapseNP . mapNP (\v => collapseNP v) . unPOP
 ||| This is needed to implement `Ord` below.
 public export %hint
 ordToEqPOP :  POP (Ord . f) kss -> POP (Eq . f) kss
-ordToEqPOP = mapPOP (\_ => materialize Eq)
+ordToEqPOP = mapPOP (\_ => %search)
 
 ||| This is needed to implement `Monoid` below.
 public export %hint
 monoidToSemigroupPOP : POP (Monoid . f) kss -> POP (Semigroup . f) kss
-monoidToSemigroupPOP = mapPOP (\_ => materialize Semigroup)
+monoidToSemigroupPOP = mapPOP (\_ => %search)
 
 ||| Converts a POP of constraints to an n-ary sum
 ||| holding constrains about the inner n-ary sum.
@@ -101,9 +101,10 @@ monoidToSemigroupPOP = mapPOP (\_ => materialize Semigroup)
 ||| This allows us to for instance implent `Eq (POP f kss) ` below
 ||| via a direct call to (==) specialized to Eq (NP (NP f) kss).
 public export %hint
-popToNP :  POP_ k (c . f) kss
-        -> {auto prf : forall ks . NP_ k (c . f) ks => c (NP_ k f ks)}
-        -> NP_ (List k) (c . NP_ k f) kss
+popToNP :
+     POP_ k (c . f) kss
+  -> {auto prf : forall ks . NP_ k (c . f) ks => c (NP_ k f ks)}
+  -> NP_ (List k) (c . NP_ k f) kss
 popToNP (MkPOP nps) = hmap (\_ => prf) nps
 
 --------------------------------------------------------------------------------

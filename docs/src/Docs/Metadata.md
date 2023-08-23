@@ -71,9 +71,11 @@ we can use `hcliftA2` followed by `hconcat`:
 ```idris
 genEncode : Meta t code => (all : POP Encode code) => t -> List String
 genEncode {all = MkPOP _} = encodeSOP (metaFor t) . from
-  where encodeSOP : TypeInfo code -> SOP I code -> List String
-        encodeSOP (MkTypeInfo _ _ cons) =
-          hconcat . hcliftA2 (Encode . NP I) encodeCon cons . unSOP
+
+  where
+    encodeSOP : TypeInfo code -> SOP I code -> List String
+    encodeSOP (MkTypeInfo _ _ cons) =
+      hconcat . hcliftA2 (Encode . NP I) encodeCon cons . unSOP
 ```
 
 The functions to be used in `derive` are verbatim copies of the
@@ -99,8 +101,11 @@ we somehow need to convert the decoded n-ary sum to a `SOP`
 value by applying the correct sequence of `S` and `Z` constructors:
 
 ```idris
-decodeCon :  forall ks . Decode (NP f ks)
-          => ConInfo ks -> (toSOP : NP f ks -> SOP f kss) -> Parser (SOP f kss)
+decodeCon :
+     {auto _ : Decode (NP f ks)}
+  -> ConInfo ks
+  -> (toSOP : NP f ks -> SOP f kss)
+  -> Parser (SOP f kss)
 decodeCon ci toSOP = string ci.conName *> map toSOP decode
 ```
 
@@ -115,9 +120,11 @@ the `Alternative` instance of `Parser`:
 -- Generic decoding function
 genDecode : {code : _} -> Meta t code => (all : POP Decode code) => Parser t
 genDecode {all = MkPOP _} = to <$> decodeSOP (metaFor t)
-  where decodeSOP : TypeInfo code -> Parser (SOP I code)
-        decodeSOP (MkTypeInfo _ _ cons) =
-          hchoice $ hcliftA2 (Decode . NP I) decodeCon cons injectionsSOP
+
+  where
+    decodeSOP : TypeInfo code -> Parser (SOP I code)
+    decodeSOP (MkTypeInfo _ _ cons) =
+      hchoice $ hcliftA2 (Decode . NP I) decodeCon cons injectionsSOP
 ```
 
 Again, the functions to be used in `derive` are verbatim copies of the
@@ -142,10 +149,12 @@ test them at the REPL:
 
 export
 demon : Monster
-demon = Demon { hp = 530
-              , sp = 120
-              , spells = [MkSpell 40 "Disintegrate", MkSpell 10 "Utterdark"]
-              }
+demon =
+  Demon
+    { hp = 530
+    , sp = 120
+    , spells = [MkSpell 40 "Disintegrate", MkSpell 10 "Utterdark"]
+    }
 
 export
 encDemon : List String

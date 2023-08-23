@@ -126,25 +126,30 @@ showC _ info []   = info.conName
 -- This uses `showCon` from the Prelude to wrap an applied
 -- constructor in parentheses depending on `p`.
 showC p info args =
-  let con = wrapOperator info.conName
+  let con := wrapOperator info.conName
    in maybe (showOther con) (showRecord con) (argNames info)
 
-  where showNamed : Show a => String -> a -> String
-        showNamed name v = name ++ " = " ++ show v
+  where
+    showNamed : Show a => String -> a -> String
+    showNamed name v = name ++ " = " ++ show v
 
-        showRecord : (con : String) -> NP (K String) ks -> String
-        showRecord con names =
-          let applied = hcliftA2 (Show . f) showNamed names args
-              inner   = intersperse ", " (collapseNP applied)
-           in showCon p con (" { " ++ concat inner ++ " }")
+    showRecord : (con : String) -> NP (K String) ks -> String
+    showRecord con names =
+      let applied := hcliftA2 (Show . f) showNamed names args
+          inner   := intersperse ", " (collapseNP applied)
+       in showCon p con (" { " ++ concat inner ++ " }")
 
-        showOther : (con : String) -> String
-        showOther con =
-          let argStr = hconcat $ hcmap (Show . f) showArg args
-           in showCon p con argStr
+    showOther : (con : String) -> String
+    showOther con =
+      let argStr := hconcat $ hcmap (Show . f) showArg args
+       in showCon p con argStr
 
-showSOP :  (all : POP (Show . f) kss)
-        => Prec -> TypeInfo kss -> SOP f kss -> String
+showSOP :
+     {auto all : POP (Show . f) kss}
+  -> Prec
+  -> TypeInfo kss
+  -> SOP f kss
+  -> String
 showSOP {all = MkPOP _} p (MkTypeInfo _ _ cons) =
   hconcat . hcliftA2 (NP $ Show . f) (showC p) cons . unSOP
 

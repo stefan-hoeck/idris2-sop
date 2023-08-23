@@ -33,9 +33,11 @@ mkGeneric = "MkGeneric"
 private
 mkSOP' : (k : Nat) -> (arg : TTImp) -> TTImp
 mkSOP' k arg = `(MkSOP ~(run k))
-where run : (n : Nat) -> TTImp
-      run 0     = `(Z ~(arg))
-      run (S n) = `(S ~(run n))
+
+  where
+    run : (n : Nat) -> TTImp
+    run 0     = `(Z ~(arg))
+    run (S n) = `(S ~(run n))
 
 private
 mkSOP : (k : Nat) -> (args : List TTImp) -> TTImp
@@ -46,11 +48,13 @@ mkSOP k args = mkSOP' k (listOf args)
 export
 mkCode : (p : ParamTypeInfo) -> TTImp
 mkCode p = listOf $ map (\c => listOf $ explicits c.args) p.cons
-  where explicits : Vect n (ConArg p.numParams) -> List TTImp
-        explicits [] = []
-        explicits (CArg _ _ ExplicitArg t :: as) =
-          ttimp p.paramNames t :: explicits as
-        explicits (_ :: as) = explicits as
+
+  where
+    explicits : Vect n (ConArg p.numParams) -> List TTImp
+    explicits [] = []
+    explicits (CArg _ _ ExplicitArg t :: as) =
+      ttimp p.paramNames t :: explicits as
+    explicits (_ :: as) = explicits as
 
 private
 fromClause : (Nat,ConNames) -> Clause
@@ -76,9 +80,11 @@ toFromIdClause (k,(con,ns,vars)) = patClause (mkSOP k $ map bindVar ns) `(Refl)
 private
 zipWithIndex : List a -> List (Nat,a)
 zipWithIndex as = run 0 as
-  where run : Nat -> List a -> List (Nat,a)
-        run _ []     = []
-        run k (h::t) = (k,h) :: run (S k) t
+
+  where
+    run : Nat -> List a -> List (Nat,a)
+    run _ []     = []
+    run k (h::t) = (k,h) :: run (S k) t
 
 private
 conNames : ParamCon n -> ConNames
@@ -92,21 +98,21 @@ conNames c =
 export
 GenericVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
 GenericVis vis _ p =
-  let names    = zipWithIndex (map conNames p.cons)
-      fun      = UN . Basic $ "implGeneric" ++ camelCase p.info.name
+  let names    := zipWithIndex (map conNames p.cons)
+      fun      := UN . Basic $ "implGeneric" ++ camelCase p.info.name
 
-      appType  = p.applied
-      genType  = `(Generic ~(appType) ~(mkCode p))
-      funType  = piAll genType p.implicits
+      appType  := p.applied
+      genType  := `(Generic ~(appType) ~(mkCode p))
+      funType  := piAll genType p.implicits
 
-      x        = lambdaArg {a = Name} "x"
-      varX     = var "x"
-      from     = lam x $ iCase varX implicitFalse (map fromClause names)
-      to       = lam x $ iCase varX implicitFalse (map toClause names)
-      fromToId = lam x $ iCase varX implicitFalse (map fromToIdClause names)
-      toFromId = lam x $ iCase varX implicitFalse (map toFromIdClause names)
+      x        := lambdaArg {a = Name} "x"
+      varX     := var "x"
+      from     := lam x $ iCase varX implicitFalse (map fromClause names)
+      to       := lam x $ iCase varX implicitFalse (map toClause names)
+      fromToId := lam x $ iCase varX implicitFalse (map fromToIdClause names)
+      toFromId := lam x $ iCase varX implicitFalse (map toFromIdClause names)
 
-      impl     = appAll mkGeneric [from,to,fromToId,toFromId]
+      impl     := appAll mkGeneric [from,to,fromToId,toFromId]
 
    in Right
        [ TL (interfaceHint vis fun funType) (def fun [patClause (var fun) impl])]
@@ -135,10 +141,10 @@ int n = `(fromInteger ~(primVal $ BI (cast n)))
 private
 appNSName : Name -> (con,np : TTImp) -> TTImp
 appNSName (NS (MkNS ss) (UN $ Basic s)) con np =
-  let ss' = listOf $ reverse $ map str ss
+  let ss' := listOf $ reverse $ map str ss
    in `(~(con) ~(ss') ~(str s) ~(np))
 appNSName n con np                          =
-  let s = str $ nameStr n
+  let s := str $ nameStr n
    in `(~(con) [] ~(s) ~(np))
 
 -- creates an ArgName's TTImp from an argument's index and name
@@ -151,17 +157,19 @@ argNameTTImp (k, _)                   = `(UnnamedArg ~(int k))
 private
 conTTImp : ParamCon n -> TTImp
 conTTImp c =
-  let np = listOf $ map argNameTTImp (names 0 c.args)
+  let np := listOf $ map argNameTTImp (names 0 c.args)
    in appNSName c.name `(MkConInfo) np
-  where names : (k : Nat) -> Vect m (ConArg n) -> List (Nat, Maybe Name)
-        names k []                             = []
-        names k (CArg n _ ExplicitArg t :: as) = (k,n) :: names (S k) as
-        names k (_ :: as)                      = names k as
+
+  where
+    names : (k : Nat) -> Vect m (ConArg n) -> List (Nat, Maybe Name)
+    names k []                             = []
+    names k (CArg n _ ExplicitArg t :: as) = (k,n) :: names (S k) as
+    names k (_ :: as)                      = names k as
 
 private
 tiTTImp : ParamTypeInfo -> TTImp
 tiTTImp p =
-  let nps     = map conTTImp p.cons
+  let nps := map conTTImp p.cons
    in appNSName p.info.name `(MkTypeInfo) (listOf nps)
 
 ||| Derives a `Meta` implementation for the given data type
@@ -169,11 +177,11 @@ tiTTImp p =
 export
 MetaVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
 MetaVis vis _ p =
-  let genType  = `(Meta ~(p.applied) ~(mkCode p))
-      funType  = piAll genType p.implicits
-      fun      = UN . Basic $ "implMeta" ++ camelCase p.info.name
+  let genType  := `(Meta ~(p.applied) ~(mkCode p))
+      funType  := piAll genType p.implicits
+      fun      := UN . Basic $ "implMeta" ++ camelCase p.info.name
 
-      impl     = `(MkMeta ~(tiTTImp p))
+      impl     := `(MkMeta ~(tiTTImp p))
 
    in Right
        [TL (interfaceHint vis fun funType) (def fun [patClause (var fun) impl])]

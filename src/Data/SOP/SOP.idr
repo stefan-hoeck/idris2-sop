@@ -115,10 +115,11 @@ injectSOP v = MkSOP $ inject v
 ||| Tries to extract a product of the given type from an
 ||| n-ary sum of products.
 public export
-extractSOP :  (0 ks : List k)
-           -> SOP f kss
-           -> {auto prf : Elem ks kss}
-           -> Maybe (NP f ks)
+extractSOP :
+     (0 ks : List k)
+  -> SOP f kss
+  -> {auto prf : Elem ks kss}
+  -> Maybe (NP f ks)
 extractSOP ks (MkSOP ns) = extract ks {prf} ns
 
 --------------------------------------------------------------------------------
