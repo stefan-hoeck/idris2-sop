@@ -144,8 +144,9 @@ update (Just a) _ = a
 update Nothing  a = a
 
 updateUser4 : User4Update -> User4DB -> User4DB
-updateUser4 upd old = let upd' = setAt' () Int Nothing upd
-                       in hliftA2 update upd' old
+updateUser4 upd old =
+  let upd' := setAt' () Int Nothing upd
+   in hliftA2 update upd' old
 ```
 
 Let's break this down a bit: Function `setAt` replaces the
@@ -164,8 +165,10 @@ Let's see how this works out.
 ```idris
 export
 testUpd : User4DB
-testUpd = updateUser4 [Nothing,Nothing,Nothing,Just 44,Nothing]
-                      [12,"hock","hock@me.ch",42,"top secret"]
+testUpd =
+  updateUser4
+    [Nothing,Nothing,Nothing,Just 44,Nothing]
+    [12,"hock","hock@me.ch",42,"top secret"]
 ```
 
 We'll have to inspect the result at
@@ -197,11 +200,12 @@ data IdField = IdYes | IdNo
 data PasswordField = PwYes | PwNo
 
 ||| Fields of a user data type
-data UserField = Id IdField
-               | Name
-               | EMail
-               | Age
-               | PW PasswordField
+data UserField : Type where
+  Id    : IdField -> UserField
+  Name  : UserField
+  EMail : UserField
+  Age   : UserField
+  PW    : PasswordField -> UserField
 
 ||| Converts a `UserField` to the corresponding
 ||| value type
@@ -231,8 +235,9 @@ UserUpdate : Type
 UserUpdate = User IdNo PwYes Maybe
 
 updateUser : UserUpdate -> UserDB -> UserDB
-updateUser upd old = let upd' = setAt' (Id IdNo) (Id IdYes) Nothing upd
-                      in hliftA2 update upd' old
+updateUser upd old =
+  let upd' := setAt' (Id IdNo) (Id IdYes) Nothing upd
+   in hliftA2 update upd' old
 ```
 
 While the syntax is a bit more verbose that with proper

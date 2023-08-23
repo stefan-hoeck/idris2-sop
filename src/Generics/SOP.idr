@@ -30,14 +30,20 @@ interface Generic (0 t : Type) (0 code : List $ List Type) | t where
   toFromId : (v : SOP I code) -> from (to v) = v
 
 export
-fromInjective : Generic t code =>
-                (0 x : t) -> (0 y : t) -> (from x = from y) -> x = y
+fromInjective :
+     {auto _ : Generic t code}
+  -> (0 x : t)
+  -> (0 y : t)
+  -> (from x = from y)
+  -> x = y
 fromInjective x y prf = rewrite sym $ fromToId y in lemma2
-  where lemma1 : to {t = t} (from x) = to {t = t} (from y)
-        lemma1 = cong to prf
 
-        lemma2 : x = to {t = t} (from y)
-        lemma2 = rewrite sym $ fromToId x in lemma1
+  where
+    lemma1 : to {t = t} (from x) = to {t = t} (from y)
+    lemma1 = cong to prf
+
+    lemma2 : x = to {t = t} (from y)
+    lemma2 = rewrite sym $ fromToId x in lemma1
 
 public export
 0 Code : (t : Type) -> Generic t code => List $ List Type
@@ -46,21 +52,23 @@ Code _ = code
 ||| Tries to extract the arguments of a single constructor
 ||| from a value's generic representation.
 public export
-genExtract :  (0 ts : List Type)
-           -> (v : t)
-           -> Generic t code
-           => {auto prf : Elem ts code}
-           -> Maybe (NP I ts)
+genExtract :
+     (0 ts : List Type)
+  -> (v : t)
+  -> {auto _ : Generic t code}
+  -> {auto prf : Elem ts code}
+  -> Maybe (NP I ts)
 genExtract ts v = extractSOP ts $ from v
 
 ||| Tries to extract the value of a single one argument
 ||| constructor from a value's generic representation.
 public export
-genExtract1 :  (0 t' : Type)
-            -> (v : t)
-            -> Generic t code
-            => {auto prf : Elem [t'] code}
-            -> Maybe t'
+genExtract1 :
+     (0 t' : Type)
+  -> (v : t)
+  -> {auto _   : Generic t code}
+  -> {auto prf : Elem [t'] code}
+  -> Maybe t'
 genExtract1 t' v = hd <$> genExtract [t'] v
 
 ||| Returns all value from a generic enum type
@@ -69,9 +77,11 @@ public export
 valuesNP : Generic t code => (et : EnumType code) =>
            NP_ (List Type) (K t) code
 valuesNP = hmap (to . MkSOP) (run et)
-  where run :  EnumType kss -> NP_ (List k) (K (NS_ (List k) (NP f) kss)) kss
-        run EZ     = []
-        run (ES x) = Z [] :: mapNP (\ns => S ns) (run x)
+
+  where
+    run :  EnumType kss -> NP_ (List k) (K (NS_ (List k) (NP f) kss)) kss
+    run EZ     = []
+    run (ES x) = Z [] :: mapNP (\ns => S ns) (run x)
 
 ||| Returns all value from a generic enum type
 ||| (all nullary constructors) wrapped in a list.
@@ -82,8 +92,11 @@ values = collapseNP valuesNP
 ||| Like `valuesNP` but takes the erased value type as an
 ||| explicit argument to help with type inference.
 public export %inline
-valuesForNP : (0 t: Type) -> Generic t code => (et : EnumType code) =>
-              NP_ (List Type) (K t) code
+valuesForNP :
+     (0 t: Type)
+  -> {auto _ : Generic t code}
+  -> {auto et : EnumType code}
+  -> NP_ (List Type) (K t) code
 valuesForNP _ = valuesNP
 
 ||| Like `values` but takes the erased value type as an
@@ -111,18 +124,24 @@ genCompare x y = compare (from x) (from y)
 ||| Default `decEq` implementation for data types with a `Generic`
 ||| instance.
 public export
-genDecEq :  Generic t code => POP DecEq code
-         => (x : t) -> (y : t) -> Dec (x = y)
-genDecEq x y = case decEq (from x) (from y) of
-                    (Yes prf)   => Yes $ fromInjective x y prf
-                    (No contra) => No $ \h => contra (cong from h)
+genDecEq :
+     {auto _ : Generic t code}
+  -> {auto _ : POP DecEq code}
+  -> (x : t)
+  -> (y : t)
+  -> Dec (x = y)
+genDecEq x y =
+  case decEq (from x) (from y) of
+    (Yes prf)   => Yes $ fromInjective x y prf
+    (No contra) => No $ \h => contra (cong from h)
 
 ||| Default `(<+>)` implementation for data types with a `Generic`
 ||| instance.
 public export
-genAppend :  Generic t [ts]
-          => POP Semigroup [ts]
-          => t -> t -> t
+genAppend :
+     {auto _ : Generic t [ts]}
+  -> {auto _ : POP Semigroup [ts]}
+  -> t -> t -> t
 genAppend x y = to $ from x <+> from y
 
 ||| Default `neutral` implementation for data types with a `Generic`

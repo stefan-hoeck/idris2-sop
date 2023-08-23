@@ -147,37 +147,45 @@ record Parser (t : Type) where
 
 public export
 Functor Parser where
-  map f pa = MkParser $ \ts => do (a,ts') <- pa.run ts
-                                  pure (f a, ts')
+  map f pa =
+    MkParser $ \ts => do
+      (a,ts') <- pa.run ts
+      pure (f a, ts')
 
 public export
 Applicative Parser where
   pure a = MkParser $ \ts => Right (a,ts)
 
-  pf <*> pa = MkParser $ \ts => do (f, ts' ) <- pf.run ts
-                                   (a, ts'') <- pa.run ts'
-                                   pure (f a, ts'')
+  pf <*> pa = MkParser $ \ts => do
+    (f, ts' ) <- pf.run ts
+    (a, ts'') <- pa.run ts'
+    pure (f a, ts'')
 
 public export
 Monad Parser where
-  pa >>= f = MkParser $ \ts => do (a, ts' ) <- pa.run ts
-                                  (f a).run ts'
+  pa >>= f = MkParser $ \ts => do
+    (a, ts' ) <- pa.run ts
+    (f a).run ts'
 
 public export
 Alternative Parser where
   empty = MkParser Left
 
-  p1 <|> p2 = MkParser $ \ts => case p1.run ts of
-                                     Left _ => p2.run ts
-                                     res    => res
+  p1 <|> p2 =
+    MkParser $ \ts =>
+      case p1.run ts of
+        Left _ => p2.run ts
+        res    => res
 
 ||| Returns the next string token, failing if
 ||| the list of tokens is empty.
 public export
 next : Parser String
-next = MkParser $ \ts => case ts of
-                              []     => Left []
-                              (h::t) => Right (h,t)
+next =
+  MkParser $ \ts =>
+    case ts of
+      []     => Left []
+      (h::t) => Right (h,t)
 
 ||| Succeeds if the next token matches exactly the
 ||| given String.
@@ -202,10 +210,11 @@ repeat p (S n) = [| p :: repeat p n |]
 ||| Fails if not the whole list is consumed.
 public export
 parse : Parser t -> List String -> Either (List String) t
-parse p ts = case p.run ts of
-                  Right (t,[]) => Right t
-                  Right (_,ts) => Left ts
-                  Left ts      => Left ts
+parse p ts =
+  case p.run ts of
+    Right (t,[]) => Right t
+    Right (_,ts) => Left ts
+    Left ts      => Left ts
 ```
 
 ### Generically derived Encoders
@@ -290,10 +299,11 @@ for all possible fields of the sum.
 Next, we define a generic version of `encode`:
 
 ```idris
-genEncode :  Generic t code
-          => POP Encode code
-          => SingletonList code
-          => t -> List String
+genEncode :
+     {auto _ : Generic t code}
+  -> {auto _ : POP Encode code}
+  -> {auto _ : SingletonList code}
+  -> t -> List String
 genEncode = encode . from
 ```
 
@@ -307,8 +317,9 @@ Encode Spell where encode = genEncode
 
 ||| The result can't be reduced any further, since `show` and
 ||| `cast` of primitives is involved.
-encodeSpellTest : encode (MkSpell 10 "foo") =
-                  [show (cast {from = Nat} {to = Integer} 10), "foo"]
+encodeSpellTest :
+  encode (MkSpell 10 "foo") =
+  [show (cast {from = Nat} {to = Integer} 10), "foo"]
 encodeSpellTest = Refl
 ```
 
@@ -351,10 +362,12 @@ Decode Double where decode = mapMaybe parseDouble next
 public export
 Decode Bool where
   decode = mapMaybe parseBool next
-    where parseBool : String -> Maybe Bool
-          parseBool "False" = Just False
-          parseBool "True"  = Just True
-          parseBool _       = Nothing
+
+    where
+      parseBool : String -> Maybe Bool
+      parseBool "False" = Just False
+      parseBool "True"  = Just True
+      parseBool _       = Nothing
 
 public export
 Decode Nat where decode = mapMaybe parsePositive next
@@ -403,10 +416,11 @@ POP (Decode . f) kss => SingletonList kss => Decode (SOP f kss) where
 And again, we provide a generic version of `decode`:
 
 ```idris
-genDecode :  Generic t code
-          => POP Decode code
-          => SingletonList code
-          => Parser t
+genDecode :
+     {auto _ : Generic t code}
+  -> {auto _ : POP Decode code}
+  -> {auto _ : SingletonList code}
+  -> Parser t
 genDecode = map to decode
 ```
 
@@ -436,9 +450,12 @@ to a dragon:
 ```idris
 public export
 gorgar : Dragon
-gorgar = MkDragon "GORGAR" 15000
-           [MkSpell 100 "Fireball", MkSpell 20 "Invisibility"]
-           ["Mail of Mithril", "1'000 gold coins"]
+gorgar =
+  MkDragon
+    "GORGAR"
+    15000
+    [MkSpell 100 "Fireball", MkSpell 20 "Invisibility"]
+    ["Mail of Mithril", "1'000 gold coins"]
 
 export
 printGorgar : IO ()

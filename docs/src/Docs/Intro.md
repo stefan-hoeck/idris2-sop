@@ -107,9 +107,10 @@ Decode Double where
   decode (h::t) = Just (cast h, t)
 
 Decode a => Decode b => Decode (a,b) where
-  decode ss = do (a,ss')  <- decode ss
-                 (b,ss'') <- decode ss'
-                 pure ((a,b), ss'')
+  decode ss = do
+    (a,ss')  <- decode ss
+    (b,ss'') <- decode ss'
+    pure ((a,b), ss'')
 ```
 
 We can again define a utility function for decoding product
@@ -129,8 +130,9 @@ tupleToArticle (i,n,d,p) = MkArticle i n d p
 
 Decode Article where decode = decodeVia tupleToArticle
 
-decodeTest : Just (MkArticle 1 "foo" "bar" 10.0, Nil) =
-             decode ["1","foo","bar","10.0"]
+decodeTest :
+  Just (MkArticle 1 "foo" "bar" 10.0, Nil) =
+  decode ["1","foo","bar","10.0"]
 decodeTest = Refl
 ```
 
@@ -146,8 +148,9 @@ Idris to prove that we made no mistake:
 toTupleId : (x : Article) -> tupleToArticle (articleToTuple x) = x
 toTupleId (MkArticle _ _ _ _) = Refl
 
-fromTupleId :  (x : (Int,String,String,Double))
-            -> articleToTuple (tupleToArticle x) = x
+fromTupleId :
+     (x : (Int,String,String,Double))
+  -> articleToTuple (tupleToArticle x) = x
 fromTupleId (_,_,_,_) = Refl
 ```
 
@@ -157,9 +160,10 @@ Now that we have articles for our web store, lets define some payment
 methods we accept:
 
 ```idris
-data Payment = CreditCard String
-             | Twint String
-             | Invoice
+data Payment : Type where
+  CreditCard : String -> Payment
+  Twint      : String -> Payment
+  Invoice    : Payment
 ```
 
 Can we use the same techniques for implementing interfaces as
@@ -187,8 +191,9 @@ toEitherId (CreditCard s) = Refl
 toEitherId (Twint s)      = Refl
 toEitherId (Invoice)      = Refl
 
-fromEitherId :  (x : Either String (Either String ()))
-             -> paymentToEither (eitherToPayment x) = x
+fromEitherId :
+     (x : Either String (Either String ()))
+  -> paymentToEither (eitherToPayment x) = x
 fromEitherId (Left s)           = Refl
 fromEitherId (Right $ Left s)   = Refl
 fromEitherId (Right $ Right ()) = Refl

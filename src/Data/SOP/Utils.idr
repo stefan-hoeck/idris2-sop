@@ -16,23 +16,6 @@ K : Type -> k -> Type
 K t _ = t
 
 --------------------------------------------------------------------------------
---          Interface Conversions
---------------------------------------------------------------------------------
-
-||| Materializes an implicit value.
-|||
-||| This is useful for instance to convert a heterogeneous list of
-||| `Ord` values to one of `Eq` values:
-|||
-||| ```idris example
-||| ordToEqNP : NP (Ord . f) ks -> NP (Eq . f) ks
-||| ordToEqNP = mapNP (\_ => materialize Eq)
-||| ```
-public export
-materialize : (0 c : k -> Type) -> (instance : c v) => c v
-materialize _ {instance} = instance
-
---------------------------------------------------------------------------------
 --          Singleton Lists
 --------------------------------------------------------------------------------
 
@@ -63,22 +46,25 @@ singletonList (_ :: (_ :: _)) = No absurd
 ||| View for updating a single occurence of a value
 ||| in a list
 public export
-data UpdateOnce :  (t   : k)
-                -> (t'  : k)
-                -> (ks  : List k)
-                -> (ks' : List k)
-                -> Type where
+data UpdateOnce :
+       (t   : k)
+    -> (t'  : k)
+    -> (ks  : List k)
+    -> (ks' : List k)
+    -> Type where
+
   UpdateHere  : UpdateOnce t t' (t :: ks) (t' :: ks)
   UpdateThere : UpdateOnce t t' ks ks' -> UpdateOnce t t' (k :: ks) (k :: ks')
 
 ||| View for updating several occurences of a value
 ||| in a list
 public export
-data UpdateMany :  (t   : k)
-                -> (t'  : k)
-                -> (ks  : List k)
-                -> (ks' : List k)
-                -> Type where
+data UpdateMany :
+       (t   : k)
+    -> (t'  : k)
+    -> (ks  : List k)
+    -> (ks' : List k)
+    -> Type where
   UMNil      : UpdateMany t t' [] []
   UMConsSame : UpdateMany t t' ks ks' -> UpdateMany t t' (t::ks) (t'::ks')
   UMConsDiff : UpdateMany t t' ks ks' -> UpdateMany t t' (k::ks) (k::ks')

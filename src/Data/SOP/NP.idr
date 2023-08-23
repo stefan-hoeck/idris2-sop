@@ -198,10 +198,11 @@ get t {prf = There _} (_ :: vs) = get t vs
 ||| in an n-ary product, thereby possibly changing the
 ||| types of stored values.
 public export
-modify :  (fun : f t -> f t')
-       -> {auto prf : UpdateOnce t t' ks ks'}
-       -> NP_ k f ks
-       -> NP_ k f ks'
+modify :
+     (fun : f t -> f t')
+  -> {auto prf : UpdateOnce t t' ks ks'}
+  -> NP_ k f ks
+  -> NP_ k f ks'
 modify fun {prf = UpdateHere}    (v :: vs) = fun v :: vs
 modify fun {prf = UpdateThere _} (v :: vs) = v :: modify fun vs
 
@@ -211,11 +212,12 @@ modify fun {prf = UpdateThere _} (v :: vs) = v :: modify fun vs
 |||
 ||| This is the effectful version of `modify`.
 public export
-modifyF :  Functor g
-        => (fun : f t -> g (f t'))
-        -> {auto prf : UpdateOnce t t' ks ks'}
-        -> NP_ k f ks
-        -> g (NP_ k f ks')
+modifyF :
+     {auto _ : Functor g}
+  -> (fun : f t -> g (f t'))
+  -> {auto prf : UpdateOnce t t' ks ks'}
+  -> NP_ k f ks
+  -> g (NP_ k f ks')
 modifyF fun {prf = UpdateHere}    (v :: vs) = (:: vs) <$> fun v
 modifyF fun {prf = UpdateThere _} (v :: vs) = (v ::)  <$> modifyF fun vs
 
@@ -223,10 +225,11 @@ modifyF fun {prf = UpdateThere _} (v :: vs) = (v ::)  <$> modifyF fun vs
 ||| in an n-ary product, thereby possibly changing the
 ||| types of stored values.
 public export
-modifyMany :  (fun : f t -> f t')
-           -> {auto prf : UpdateMany t t' ks ks'}
-           -> NP_ k f ks
-           -> NP_ k f ks'
+modifyMany :
+     (fun : f t -> f t')
+  -> {auto prf : UpdateMany t t' ks ks'}
+  -> NP_ k f ks
+  -> NP_ k f ks'
 modifyMany f {prf = UMNil}        []      = []
 modifyMany f {prf = UMConsSame x} (v::vs) = f v :: modifyMany f vs
 modifyMany f {prf = UMConsDiff x} (v::vs) = v   :: modifyMany f vs
@@ -236,11 +239,12 @@ modifyMany f {prf = UMConsDiff x} (v::vs) = v   :: modifyMany f vs
 |||
 ||| This is the effectful version of `modifyMany`.
 public export
-modifyManyF :  Applicative g
-            => (fun : f t -> g (f t'))
-            -> {auto prf : UpdateMany t t' ks ks'}
-            -> NP_ k f ks
-            -> g (NP_ k f ks')
+modifyManyF :
+     {auto _ : Applicative g}
+  -> (fun : f t -> g (f t'))
+  -> {auto prf : UpdateMany t t' ks ks'}
+  -> NP_ k f ks
+  -> g (NP_ k f ks')
 modifyManyF f {prf = UMNil}        []      = pure []
 modifyManyF f {prf = UMConsSame x} (v::vs) = [| f v :: modifyManyF f vs |]
 modifyManyF f {prf = UMConsDiff x} (v::vs) = (v ::) <$> modifyManyF f vs
@@ -249,44 +253,48 @@ modifyManyF f {prf = UMConsDiff x} (v::vs) = (v ::) <$> modifyManyF f vs
 ||| in an n-ary product, thereby possibly changing the
 ||| types of stored values.
 public export %inline
-setAt :  (0 t : k)
-      -> (v' : f t')
-      -> {auto prf : UpdateOnce t t' ks ks'}
-      -> NP_ k f ks
-      -> NP_ k f ks'
+setAt :
+     (0 t : k)
+  -> (v' : f t')
+  -> {auto prf : UpdateOnce t t' ks ks'}
+  -> NP_ k f ks
+  -> NP_ k f ks'
 setAt t v' = modify {t = t} (const v')
 
 ||| Replaces several elements of the given type
 ||| in an n-ary product, thereby possibly changing the
 ||| types of stored values.
 public export %inline
-setAtMany :  (0 t : k)
-          -> (v' : f t')
-          -> {auto prf : UpdateMany t t' ks ks'}
-          -> NP_ k f ks
-          -> NP_ k f ks'
+setAtMany :
+     (0 t : k)
+  -> (v' : f t')
+  -> {auto prf : UpdateMany t t' ks ks'}
+  -> NP_ k f ks
+  -> NP_ k f ks'
 setAtMany t v' = modifyMany {t = t} (const v')
 
 ||| Alias for `setAt` for those occasions when
 ||| Idris cannot infer the type of the new value.
 public export %inline
-setAt' :  (0 t  : k)
-       -> (0 t' : k)
-       -> (v' : f t')
-       -> {auto prf : UpdateOnce t t' ks ks'}
-       -> NP_ k f ks
-       -> NP_ k f ks'
+setAt' :
+     (0 t  : k)
+  -> (0 t' : k)
+  -> (v' : f t')
+  -> {auto prf : UpdateOnce t t' ks ks'}
+  -> NP_ k f ks
+  -> NP_ k f ks'
 setAt' t _ v' np = setAt t v' np
 
 ||| Alias for `setAtMany` for those occasions when
 ||| Idris cannot infer the type of the new value.
 public export %inline
-setAtMany' :  (0 t  : k)
-           -> (0 t' : k)
-           -> (v' : f t')
-           -> {auto prf : UpdateMany t t' ks ks'}
-           -> NP_ k f ks
-           -> NP_ k f ks'
+setAtMany' :
+     (0 t  : k)
+  -> (0 t' : k)
+  -> (v' : f t')
+  -> {auto prf : UpdateMany t t' ks ks'}
+  -> NP_ k f ks
+  -> NP_ k f ks'
 setAtMany' t _ v' np = setAtMany t v' np
 
 --------------------------------------------------------------------------------
@@ -310,11 +318,12 @@ append (v :: vs) y = v :: append vs y
 ||| Expands an n-ary product by filling missing
 ||| values with the given default-generating function.
 public export
-expand :  {ks' : List k}
-       -> (forall k . f k)
-       -> NP f ks
-       -> {auto prf : Sublist ks ks'}
-       -> NP f ks'
+expand :
+     {ks' : List k}
+  -> (forall k . f k)
+  -> NP f ks
+  -> {auto prf : Sublist ks ks'}
+  -> NP f ks'
 expand f []                         = pureNP f
 expand f (v :: vs) {prf = SLSame x} = v :: expand f vs
 expand f vs        {prf = SLDiff x} = f :: expand f vs
@@ -324,12 +333,13 @@ expand f vs        {prf = SLDiff x} = f :: expand f vs
 |||
 ||| This is the constrained version of `expand`.
 public export
-cexpand :  (0 c : k -> Type)
-        -> (cs : NP c ks')
-        => (forall k . c k => f k)
-        -> {auto prf : Sublist ks ks'}
-        -> NP_ k f ks
-        -> NP_ k f ks'
+cexpand :
+     (0 c : k -> Type)
+  -> {auto cs  : NP c ks'}
+  -> (forall k . c k => f k)
+  -> {auto prf : Sublist ks ks'}
+  -> NP_ k f ks
+  -> NP_ k f ks'
 cexpand c {cs = []}   f []                         = []
 cexpand c {cs = _::_} f []                         = f :: cexpand c f []
 cexpand c {cs = _::_} f (v :: vs) {prf = SLSame x} = v :: cexpand c f vs
@@ -342,12 +352,12 @@ cexpand c {cs = _::_} f vs        {prf = SLDiff x} = f :: cexpand c f vs
 ||| This is needed to implement `Ord` below.
 public export %hint
 ordToEqNP : NP (Ord . f) ks -> NP (Eq . f) ks
-ordToEqNP = mapNP (\_ => materialize Eq)
+ordToEqNP = mapNP (\_ => %search)
 
 ||| This is needed to implement `Monoid` below.
 public export %hint
 monoidToSemigroupNP : NP (Monoid . f) ks -> NP (Semigroup . f) ks
-monoidToSemigroupNP = mapNP (\_ => materialize Semigroup)
+monoidToSemigroupNP = mapNP (\_ => %search)
 
 --------------------------------------------------------------------------------
 --          Implementations
