@@ -312,7 +312,7 @@ hcliftA :
   -> (fun : forall a . c a => f a -> g a)
   -> p f ks
   -> p g ks
-hcliftA = hcmap
+hcliftA c x = hcmap c
 
 ||| Like `hliftA2` but with a constrained function.
 public export %inline
