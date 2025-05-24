@@ -20,7 +20,7 @@ import System.File
 
 private
 ConNames : Type
-ConNames = (Name, List String, List TTImp)
+ConNames = (Name, List Name, List TTImp)
 
 ||| Name of record `Generic`'s constructor.
 export
@@ -90,7 +90,7 @@ private
 conNames : ParamCon n -> ConNames
 conNames c =
   let ns   := toList $ freshNames "x" (count isExplicit c.args)
-      vars := map varStr ns
+      vars := map var ns
    in (c.name, ns, vars)
 
 ||| Derives a `Generic` implementation for the given data type
