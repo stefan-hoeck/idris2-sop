@@ -16,7 +16,7 @@ using elaborator reflection.
 
 ## Table of Contents
 
-1. [Introduction to Generic Representations of Data](Intro.md)
-2. [Barbies : Data Types that can change their Clothes](Barbies.md)
-3. [Deriving Interface Implementations](Deriving.md)
-4. [Metadata](Metadata.md)
+1. [Introduction to Generic Representations of Data](docs/md/Intro.md)
+2. [Barbies : Data Types that can change their Clothes](docs/md/Barbies.md)
+3. [Deriving Interface Implementations](docs/md/Deriving.md)
+4. [Metadata](docs/md/Metadata.md)
